@@ -5,27 +5,10 @@ import { formatEther } from 'viem';
 
 const CONTRACT_ADDRESS = '0x8FD289D9644cF84C4298ebf30Ad6Ef3A15E2135F';
 
-const CONTRACT_ABI = [
-  {
-    inputs: [{ internalType: 'uint256', name: '_level', type: 'uint256' }],
-    name: 'setProgress',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [{ internalType: 'address', name: '', type: 'address' }],
-    name: 'userProgress',
-    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
-    stateMutability: 'view',
-    type: 'function',
-  },
-] as const;
-
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
-  const [levelInput, setLevelInput] = useState<string>('1');
+  const [levelInput, setLevelInput] = useState('1');
 
   useEffect(() => {
     setMounted(true);
@@ -37,7 +20,15 @@ export default function Home() {
 
   const { data: currentLevel } = useReadContract({
     address: CONTRACT_ADDRESS,
-    abi: CONTRACT_ABI,
+    abi: [
+      {
+        inputs: [{ name: '', type: 'address' }],
+        name: 'userProgress',
+        outputs: [{ name: '', type: 'uint256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ],
     functionName: 'userProgress',
     args: address ? [address] : undefined,
   });
@@ -52,10 +43,17 @@ export default function Home() {
     if (!levelInput) return;
     writeContract({
       address: CONTRACT_ADDRESS,
-      abi: CONTRACT_ABI,
+      abi: [
+        {
+          inputs: [{ name: '_level', type: 'uint256' }],
+          name: 'setProgress',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+      ],
       functionName: 'setProgress',
       args: [BigInt(levelInput)],
-      gas: 100000n,
     });
   };
 
@@ -94,7 +92,7 @@ export default function Home() {
             </button>
           </div>
 
-          {isSuccess && <p style={{ color: '#3fb950' }}>Transaction confirmed. Level updated.</p>}
+          {isSuccess && <p style={{ color: '#3fb950' }}>Transaction confirmed! Level updated.</p>}
           {writeError && <p style={{ color: '#f85149' }}>Error: {writeError.message}</p>}
         </section>
       ) : (

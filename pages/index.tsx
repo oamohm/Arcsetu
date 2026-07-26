@@ -58,7 +58,7 @@ export default function Home() {
       ],
       functionName: 'setProgress',
       args: [BigInt(levelInput)],
-      gas: 50000n,
+      gas: 150000n,
     });
   };
 

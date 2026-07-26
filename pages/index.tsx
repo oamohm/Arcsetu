@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther } from 'viem';
@@ -23,8 +23,13 @@ const CONTRACT_ABI = [
 ] as const;
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
   const [levelInput, setLevelInput] = useState<string>('1');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { data: balanceData } = useBalance({
     address: address,
@@ -53,6 +58,8 @@ export default function Home() {
       gas: 100000n,
     });
   };
+
+  if (!mounted) return null;
 
   return (
     <main style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto', color: '#fff', backgroundColor: '#0d1117', minHeight: '100vh' }}>

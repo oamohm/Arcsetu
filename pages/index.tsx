@@ -16,15 +16,21 @@ export default function Home() {
   const [txLogs, setTxLogs] = useState<TxLog[]>([]);
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
-  // Phase 1: User Identity State
-  const [username, setUsername] = useState<string>('');
-  const [savedName, setSavedName] = useState<string>('');
+  const [username, setUsername] = useState('');
+  const [savedName, setSavedName] = useState('');
 
   useEffect(() => {
     setMounted(true);
-    if (address) {
+  }, []);
+
+  useEffect(() => {
+    if (address && typeof window !== 'undefined') {
       const stored = localStorage.getItem(`giwa_user_${address}`);
-      if (stored) setSavedName(stored);
+      if (stored) {
+        setSavedName(stored);
+      } else {
+        setSavedName('');
+      }
     }
   }, [address]);
 
@@ -66,9 +72,10 @@ export default function Home() {
   }, [isSuccess, hash, refetch, activeAction]);
 
   const saveIdentity = () => {
-    if (!username.trim() || !address) return;
-    localStorage.setItem(`giwa_user_${address}`, username.trim());
-    setSavedName(username.trim());
+    if (!username.trim() || !address || typeof window === 'undefined') return;
+    const cleanName = username.trim();
+    localStorage.setItem(`giwa_user_${address}`, cleanName);
+    setSavedName(cleanName);
     setUsername('');
   };
 
@@ -97,7 +104,7 @@ export default function Home() {
 
   return (
     <div style={{ backgroundColor: '#131B27', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '460px', backgroundColor: '#FFFFFF', color: '#1F2937', minHeight: '100vh', boxShadow: '0 0 60px rgba(0,0,0,0.5)', fontFamily: 'Segoe UI, Arial, sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: '460px', backgroundColor: '#FFFFFF', color: '#1F2937', minHeight: '100vh', boxShadow: '0 0 60px rgba(0,0,0,0.5)', fontFamily: 'sans-serif' }}>
         
         <header style={{ backgroundColor: '#1F2937', color: '#FFFFFF', padding: '24px 22px 18px' }}>
           <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '0.5px' }}>GIWASETU</div>
@@ -110,7 +117,6 @@ export default function Home() {
 
         <main style={{ padding: '22px' }}>
           
-          {/* Phase 1: Profile Badge / Input */}
           <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', borderRadius: '12px', padding: '14px', marginBottom: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '6px' }}>
               User Identity
@@ -123,7 +129,7 @@ export default function Home() {
               <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                 <input 
                   type="text" 
-                  placeholder="Enter username (e.g. alex)" 
+                  placeholder="Enter username" 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #E5E7EB', fontSize: '13px' }}
@@ -158,7 +164,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
+          <div style={{ fontSize: '12px', fontWeight 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
             Complete the Steps
           </div>
           
@@ -191,7 +197,7 @@ export default function Home() {
               <button 
                 onClick={() => runStep('recordPracticeTransaction', 'Practice transaction recorded')} 
                 disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
               >
                 Run
               </button>

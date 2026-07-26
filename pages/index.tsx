@@ -16,9 +16,17 @@ export default function Home() {
   const [txLogs, setTxLogs] = useState<TxLog[]>([]);
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
+  // Phase 1: User Identity State
+  const [username, setUsername] = useState<string>('');
+  const [savedName, setSavedName] = useState<string>('');
+
   useEffect(() => {
     setMounted(true);
-  }, []);
+    if (address) {
+      const stored = localStorage.getItem(`giwa_user_${address}`);
+      if (stored) setSavedName(stored);
+    }
+  }, [address]);
 
   const { data: balanceData } = useBalance({ address });
 
@@ -57,6 +65,13 @@ export default function Home() {
     }
   }, [isSuccess, hash, refetch, activeAction]);
 
+  const saveIdentity = () => {
+    if (!username.trim() || !address) return;
+    localStorage.setItem(`giwa_user_${address}`, username.trim());
+    setSavedName(username.trim());
+    setUsername('');
+  };
+
   const runStep = (fnName: string, label: string) => {
     setActiveAction(label);
     writeContract({
@@ -94,6 +109,36 @@ export default function Home() {
         </div>
 
         <main style={{ padding: '22px' }}>
+          
+          {/* Phase 1: Profile Badge / Input */}
+          <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', borderRadius: '12px', padding: '14px', marginBottom: '20px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '6px' }}>
+              User Identity
+            </div>
+            {savedName ? (
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#1F2937' }}>
+                Builder: <span style={{ color: '#0F766E' }}>@{savedName}</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Enter username (e.g. alex)" 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #E5E7EB', fontSize: '13px' }}
+                />
+                <button 
+                  onClick={saveIdentity}
+                  disabled={!username.trim()}
+                  style={{ padding: '8px 14px', backgroundColor: '#0F766E', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+                >
+                  Save
+                </button>
+              </div>
+            )}
+          </div>
+
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
             Your Onboarding Progress
           </div>
@@ -146,7 +191,7 @@ export default function Home() {
               <button 
                 onClick={() => runStep('recordPracticeTransaction', 'Practice transaction recorded')} 
                 disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
               >
                 Run
               </button>

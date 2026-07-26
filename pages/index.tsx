@@ -3,12 +3,11 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther } from 'viem';
 
-const CONTRACT_ADDRESS = '0x8FD289D9644cF84C4298ebf30Ad6Ef3A15E2135F';
+const CONTRACT_ADDRESS = '0xbABcB2540639b071b4fDF570a8E7c54b5899384c';
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
-  const [levelInput, setLevelInput] = useState('1');
 
   useEffect(() => {
     setMounted(true);
@@ -16,18 +15,23 @@ export default function Home() {
 
   const { data: balanceData } = useBalance({ address });
 
-  const { data: currentLevel, refetch } = useReadContract({
+  // Read User Progress
+  const { data: userProgress, refetch } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: [
       {
         inputs: [{ name: '', type: 'address' }],
-        name: 'userProgress',
-        outputs: [{ name: '', type: 'uint256' }],
+        name: 'progress',
+        outputs: [
+          { name: 'hasWallet', type: 'bool' },
+          { name: 'completedOnboarding', type: 'bool' },
+          { name: 'practiceTxCount', type: 'uint256' },
+        ],
         stateMutability: 'view',
         type: 'function',
       },
     ],
-    functionName: 'userProgress',
+    functionName: 'progress',
     args: address ? [address] : undefined,
   });
 
@@ -43,21 +47,35 @@ export default function Home() {
     }
   }, [isSuccess, refetch]);
 
-  const handleUpdate = () => {
-    if (!levelInput) return;
+  const handleMarkWallet = () => {
     writeContract({
       address: CONTRACT_ADDRESS,
       abi: [
         {
-          inputs: [{ name: '_level', type: 'uint256' }],
-          name: 'setProgress',
+          inputs: [],
+          name: 'markWalletCreated',
           outputs: [],
           stateMutability: 'nonpayable',
           type: 'function',
         },
       ],
-      functionName: 'setProgress',
-      args: [BigInt(levelInput)],
+      functionName: 'markWalletCreated',
+    });
+  };
+
+  const handleRecordTx = () => {
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      abi: [
+        {
+          inputs: [],
+          name: 'recordPracticeTransaction',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+      ],
+      functionName: 'recordPracticeTransaction',
     });
   };
 
@@ -75,24 +93,29 @@ export default function Home() {
           <h3>Account State</h3>
           <p><strong>Wallet:</strong> {address}</p>
           <p><strong>Native Balance:</strong> {balanceData ? `${formatEther(balanceData.value)} ${balanceData.symbol}` : 'Loading...'}</p>
-          <p><strong>Current On-chain Level:</strong> {currentLevel !== undefined ? currentLevel.toString() : '0'}</p>
 
           <hr style={{ borderColor: '#30363d', margin: '1.5rem 0' }} />
 
-          <h3>Update Level</h3>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-            <input 
-              type="number" 
-              value={levelInput} 
-              onChange={(e) => setLevelInput(e.target.value)}
-              style={{ padding: '0.5rem', backgroundColor: '#0d1117', color: '#fff', border: '1px solid #30363d', borderRadius: '4px' }}
-            />
+          <h3>On-chain Progress</h3>
+          <p><strong>Has Wallet Marked:</strong> {userProgress ? (userProgress[0] ? 'Yes' : 'No') : 'No'}</p>
+          <p><strong>Completed Onboarding:</strong> {userProgress ? (userProgress[1] ? 'Yes' : 'No') : 'No'}</p>
+          <p><strong>Practice Transactions:</strong> {userProgress ? userProgress[2].toString() : '0'}</p>
+
+          <div style={{ display: 'flex', gap: '1rem', margin: '1.5rem 0 1rem 0' }}>
             <button 
-              onClick={handleUpdate} 
+              onClick={handleMarkWallet} 
               disabled={isPending || isConfirming}
-              style={{ padding: '0.5rem 1rem', backgroundColor: '#238636', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              style={{ padding: '0.6rem 1rem', backgroundColor: '#238636', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
             >
-              {isPending ? 'Signing...' : isConfirming ? 'Confirming...' : 'Update On-chain'}
+              Mark Wallet
+            </button>
+
+            <button 
+              onClick={handleRecordTx} 
+              disabled={isPending || isConfirming}
+              style={{ padding: '0.6rem 1rem', backgroundColor: '#1f6beb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Record Practice Tx
             </button>
           </div>
 
@@ -110,7 +133,7 @@ export default function Home() {
             </p>
           )}
 
-          {isSuccess && <p style={{ color: '#3fb950' }}>Transaction verified on GIWA Explorer. Level updated.</p>}
+          {isSuccess && <p style={{ color: '#3fb950' }}>Transaction verified on GIWA Explorer!</p>}
           {writeError && <p style={{ color: '#f85149' }}>Error: {writeError.message}</p>}
         </section>
       ) : (

@@ -14,11 +14,9 @@ export default function Home() {
     setMounted(true);
   }, []);
 
-  const { data: balanceData } = useBalance({
-    address: address,
-  });
+  const { data: balanceData } = useBalance({ address });
 
-  const { data: currentLevel } = useReadContract({
+  const { data: currentLevel, refetch } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: [
       {
@@ -39,6 +37,12 @@ export default function Home() {
     hash,
   });
 
+  useEffect(() => {
+    if (isSuccess) {
+      refetch();
+    }
+  }, [isSuccess, refetch]);
+
   const handleUpdate = () => {
     if (!levelInput) return;
     writeContract({
@@ -54,7 +58,7 @@ export default function Home() {
       ],
       functionName: 'setProgress',
       args: [BigInt(levelInput)],
-      gas: 50000n, // giwa sepolia rpc limit override
+      gas: 50000n,
     });
   };
 
@@ -93,7 +97,21 @@ export default function Home() {
             </button>
           </div>
 
-          {isSuccess && <p style={{ color: '#3fb950' }}>Transaction confirmed! Level updated.</p>}
+          {hash && (
+            <p style={{ wordBreak: 'break-all', fontSize: '0.9rem' }}>
+              <strong>Tx Hash:</strong>{' '}
+              <a 
+                href={`https://sepolia-explorer.giwa.io/tx/${hash}`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ color: '#58a6ff' }}
+              >
+                {hash}
+              </a>
+            </p>
+          )}
+
+          {isSuccess && <p style={{ color: '#3fb950' }}>Transaction verified on GIWA Explorer. Level updated.</p>}
           {writeError && <p style={{ color: '#f85149' }}>Error: {writeError.message}</p>}
         </section>
       ) : (

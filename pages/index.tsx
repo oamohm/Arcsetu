@@ -54,6 +54,7 @@ export default function Home() {
       ],
       functionName: 'setProgress',
       args: [BigInt(levelInput)],
+      gas: 50000n, // giwa sepolia rpc limit override
     });
   };
 

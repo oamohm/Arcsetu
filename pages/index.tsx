@@ -104,11 +104,11 @@ export default function Home() {
 
   return (
     <div style={{ backgroundColor: '#131B27', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '460px', backgroundColor: '#FFFFFF', color: '#1F2937', minHeight: '100vh', boxShadow: '0 0 60px rgba(0,0,0,0.5)', fontFamily: 'sans-serif' }}>
+      <div style={{ width: '100%', maxWidth: '460px', backgroundColor: '#FFFFFF', color: '#1F2937', minHeight: '100vh', boxShadow: '0 0 60px rgba(0,0,0,0.5)' }}>
         
         <header style={{ backgroundColor: '#1F2937', color: '#FFFFFF', padding: '24px 22px 18px' }}>
-          <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '0.5px' }}>GIWASETU</div>
-          <div style={{ fontSize: '12.5px', color: '#F3D9B1', marginTop: '4px' }}>Live on GIWA Sepolia · Real transactions</div>
+          <div style={{ fontSize: '22px', fontWeight: 800 }}>GIWASETU</div>
+          <div style={{ fontSize: '12px', color: '#F3D9B1', marginTop: '4px' }}>Live on GIWA Sepolia · Real transactions</div>
         </header>
 
         <div style={{ backgroundColor: '#1F2937', padding: '0 22px 18px', display: 'flex', justifyContent: 'center' }}>
@@ -137,7 +137,7 @@ export default function Home() {
                 <button 
                   onClick={saveIdentity}
                   disabled={!username.trim()}
-                  style={{ padding: '8px 14px', backgroundColor: '#0F766E', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
+                  style={{ padding: '8px 14px', backgroundColor: '#0F766E', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '12px' }}
                 >
                   Save
                 </button>
@@ -145,76 +145,76 @@ export default function Home() {
             )}
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
             Your Onboarding Progress
           </div>
           
           <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
             <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: 800 }}>{hasWallet ? '✓' : '–'}</div>
-              <div style={{ fontSize: '10.5px', color: '#6B7280', marginTop: '2px' }}>Wallet Step</div>
+              <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>Wallet Step</div>
             </div>
             <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: 800 }}>{practiceTxCount}</div>
-              <div style={{ fontSize: '10.5px', color: '#6B7280', marginTop: '2px' }}>Practice Txns</div>
+              <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>Practice Txns</div>
             </div>
             <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: 800 }}>{completedOnboarding ? '✓' : '–'}</div>
-              <div style={{ fontSize: '10.5px', color: '#6B7280', marginTop: '2px' }}>Completed</div>
+              <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>Completed</div>
             </div>
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
             Complete the Steps
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: hasWallet ? '#F0FDFA' : '#FFFFFF', border: hasWallet ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: hasWallet ? '#0F766E' : '#E5E7EB', color: hasWallet ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: hasWallet ? '#F0FDFA' : '#FFFFFF', border: hasWallet ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: hasWallet ? '#0F766E' : '#E5E7EB', color: hasWallet ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
                 1
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 600 }}>Mark Wallet Created</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>Registers your wallet on-chain</div>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>Mark Wallet Created</div>
+                <div style={{ fontSize: '11px', color: '#6B7280' }}>Registers wallet on-chain</div>
               </div>
               <button 
                 onClick={() => runStep('markWalletCreated', 'Wallet marked created')} 
                 disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}
               >
                 Run
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: Number(practiceTxCount) > 0 ? '#F0FDFA' : '#FFFFFF', border: Number(practiceTxCount) > 0 ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: Number(practiceTxCount) > 0 ? '#F0FDFA' : '#FFFFFF', border: Number(practiceTxCount) > 0 ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
                 2
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 600 }}>Record Practice Transaction</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>Logs a practice tx (can repeat)</div>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>Record Practice Transaction</div>
+                <div style={{ fontSize: '11px', color: '#6B7280' }}>Logs practice tx</div>
               </div>
               <button 
                 onClick={() => runStep('recordPracticeTransaction', 'Practice transaction recorded')} 
                 disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}
               >
                 Run
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: completedOnboarding ? '#F0FDFA' : '#FFFFFF', border: completedOnboarding ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: completedOnboarding ? '#0F766E' : '#E5E7EB', color: completedOnboarding ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: completedOnboarding ? '#F0FDFA' : '#FFFFFF', border: completedOnboarding ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: completedOnboarding ? '#0F766E' : '#E5E7EB', color: completedOnboarding ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
                 3
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 600 }}>Complete Onboarding</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>Marks onboarding finished</div>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>Complete Onboarding</div>
+                <div style={{ fontSize: '11px', color: '#6B7280' }}>Marks onboarding finished</div>
               </div>
               <button 
                 onClick={() => runStep('completeOnboarding', 'Onboarding completed')} 
                 disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight 700, opacity: isConnected ? 1 : 0.4 }}
               >
                 Run
               </button>
@@ -222,20 +222,20 @@ export default function Home() {
           </div>
 
           {(isPending || isConfirming) && (
-            <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', color: '#C2410C', padding: '12px', borderRadius: '10px', fontSize: '12.5px', marginBottom: '14px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', color: '#C2410C', padding: '12px', borderRadius: '10px', fontSize: '12px', marginBottom: '14px', textAlign: 'center' }}>
               Signing transaction in wallet...
             </div>
           )}
 
           {writeError && (
-            <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '12px', borderRadius: '10px', fontSize: '12.5px', marginBottom: '14px', wordBreak: 'break-all' }}>
+            <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '12px', borderRadius: '10px', fontSize: '12px', marginBottom: '14px', wordBreak: 'break-all' }}>
               {writeError.message.slice(0, 100)}...
             </div>
           )}
 
           <div style={{ backgroundColor: '#FFF7ED', borderRadius: '14px', padding: '16px', marginBottom: '14px' }}>
-            <div style={{ fontWeight: 700, fontSize: '14.5px', marginBottom: '4px' }}>Contract Details</div>
-            <div style={{ fontSize: '12.5px', color: '#6B7280', lineHeight: 1.5 }}>
+            <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>Contract Details</div>
+            <div style={{ fontSize: '12px', color: '#6B7280', lineHeight: 1.5 }}>
               Address: 0xbABc...384c<br />
               <a href={`https://sepolia-explorer.giwa.io/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" style={{ color: '#0F766E', fontWeight: 600 }}>
                 View on GIWA Explorer
@@ -243,7 +243,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
             Recent Transactions
           </div>
           <div>

@@ -22,7 +22,6 @@ export default function Home() {
 
   const { data: balanceData } = useBalance({ address });
 
-  // Read User Onboarding Progress (hasWallet, completedOnboarding, practiceTxCount)
   const { data: userProgress, refetch } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: [
@@ -85,19 +84,16 @@ export default function Home() {
     <div style={{ backgroundColor: '#131B27', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: '460px', backgroundColor: '#FFFFFF', color: '#1F2937', minHeight: '100vh', boxShadow: '0 0 60px rgba(0,0,0,0.5)', fontFamily: "'Segoe UI', Arial, sans-serif" }}>
         
-        {/* Header */}
         <header style={{ backgroundColor: '#1F2937', color: '#FFFFFF', padding: '24px 22px 18px' }}>
           <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '0.5px' }}>GIWASETU</div>
           <div style={{ fontSize: '12.5px', color: '#F3D9B1', marginTop: '4px' }}>Live on GIWA Sepolia · Real transactions</div>
         </header>
 
-        {/* Wallet Connection Bar */}
         <div style={{ backgroundColor: '#1F2937', padding: '0 22px 18px', display: 'flex', justifyContent: 'center' }}>
           <ConnectButton />
         </div>
 
         <main style={{ padding: '22px' }}>
-          {/* Progress Overview Stats */}
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
             Your Onboarding Progress
           </div>
@@ -116,13 +112,11 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Interactive Steps */}
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
             Complete the Steps
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
             
-            {/* Step 1 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: hasWallet ? '#F0FDFA' : '#FFFFFF', border: hasWallet ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
               <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: hasWallet ? '#0F766E' : '#E5E7EB', color: hasWallet ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
                 1
@@ -140,9 +134,8 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Step 2 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: Number(practiceTxCount) > 0 ? '#F0FDFA' : '#FFFFFF', border: Number(practiceTxCount) > 0 ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight 700, fontSize: '13px', flexShrink: 0 }}>
+              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
                 2
               </div>
               <div style={{ flex: 1 }}>
@@ -152,13 +145,12 @@ export default function Home() {
               <button 
                 onClick={() => runStep('recordPracticeTransaction', 'Practice transaction recorded')} 
                 disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
               >
                 Run
               </button>
             </div>
 
-            {/* Step 3 */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: completedOnboarding ? '#F0FDFA' : '#FFFFFF', border: completedOnboarding ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
               <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: completedOnboarding ? '#0F766E' : '#E5E7EB', color: completedOnboarding ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
                 3
@@ -178,7 +170,6 @@ export default function Home() {
 
           </div>
 
-          {/* Status Indicator */}
           {(isPending || isConfirming) && (
             <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', color: '#C2410C', padding: '12px', borderRadius: '10px', fontSize: '12.5px', marginBottom: '14px', textAlign: 'center' }}>
               ⏳ {isPending ? 'Signing transaction in wallet...' : 'Confirming on GIWA Sepolia...'}
@@ -191,7 +182,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Contract Info Card */}
           <div style={{ backgroundColor: '#FFF7ED', borderRadius: '14px', padding: '16px', marginBottom: '14px' }}>
             <div style={{ fontWeight: 700, fontSize: '14.5px', marginBottom: '4px' }}>📜 Contract</div>
             <div style={{ fontSize: '12.5px', color: '#6B7280', lineHeight: 1.5 }}>
@@ -202,7 +192,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Recent Tx Logs */}
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
             Recent Transactions
           </div>

@@ -8,7 +8,8 @@ const CONTRACT_ADDRESS = '0xbABcB2540639b071b4fDF570a8E7c54b5899384c';
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
-  const [txLogs, setTxLogs] = useState<any[]>([]);
+
+  const [txLogs, setTxLogs] = useState<{ label: string; hash: string }[]>([]);
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
   const [usernameInput, setUsernameInput] = useState('');
@@ -20,7 +21,7 @@ export default function Home() {
 
   const { data: balanceData } = useBalance({ address });
 
-  const { data: userProgress, refetch } = useReadContract({
+  const { data: userProgressData, refetch } = useReadContract({
     address: CONTRACT_ADDRESS,
     abi: [
       {
@@ -81,9 +82,10 @@ export default function Home() {
 
   if (!mounted) return null;
 
-  const hasWallet = userProgress ? Boolean((userProgress as any)[0]) : false;
-  const completedOnboarding = userProgress ? Boolean((userProgress as any)[1]) : false;
-  const practiceTxCount = userProgress ? (userProgress as any)[2].toString() : '0';
+  const userProgressArray = Array.isArray(userProgressData) ? userProgressData : null;
+  const hasWallet = userProgressArray ? Boolean(userProgressArray[0]) : false;
+  const completedOnboarding = userProgressArray ? Boolean(userProgressArray[1]) : false;
+  const practiceTxCount = userProgressArray && userProgressArray[2] !== undefined ? String(userProgressArray[2]) : '0';
 
   return (
     <div style={{ backgroundColor: '#131B27', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
@@ -169,7 +171,7 @@ export default function Home() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: Number(practiceTxCount) > 0 ? '#F0FDFA' : '#FFFFFF', border: Number(practiceTxCount) > 0 ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight 700, fontSize: '12px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
                 2
               </div>
               <div style={{ flex: 1 }}>

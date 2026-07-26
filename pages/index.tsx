@@ -5,16 +5,9 @@ import { formatEther } from 'viem';
 
 const CONTRACT_ADDRESS = '0xbABcB2540639b071b4fDF570a8E7c54b5899384c';
 
-interface TxLog {
-  label: string;
-  hash: string;
-}
-
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
-  const [txLogs, setTxLogs] = useState<TxLog[]>([]);
-  const [activeAction, setActiveAction] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -48,174 +41,103 @@ export default function Home() {
   });
 
   useEffect(() => {
-    if (isSuccess && hash) {
+    if (isSuccess) {
       refetch();
-      if (activeAction) {
-        setTxLogs((prev) => [{ label: activeAction, hash }, ...prev]);
-        setActiveAction(null);
-      }
     }
-  }, [isSuccess, hash, refetch, activeAction]);
+  }, [isSuccess, refetch]);
 
-  const runStep = (fnName: string, label: string) => {
-    setActiveAction(label);
+  const handleMarkWallet = () => {
     writeContract({
       address: CONTRACT_ADDRESS,
       abi: [
         {
           inputs: [],
-          name: fnName,
+          name: 'markWalletCreated',
           outputs: [],
           stateMutability: 'nonpayable',
           type: 'function',
         },
       ],
-      functionName: fnName,
+      functionName: 'markWalletCreated',
+    });
+  };
+
+  const handleRecordTx = () => {
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      abi: [
+        {
+          inputs: [],
+          name: 'recordPracticeTransaction',
+          outputs: [],
+          stateMutability: 'nonpayable',
+          type: 'function',
+        },
+      ],
+      functionName: 'recordPracticeTransaction',
     });
   };
 
   if (!mounted) return null;
 
-  const hasWallet = userProgress ? Boolean(userProgress[0]) : false;
-  const completedOnboarding = userProgress ? Boolean(userProgress[1]) : false;
-  const practiceTxCount = userProgress ? userProgress[2].toString() : '0';
-
   return (
-    <div style={{ backgroundColor: '#131B27', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
-      <div style={{ width: '100%', maxWidth: '460px', backgroundColor: '#FFFFFF', color: '#1F2937', minHeight: '100vh', boxShadow: '0 0 60px rgba(0,0,0,0.5)', fontFamily: "'Segoe UI', Arial, sans-serif" }}>
-        
-        <header style={{ backgroundColor: '#1F2937', color: '#FFFFFF', padding: '24px 22px 18px' }}>
-          <div style={{ fontSize: '22px', fontWeight: 800, letterSpacing: '0.5px' }}>GIWASETU</div>
-          <div style={{ fontSize: '12.5px', color: '#F3D9B1', marginTop: '4px' }}>Live on GIWA Sepolia · Real transactions</div>
-        </header>
+    <main style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto', color: '#fff', backgroundColor: '#0d1117', minHeight: '100vh' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h2>GiwaSetu</h2>
+        <ConnectButton />
+      </header>
 
-        <div style={{ backgroundColor: '#1F2937', padding: '0 22px 18px', display: 'flex', justifyContent: 'center' }}>
-          <ConnectButton />
-        </div>
+      {isConnected && address ? (
+        <section style={{ backgroundColor: '#161b22', padding: '1.5rem', borderRadius: '8px', border: '1px solid #30363d' }}>
+          <h3>Account State</h3>
+          <p><strong>Wallet:</strong> {address}</p>
+          <p><strong>Native Balance:</strong> {balanceData ? `${formatEther(balanceData.value)} ${balanceData.symbol}` : 'Loading...'}</p>
 
-        <main style={{ padding: '22px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
-            Your Onboarding Progress
-          </div>
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-            <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800 }}>{hasWallet ? '✓' : '–'}</div>
-              <div style={{ fontSize: '10.5px', color: '#6B7280', marginTop: '2px' }}>Wallet Step</div>
-            </div>
-            <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800 }}>{practiceTxCount}</div>
-              <div style={{ fontSize: '10.5px', color: '#6B7280', marginTop: '2px' }}>Practice Txns</div>
-            </div>
-            <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
-              <div style={{ fontSize: '18px', fontWeight: 800 }}>{completedOnboarding ? '✓' : '–'}</div>
-              <div style={{ fontSize: '10.5px', color: '#6B7280', marginTop: '2px' }}>Completed</div>
-            </div>
+          <hr style={{ borderColor: '#30363d', margin: '1.5rem 0' }} />
+
+          <h3>On-chain Progress</h3>
+          <p><strong>Has Wallet Marked:</strong> {userProgress ? (userProgress[0] ? 'Yes' : 'No') : 'No'}</p>
+          <p><strong>Completed Onboarding:</strong> {userProgress ? (userProgress[1] ? 'Yes' : 'No') : 'No'}</p>
+          <p><strong>Practice Transactions:</strong> {userProgress ? userProgress[2].toString() : '0'}</p>
+
+          <div style={{ display: 'flex', gap: '1rem', margin: '1.5rem 0 1rem 0' }}>
+            <button 
+              onClick={handleMarkWallet} 
+              disabled={isPending || isConfirming}
+              style={{ padding: '0.6rem 1rem', backgroundColor: '#238636', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Mark Wallet
+            </button>
+
+            <button 
+              onClick={handleRecordTx} 
+              disabled={isPending || isConfirming}
+              style={{ padding: '0.6rem 1rem', backgroundColor: '#1f6beb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+            >
+              Record Practice Tx
+            </button>
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
-            Complete the Steps
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: hasWallet ? '#F0FDFA' : '#FFFFFF', border: hasWallet ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: hasWallet ? '#0F766E' : '#E5E7EB', color: hasWallet ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
-                1
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 600 }}>Mark Wallet Created</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>Registers your wallet on-chain</div>
-              </div>
-              <button 
-                onClick={() => runStep('markWalletCreated', 'Wallet marked created')} 
-                disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
+          {hash && (
+            <p style={{ wordBreak: 'break-all', fontSize: '0.9rem' }}>
+              <strong>Tx Hash:</strong>{' '}
+              <a 
+                href={`https://sepolia-explorer.giwa.io/tx/${hash}`} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ color: '#58a6ff' }}
               >
-                Run
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: Number(practiceTxCount) > 0 ? '#F0FDFA' : '#FFFFFF', border: Number(practiceTxCount) > 0 ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
-                2
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 600 }}>Record Practice Transaction</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>Logs a practice tx (can repeat)</div>
-              </div>
-              <button 
-                onClick={() => runStep('recordPracticeTransaction', 'Practice transaction recorded')} 
-                disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
-              >
-                Run
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: completedOnboarding ? '#F0FDFA' : '#FFFFFF', border: completedOnboarding ? '1.5px solid #0F766E' : '1.5px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '30px', height: '30px', borderRadius: '50%', backgroundColor: completedOnboarding ? '#0F766E' : '#E5E7EB', color: completedOnboarding ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '13px', flexShrink: 0 }}>
-                3
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13.5px', fontWeight: 600 }}>Complete Onboarding</div>
-                <div style={{ fontSize: '11px', color: '#6B7280', marginTop: '2px' }}>Marks onboarding finished</div>
-              </div>
-              <button 
-                onClick={() => runStep('completeOnboarding', 'Onboarding completed')} 
-                disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, cursor: isConnected ? 'pointer' : 'not-allowed', opacity: isConnected ? 1 : 0.4 }}
-              >
-                Run
-              </button>
-            </div>
-
-          </div>
-
-          {(isPending || isConfirming) && (
-            <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', color: '#C2410C', padding: '12px', borderRadius: '10px', fontSize: '12.5px', marginBottom: '14px', textAlign: 'center' }}>
-              ⏳ {isPending ? 'Signing transaction in wallet...' : 'Confirming on GIWA Sepolia...'}
-            </div>
-          )}
-
-          {writeError && (
-            <div style={{ backgroundColor: '#FEF2F2', border: '1px solid #FCA5A5', color: '#991B1B', padding: '12px', borderRadius: '10px', fontSize: '12.5px', marginBottom: '14px', wordBreak: 'break-all' }}>
-              ❌ {writeError.message.slice(0, 100)}...
-            </div>
-          )}
-
-          <div style={{ backgroundColor: '#FFF7ED', borderRadius: '14px', padding: '16px', marginBottom: '14px' }}>
-            <div style={{ fontWeight: 700, fontSize: '14.5px', marginBottom: '4px' }}>📜 Contract</div>
-            <div style={{ fontSize: '12.5px', color: '#6B7280', lineHeight: 1.5 }}>
-              Address: 0xbABc...384c<br />
-              <a href={`https://sepolia-explorer.giwa.io/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" style={{ color: '#0F766E', fontWeight: 600 }}>
-                View on GIWA Explorer →
+                {hash}
               </a>
-            </div>
-          </div>
+            </p>
+          )}
 
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
-            Recent Transactions
-          </div>
-          <div>
-            {txLogs.length === 0 ? (
-              <div style={{ fontSize: '12px', color: '#6B7280' }}>No transactions yet in this session.</div>
-            ) : (
-              txLogs.map((log, i) => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: '10px', marginBottom: '8px', fontSize: '12px' }}>
-                  <span>{log.label} ✓</span>
-                  <a href={`https://sepolia-explorer.giwa.io/tx/${log.hash}`} target="_blank" rel="noreferrer" style={{ color: '#0F766E', textDecoration: 'none', fontWeight: 600 }}>
-                    View transaction →
-                  </a>
-                </div>
-              ))
-            )}
-          </div>
-        </main>
-
-        <footer style={{ padding: '16px 22px 30px', fontSize: '11px', color: '#6B7280', textAlign: 'center', lineHeight: 1.6 }}>
-          GiwaSetu — real smart contract interactions on GIWA Sepolia Testnet.<br />
-          Native Balance: {balanceData ? `${formatEther(balanceData.value)} ${balanceData.symbol}` : '0 ETH'}
-        </footer>
-      </div>
-    </div>
+          {isSuccess && <p style={{ color: '#3fb950' }}>Transaction verified on GIWA Explorer!</p>}
+          {writeError && <p style={{ color: '#f85149' }}>Error: {writeError.message}</p>}
+        </section>
+      ) : (
+        <p>Connect wallet to inspect balance and execute transactions.</p>
+      )}
+    </main>
   );
 }

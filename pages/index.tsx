@@ -5,34 +5,18 @@ import { formatEther } from 'viem';
 
 const CONTRACT_ADDRESS = '0xbABcB2540639b071b4fDF570a8E7c54b5899384c';
 
-interface TxLog {
-  label: string;
-  hash: string;
-}
-
 export default function Home() {
   const [mounted, setMounted] = useState(false);
   const { address, isConnected } = useAccount();
-  const [txLogs, setTxLogs] = useState<TxLog[]>([]);
+  const [txLogs, setTxLogs] = useState<any[]>([]);
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
-  const [username, setUsername] = useState('');
-  const [savedName, setSavedName] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
+  const [savedUsername, setSavedUsername] = useState('');
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (address && typeof window !== 'undefined') {
-      const stored = localStorage.getItem(`giwa_user_${address}`);
-      if (stored) {
-        setSavedName(stored);
-      } else {
-        setSavedName('');
-      }
-    }
-  }, [address]);
 
   const { data: balanceData } = useBalance({ address });
 
@@ -71,12 +55,11 @@ export default function Home() {
     }
   }, [isSuccess, hash, refetch, activeAction]);
 
-  const saveIdentity = () => {
-    if (!username.trim() || !address || typeof window === 'undefined') return;
-    const cleanName = username.trim();
-    localStorage.setItem(`giwa_user_${address}`, cleanName);
-    setSavedName(cleanName);
-    setUsername('');
+  const handleSaveUser = () => {
+    if (usernameInput.trim()) {
+      setSavedUsername(usernameInput.trim());
+      setUsernameInput('');
+    }
   };
 
   const runStep = (fnName: string, label: string) => {
@@ -98,9 +81,9 @@ export default function Home() {
 
   if (!mounted) return null;
 
-  const hasWallet = userProgress ? Boolean(userProgress[0]) : false;
-  const completedOnboarding = userProgress ? Boolean(userProgress[1]) : false;
-  const practiceTxCount = userProgress ? userProgress[2].toString() : '0';
+  const hasWallet = userProgress ? Boolean((userProgress as any)[0]) : false;
+  const completedOnboarding = userProgress ? Boolean((userProgress as any)[1]) : false;
+  const practiceTxCount = userProgress ? (userProgress as any)[2].toString() : '0';
 
   return (
     <div style={{ backgroundColor: '#131B27', minHeight: '100vh', display: 'flex', justifyContent: 'center' }}>
@@ -121,23 +104,22 @@ export default function Home() {
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '6px' }}>
               User Identity
             </div>
-            {savedName ? (
+            {savedUsername ? (
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#1F2937' }}>
-                Builder: <span style={{ color: '#0F766E' }}>@{savedName}</span>
+                Builder Tag: <span style={{ color: '#0F766E' }}>@{savedUsername}</span>
               </div>
             ) : (
               <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                 <input 
                   type="text" 
                   placeholder="Enter username" 
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={usernameInput}
+                  onChange={(e) => setUsernameInput(e.target.value)}
                   style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #E5E7EB', fontSize: '13px' }}
                 />
                 <button 
-                  onClick={saveIdentity}
-                  disabled={!username.trim()}
-                  style={{ padding: '8px 14px', backgroundColor: '#0F766E', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '12px' }}
+                  onClick={handleSaveUser}
+                  style={{ padding: '8px 14px', backgroundColor: '#0F766E', color: '#FFF', border: 'none', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
                 >
                   Save
                 </button>
@@ -187,7 +169,7 @@ export default function Home() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: Number(practiceTxCount) > 0 ? '#F0FDFA' : '#FFFFFF', border: Number(practiceTxCount) > 0 ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight 700, fontSize: '12px' }}>
                 2
               </div>
               <div style={{ flex: 1 }}>
@@ -214,7 +196,7 @@ export default function Home() {
               <button 
                 onClick={() => runStep('completeOnboarding', 'Onboarding completed')} 
                 disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight 700, opacity: isConnected ? 1 : 0.4 }}
+                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}
               >
                 Run
               </button>

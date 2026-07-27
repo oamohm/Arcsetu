@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAccount, useSendTransaction, useChainId } from 'wagmi'
+import { useAccount, useSendTransaction, useBalance, useChainId } from 'wagmi'
 import { parseEther } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
@@ -14,6 +14,7 @@ interface ActivityItem {
 export default function Home() {
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
+  const { data: balanceData } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
@@ -29,14 +30,14 @@ export default function Home() {
       id: '1',
       title: 'Web3 UPI (@Bhupendrxsingh)',
       timestamp: new Date().toLocaleTimeString(),
-      amount: '0.0001 TEST',
+      amount: '0.0001 USDC',
       txHash: '0x7a8...e41'
     },
     {
       id: '2',
       title: 'Practice Tx Execution',
       timestamp: new Date(Date.now() - 3600000).toLocaleTimeString(),
-      amount: '0.0001 TEST',
+      amount: '0.0001 USDC',
       txHash: '0x3b2...a89'
     }
   ])
@@ -70,7 +71,7 @@ export default function Home() {
         id: Date.now().toString(),
         title: `Web3 UPI (${recipient})`,
         timestamp: new Date().toLocaleTimeString(),
-        amount: `${amount} TOKEN`,
+        amount: `${amount} ${balanceData?.symbol || 'TOKEN'}`,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`
       }
       setActivities([newAct, ...activities])
@@ -103,7 +104,7 @@ export default function Home() {
         id: Date.now().toString(),
         title: 'Practice Tx Execution',
         timestamp: new Date().toLocaleTimeString(),
-        amount: '0.00001 TEST',
+        amount: `0.00001 ${balanceData?.symbol || 'TOKEN'}`,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`
       }
       setActivities([newAct, ...activities])
@@ -130,7 +131,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
         
-        {/* RainbowKit Header */}
+        {/* RainbowKit Header with Balance Display */}
         <header className="flex flex-col sm:flex-row justify-between items-center bg-[#111625] p-5 rounded-2xl border border-slate-800 gap-4 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
@@ -142,7 +143,7 @@ export default function Home() {
             </div>
           </div>
           
-          <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
+          <ConnectButton showBalance={true} chainStatus="icon" accountStatus="address" />
         </header>
 
         {statusMsg && (
@@ -166,8 +167,10 @@ export default function Home() {
               <span className="text-sm font-mono font-semibold text-blue-300">@Bhupendrxsingh</span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">Dojang Royalty Earned</span>
-              <span className="text-sm font-mono font-semibold text-emerald-400">+0.000002 TEST</span>
+              <span className="text-xs text-slate-400">Live Balance</span>
+              <span className="text-sm font-mono font-semibold text-emerald-400">
+                {balanceData ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : '0.0000 USDC'}
+              </span>
             </div>
           </div>
         </section>
@@ -267,7 +270,7 @@ export default function Home() {
                   disabled={txLoading}
                   className="w-2/3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99]"
                 >
-                  {txLoading ? 'Processing Tx...' : 'Pay via Web3 UPI'}
+                  {txLoading ? 'Processing Tx...' : `Pay via Web3 UPI (${balanceData?.symbol || 'USDC'})`}
                 </button>
               </div>
               
@@ -294,7 +297,7 @@ export default function Home() {
                 <span className="font-mono text-emerald-400 font-semibold">16.12 KRW (₩)</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">1 ETH =</span>
+                <span className="text-slate-400">1 ETH / USDC =</span>
                 <span className="font-mono text-blue-400 font-semibold">₹298,450 INR | ₩4,810,000 KRW</span>
               </div>
               <p className="text-[10px] text-slate-500 text-center pt-1">Cross-Border FX Lock Rate via GIWA Settlement Engine</p>

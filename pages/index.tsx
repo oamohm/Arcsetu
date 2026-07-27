@@ -73,23 +73,24 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 p-4 max-w-md mx-auto font-sans">
-      <header className="border-b border-slate-800 pb-4 mb-6 text-center">
-        <h1 className="text-xl font-bold tracking-tight">GIWASETU</h1>
-        <p className="text-xs text-slate-400">GASOK Builder Onboarding Hub</p>
+    <div style={{ backgroundColor: '#0f172a', color: '#f8fafc', minHeight: '100vh', padding: '16px', fontFamily: 'sans-serif', maxWidth: '480px', margin: '0 auto' }}>
+      <header style={{ borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '24px', textAlign: 'center' }}>
+        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, letterSpacing: '0.5px' }}>GIWASETU</h1>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>GASOK Builder Onboarding Hub</p>
       </header>
 
-      <main className="space-y-6">
-        <section className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <h2 className="text-xs font-semibold text-sky-400 uppercase tracking-wider mb-2">
+      <main style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* FAUCETS */}
+        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
             GIWA Testnet Faucets
           </h2>
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: '8px' }}>
             <a
               href="https://faucet.lambda256.io"
               target="_blank"
               rel="noreferrer"
-              className="flex-1 bg-sky-600 hover:bg-sky-500 text-white text-xs font-medium py-2 px-3 rounded-lg text-center"
+              style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center' }}
             >
               Primary Faucet (10 TEST)
             </a>
@@ -97,38 +98,39 @@ export default function Home() {
               href="https://sepolia-faucet.giwa.io"
               target="_blank"
               rel="noreferrer"
-              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-medium py-2 px-3 rounded-lg text-center"
+              style={{ flex: 1, backgroundColor: '#334155', color: '#fff', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center' }}
             >
               Backup Faucet
             </a>
           </div>
         </section>
 
-        <section className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <h2 className="text-xs font-semibold text-sky-400 uppercase tracking-wider mb-2">
+        {/* UP.ID */}
+        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
             User Identity (UP.ID)
           </h2>
           {isRegistered ? (
-            <div className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-700">
-              <span className="font-mono text-sm text-sky-300">@{upId}</span>
-              <span className="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
+              <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#7dd3fc', fontWeight: 'bold' }}>@{upId}</span>
+              <span style={{ fontSize: '11px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '2px 8px', borderRadius: '12px' }}>
                 Bound to Wallet
               </span>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
                 placeholder="Enter UP.ID / Username"
                 value={upId}
                 onChange={(e) => setUpId(e.target.value)}
                 disabled={!isConnected}
-                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500 disabled:opacity-50"
+                style={{ flex: 1, backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '14px' }}
               />
               <button
                 onClick={handleSaveUpId}
                 disabled={!isConnected || !upId.trim()}
-                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-medium text-sm px-4 py-2 rounded-lg"
+                style={{ backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 16px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', opacity: (!isConnected || !upId.trim()) ? 0.5 : 1 }}
               >
                 Save
               </button>
@@ -136,68 +138,74 @@ export default function Home() {
           )}
         </section>
 
-        <section className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <h2 className="text-xs font-semibold text-sky-400 uppercase tracking-wider mb-3">
-            Onboarding Progress
+        {/* PROGRESS */}
+        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
+            Your Onboarding Progress
           </h2>
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="bg-slate-900 p-2 rounded-lg border border-slate-700">
-              <p className="text-slate-400">UP.ID Step</p>
-              <p className="font-bold text-sm mt-1">{workflowStep >= 1 ? '✓' : '-'}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center' }}>
+            <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155' }}>
+              <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>UP.ID Step</p>
+              <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '4px 0 0 0', color: workflowStep >= 1 ? '#34d399' : '#fff' }}>
+                {workflowStep >= 1 ? '✓' : '-'}
+              </p>
             </div>
-            <div className="bg-slate-900 p-2 rounded-lg border border-slate-700">
-              <p className="text-slate-400">Practice Txns</p>
-              <p className="font-bold text-sm mt-1">{practiceTxCount}</p>
+            <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155' }}>
+              <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>Practice Txns</p>
+              <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '4px 0 0 0' }}>{practiceTxCount}</p>
             </div>
-            <div className="bg-slate-900 p-2 rounded-lg border border-slate-700">
-              <p className="text-slate-400">Dojang Issued</p>
-              <p className="font-bold text-sm mt-1">{workflowStep >= 2 ? '✓' : '-'}</p>
+            <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155' }}>
+              <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>Dojang Issued</p>
+              <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '4px 0 0 0', color: workflowStep >= 2 ? '#34d399' : '#fff' }}>
+                {workflowStep >= 2 ? '✓' : '-'}
+              </p>
             </div>
           </div>
         </section>
 
-        <section className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <h2 className="text-xs font-semibold text-sky-400 uppercase tracking-wider mb-3">
+        {/* WORKFLOW */}
+        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
             Interactive Workflow
           </h2>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-700">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
               <div>
-                <p className="text-sm font-medium">1. Create UP.ID & Wallet</p>
-                <p className="text-xs text-slate-400">Registers wallet on-chain</p>
+                <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>1. Create UP.ID & Wallet</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Registers wallet on-chain</p>
               </div>
               <button
                 onClick={() => handleWorkflowRun(1)}
                 disabled={!isConnected || !isRegistered}
-                className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-xs px-3 py-1.5 rounded-md"
+                style={{ backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || !isRegistered) ? 0.5 : 1 }}
               >
                 Run
               </button>
             </div>
 
-            <div className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-700">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
               <div>
-                <p className="text-sm font-medium">2. Execute Practice Tx</p>
-                <p className="text-xs text-slate-400">Logs practice transaction</p>
+                <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>2. Execute Practice Tx</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Logs practice transaction</p>
               </div>
               <button
                 onClick={() => handleWorkflowRun(2)}
                 disabled={!isConnected || workflowStep < 1}
-                className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-xs px-3 py-1.5 rounded-md"
+                style={{ backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || workflowStep < 1) ? 0.5 : 1 }}
               >
                 Run
               </button>
             </div>
 
-            <div className="flex items-center justify-between bg-slate-900 p-3 rounded-lg border border-slate-700">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
               <div>
-                <p className="text-sm font-medium">3. Issue Dojang Stamp</p>
-                <p className="text-xs text-slate-400">Marks onboarding completed</p>
+                <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>3. Issue Dojang Stamp</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Marks onboarding completed</p>
               </div>
               <button
                 onClick={() => handleWorkflowRun(3)}
                 disabled={!isConnected || practiceTxCount === 0}
-                className="bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-xs px-3 py-1.5 rounded-md"
+                style={{ backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || practiceTxCount === 0) ? 0.5 : 1 }}
               >
                 Run
               </button>
@@ -205,59 +213,61 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-          <h2 className="text-xs font-semibold text-sky-400 uppercase tracking-wider mb-3">
+        {/* P2P TRANSFER */}
+        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
             P2P Token Transfer (Send TEST)
           </h2>
-          <div className="space-y-3">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <input
               type="text"
               placeholder="Recipient Address (0x...)"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500 font-mono"
+              style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '13px', fontFamily: 'monospace' }}
             />
-            <div className="flex gap-2">
+            <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
                 placeholder="Amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="w-24 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-sky-500"
+                style={{ width: '80px', backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '13px' }}
               />
               <button
                 onClick={handleSendTokens}
                 disabled={!isConnected || isPending || !recipient}
-                className="flex-1 bg-sky-600 hover:bg-sky-500 disabled:opacity-50 text-white font-medium text-sm py-2 rounded-lg"
+                style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', opacity: (!isConnected || isPending || !recipient) ? 0.5 : 1 }}
               >
                 {isPending ? 'Sending...' : 'Send TEST Tokens'}
               </button>
             </div>
             {isConfirmed && (
-              <p className="text-xs text-emerald-400 text-center font-mono">
+              <p style={{ fontSize: '11px', color: '#34d399', textAlign: 'center', fontFamily: 'monospace', margin: '4px 0 0 0' }}>
                 Tx Confirmed: {hash?.slice(0, 10)}...{hash?.slice(-8)}
               </p>
             )}
           </div>
         </section>
 
-        <section className="bg-slate-800/50 p-4 rounded-xl border border-slate-800 text-xs text-slate-400 space-y-1">
-          <p className="font-semibold text-slate-300">Contract Details</p>
-          <p className="font-mono">{CONTRACT_ADDRESS}</p>
+        {/* CONTRACT INFO */}
+        <section style={{ backgroundColor: 'rgba(30, 41, 59, 0.5)', padding: '12px', borderRadius: '12px', border: '1px solid #1e293b', fontSize: '12px', color: '#94a3b8' }}>
+          <p style={{ fontWeight: 'bold', color: '#cbd5e1', margin: 0 }}>Contract Details</p>
+          <p style={{ fontFamily: 'monospace', margin: '4px 0' }}>{CONTRACT_ADDRESS}</p>
           <a
             href={`https://sepolia-explorer.giwa.io/address/${CONTRACT_ADDRESS}`}
             target="_blank"
             rel="noreferrer"
-            className="inline-block text-sky-400 hover:underline pt-1"
+            style={{ color: '#38bdf8', textDecoration: 'none' }}
           >
             View on GIWA Explorer
           </a>
         </section>
       </main>
 
-      <footer className="mt-8 text-center text-xs text-slate-500">
-        <p>GIWASETU — Built for GIWA GASOK Builder Program.</p>
-        {balanceData && <p className="mt-1 font-mono">Native Balance: {balanceData.formatted.slice(0, 8)} {balanceData.symbol}</p>}
+      <footer style={{ marginTop: '32px', textAlign: 'center', fontSize: '12px', color: '#64748b' }}>
+        <p style={{ margin: 0 }}>GIWASETU — Built for GIWA GASOK Builder Program.</p>
+        {balanceData && <p style={{ fontFamily: 'monospace', margin: '4px 0 0 0' }}>Native Balance: {balanceData.formatted.slice(0, 8)} {balanceData.symbol}</p>}
       </footer>
     </div>
   );

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
 import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { Html5QrcodeScanner } from 'html5-qrcode'
 
 type Lang = 'en' | 'ko' | 'hi' | 'es'
 
@@ -38,10 +39,11 @@ const translations = {
     downloadCsv: 'Download CSV ↗',
     resourcesHeader: 'Ecosystem Protocols & Official Links',
     scanQr: 'Scan QR',
+    closeQr: 'Close Camera',
     qrTitle: 'Dynamic Receiver QR Invoice',
     royaltyHeader: 'Universal Royalty & Fee Distribution Engine',
     royaltyDesc: 'Distribute creator fees, builder incentives, or cross-chain royalties across any connected network natively.',
-    distributeRoyalty: 'Distribute Royalty',
+    distributeRoyalty: 'Send Royalty',
     txSuccessTitle: 'Transaction Confirmed!',
     txSuccessDesc: 'Your transaction was successfully processed on the network.',
     viewExplorer: 'View on Explorer ↗',
@@ -79,10 +81,11 @@ const translations = {
     downloadCsv: 'CSV 다운로드 ↗',
     resourcesHeader: '생태계 프로토콜 및 공식 링크',
     scanQr: 'QR 스캔',
+    closeQr: '카메라 닫기',
     qrTitle: '동적 수신 QR 인보이스',
     royaltyHeader: '유니버셜 로열티 및 수수료 분배 엔진',
     royaltyDesc: '모든 연결된 네트워크에서 크리에이터 수수료, 빌더 인센티브 또는 크로스체인 로열티를 직접 분배합니다.',
-    distributeRoyalty: '로열티 분배하기',
+    distributeRoyalty: '로열티 전송',
     txSuccessTitle: '트랜잭션 승인 완료!',
     txSuccessDesc: '트랜잭션이 네트워크에서 성공적으로 처리되었습니다.',
     viewExplorer: '탐색기에서 보기 ↗',
@@ -120,10 +123,11 @@ const translations = {
     downloadCsv: 'CSV डाउनलोड ↗',
     resourcesHeader: 'इकोसिस्टम प्रोटोकॉल और ऑफिशियल लिंक्स',
     scanQr: 'QR स्कैन करें',
+    closeQr: 'कैमरा बंद करें',
     qrTitle: 'डायनामिक रिसीविंग QR इनवॉइस',
-    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन इंजन',
-    royaltyDesc: 'किसी भी कनेक्टेड नेटवर्क पर क्रिएटर फ़ीस, बिल्डर इंसेंटिव या क्रॉस-चेन रॉयल्टी सीधे बाटें।',
-    distributeRoyalty: 'रॉयल्टी डिस्ट्रीब्यूट करें',
+    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन',
+    royaltyDesc: 'क्रिएटर फ़ीस या रॉयल्टी ट्रांसफर करें। ख़ाली छोड़ने पर यह आपके खुद के वॉलेट में ट्रांसफर होगा।',
+    distributeRoyalty: 'रॉयल्टी भेजें',
     txSuccessTitle: 'ट्रांजैक्शन सफल रहा!',
     txSuccessDesc: 'आपका ट्रांजैक्शन नेटवर्क पर सफलतापूर्वक पूरा हो गया है।',
     viewExplorer: 'एक्सप्लोरर पर देखें ↗',
@@ -161,10 +165,11 @@ const translations = {
     downloadCsv: 'Descargar CSV ↗',
     resourcesHeader: 'Protocolos del Ecosistema y Enlaces Oficiales',
     scanQr: 'Escanear QR',
+    closeQr: 'Cerrar Cámara',
     qrTitle: 'Factura QR de Recepción Dinámica',
     royaltyHeader: 'Motor Universal de Distribución de Regalías',
     royaltyDesc: 'Distribuya tarifas de creador e incentivos en cualquier red conectada de forma nativa.',
-    distributeRoyalty: 'Distribuir Regalías',
+    distributeRoyalty: 'Enviar Regalía',
     txSuccessTitle: '¡Transacción Confirmada!',
     txSuccessDesc: 'Su transacción se procesó con éxito en la red.',
     viewExplorer: 'Ver en Explorador ↗',
@@ -204,12 +209,12 @@ export default function Home() {
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('4')
   const [practiceCount, setPracticeCount] = useState(1)
-  const [stampIssued, setStampIssued] = useState(true)
+  const [stampIssued, setStampIssued] = useState(false)
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
   const [royaltyRecipient, setRoyaltyRecipient] = useState('')
-  const [royaltyAmount, setRoyaltyAmount] = useState('0.0005')
+  const [royaltyAmount, setRoyaltyAmount] = useState('0.0001')
 
   const [successModal, setSuccessModal] = useState<ModalDetails | null>(null)
 
@@ -217,6 +222,8 @@ export default function Home() {
   const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [activities, setActivities] = useState<ActivityItem[]>([])
+
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null)
 
   const currentWallet = address ? address.toLowerCase() : ''
   const isGiwa = chainId === 91342
@@ -238,7 +245,6 @@ export default function Home() {
 
   const playSuccessChime = () => {
     if (typeof window === 'undefined') return
-
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
       if (!AudioCtx) return
@@ -305,6 +311,46 @@ export default function Home() {
     }
   }, [isConnected, currentWallet])
 
+  // Camera QR Scanner Mounting Logic
+  useEffect(() => {
+    if (isScannerOpen) {
+      const scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        /* verbose= */ false
+      )
+      
+      scannerRef.current = scanner
+
+      scanner.render(
+        (decodedText) => {
+          let extracted = decodedText
+          if (decodedText.includes('ethereum:')) {
+            extracted = decodedText.split('ethereum:')[1].split('@')[0].split('?')[0]
+          }
+          setRecipient(extracted)
+          setStatusMsg(`Scanned: ${extracted.slice(0, 10)}...`)
+          setIsScannerOpen(false)
+          scanner.clear().catch(console.error)
+        },
+        (error) => {
+          // scanning...
+        }
+      )
+    } else {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error)
+        scannerRef.current = null
+      }
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error)
+      }
+    }
+  }, [isScannerOpen])
+
   const saveActivity = (newAct: ActivityItem) => {
     if (!currentWallet || typeof window === 'undefined') return
     const updated = [newAct, ...activities]
@@ -366,15 +412,6 @@ export default function Home() {
     setStatusMsg(`Custom handle updated to ${cleanId}`)
   }
 
-  const handleSimulateScan = () => {
-    setIsScannerOpen(true)
-    setTimeout(() => {
-      setRecipient('0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b')
-      setIsScannerOpen(false)
-      setStatusMsg('QR Code scanned successfully!')
-    }, 1200)
-  }
-
   const handlePayment = async () => {
     if (!isConnected) {
       alert(t.notConnected)
@@ -389,8 +426,8 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const targetAddress = recipient.startsWith('0x') 
-        ? (recipient as `0x${string}`) 
+      const targetAddress = (recipient.trim().startsWith('0x') && recipient.trim().length === 42)
+        ? (recipient.trim() as `0x${string}`) 
         : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
       const inputAmount = amount && !isNaN(Number(amount)) ? amount : '0.0001'
@@ -439,14 +476,16 @@ export default function Home() {
   }
 
   const handleRoyaltyPayout = async () => {
-    if (!isConnected) {
+    if (!isConnected || !address) {
       alert(t.notConnected)
       return
     }
 
-    const targetAddress = royaltyRecipient.startsWith('0x')
-      ? (royaltyRecipient as `0x${string}`)
-      : address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+    // Check destination address: User input or Self
+    const cleanRecipient = royaltyRecipient.trim()
+    const targetAddress = (cleanRecipient.startsWith('0x') && cleanRecipient.length === 42)
+      ? (cleanRecipient as `0x${string}`)
+      : address
 
     try {
       setTxLoading(true)
@@ -454,11 +493,12 @@ export default function Home() {
 
       const hash = await sendTransactionAsync({
         to: targetAddress,
-        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0005'),
+        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0001'),
       })
 
       const amtSymbol = `${royaltyAmount} ${balanceData?.symbol || 'ETH'}`
-      const txTitle = `Royalty Distribution (${networkName})`
+      const targetLabel = targetAddress.toLowerCase() === address.toLowerCase() ? 'Self Wallet' : `${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)}`
+      const txTitle = `Royalty Distribution → ${targetLabel}`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -593,11 +633,11 @@ export default function Home() {
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">{t.liveBalance} ({networkName})</span>
+              <span className="text-xs text-slate-400">{t.liveBalance} ({isConnected ? networkName : 'Disconnected'})</span>
               <span className="text-sm font-mono font-semibold text-emerald-400">
-                {isConnected && balanceData 
-                  ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` 
-                  : '625.4336 USDC'}
+                {isConnected 
+                  ? (balanceData ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : 'Loading...') 
+                  : '--'}
               </span>
             </div>
           </div>
@@ -627,25 +667,29 @@ export default function Home() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">GIWA L2</p>
-                <p className="font-mono text-emerald-400 mt-1">{isGiwa && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ETH` : 'Active / Sync'}</p>
+                <p className="font-mono text-emerald-400 mt-1">
+                  {isConnected && isGiwa && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ETH` : (isConnected ? 'Active / Sync' : '--')}
+                </p>
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Arc Testnet</p>
-                <p className="font-mono text-blue-400 mt-1">625.434 USDC</p>
+                <p className="font-mono text-blue-400 mt-1">
+                  {isConnected && isArc && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ${balanceData.symbol}` : (isConnected ? 'Active' : '--')}
+                </p>
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Ethereum L1</p>
-                <p className="font-mono text-indigo-400 mt-1">Mainnet Ready</p>
+                <p className="font-mono text-indigo-400 mt-1">{isConnected ? 'Mainnet Ready' : '--'}</p>
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Bitcoin (UTXO)</p>
-                <p className="font-mono text-amber-400 mt-1">Cross-Chain Bridge</p>
+                <p className="font-mono text-amber-400 mt-1">{isConnected ? 'Cross-Chain Bridge' : '--'}</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Royalty Engine Section */}
+        {/* Royalty Engine Section - Updated */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
           <div>
             <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
@@ -655,7 +699,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input 
               type="text"
-              placeholder="Creator/Builder Address (or leave empty for self)"
+              placeholder="Recipient Address 0x... (Leave empty for Self-Transfer)"
               value={royaltyRecipient}
               onChange={(e) => setRoyaltyRecipient(e.target.value)}
               className="sm:col-span-2 bg-[#0b0e17] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
@@ -663,6 +707,7 @@ export default function Home() {
             <div className="flex gap-2">
               <input 
                 type="text"
+                placeholder="Amount"
                 value={royaltyAmount}
                 onChange={(e) => setRoyaltyAmount(e.target.value)}
                 className="w-1/2 bg-[#0b0e17] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
@@ -769,16 +814,18 @@ export default function Home() {
                   className="flex-1 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all font-mono"
                 />
                 <button
-                  onClick={handleSimulateScan}
+                  onClick={() => setIsScannerOpen(!isScannerOpen)}
                   className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium cursor-pointer"
                 >
-                  📷 {t.scanQr}
+                  📷 {isScannerOpen ? t.closeQr : t.scanQr}
                 </button>
               </div>
 
+              {/* Real Camera Scanner Container */}
               {isScannerOpen && (
-                <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 text-center text-xs text-purple-300 animate-pulse">
-                  Scanning Camera Feed / Processing Image...
+                <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 space-y-2">
+                  <div id="reader" className="w-full overflow-hidden rounded-lg"></div>
+                  <p className="text-[10px] text-center text-slate-400">Point your camera at a QR code containing a wallet address</p>
                 </div>
               )}
               
@@ -799,7 +846,7 @@ export default function Home() {
               </div>
               
               <p className="text-[10px] text-center text-slate-500">
-                Connected Network: {networkName} | Dynamic Explorer Sync Active
+                Connected Network: {isConnected ? networkName : 'None'} | Dynamic Explorer Sync Active
               </p>
             </div>
           )}
@@ -819,7 +866,7 @@ export default function Home() {
               <div className="space-y-1">
                 <p className="text-xs font-mono font-bold text-purple-400">{userUpId}</p>
                 <p className="text-[11px] font-mono text-slate-400 break-all">{address || 'No wallet connected'}</p>
-                <p className="text-[10px] text-emerald-400 font-semibold pt-1">Network: {networkName}</p>
+                <p className="text-[10px] text-emerald-400 font-semibold pt-1">Network: {isConnected ? networkName : '--'}</p>
               </div>
             </div>
           )}

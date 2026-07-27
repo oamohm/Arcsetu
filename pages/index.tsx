@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useAccount, useConnect, useDisconnect, useSwitchChain, useSendTransaction } from 'wagmi'
+import { useAccount, useSendTransaction, useChainId } from 'wagmi'
 import { parseEther } from 'viem'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 
 interface ActivityItem {
   id: string
@@ -11,10 +12,8 @@ interface ActivityItem {
 }
 
 export default function Home() {
-  const { address, isConnected, chain } = useAccount()
-  const { connect, connectors } = useConnect()
-  const { disconnect } = useDisconnect()
-  const { chains, switchChain } = useSwitchChain()
+  const { address, isConnected } = useAccount()
+  const chainId = useChainId()
   const { sendTransactionAsync } = useSendTransaction()
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
@@ -42,23 +41,13 @@ export default function Home() {
     }
   ])
 
-  // Connect Wallet Action
-  const handleConnect = () => {
-    if (connectors.length > 0) {
-      connect({ connector: connectors[0] })
-    } else {
-      alert('कोई वेब3 वॉलेट नहीं मिला! कृपया MetaMask या OKX ऐप के ब्राउज़र में खोलें।')
-    }
-  }
-
-  // Execute Web3 UPI / On-Chain Settlement Payment
   const handlePayment = async () => {
     if (!isConnected) {
-      handleConnect()
+      alert('कृपया पहले कनेक्ट वॉलेट बटन से अपना वॉलेट जोड़ें!')
       return
     }
     if (!recipient) {
-      alert('कृपया प्राप्तकर्ता (Recipient Address / UP.ID) दर्ज करें!')
+      alert('कृपया प्राप्तकर्ता दर्ज करें!')
       return
     }
 
@@ -81,7 +70,7 @@ export default function Home() {
         id: Date.now().toString(),
         title: `Web3 UPI (${recipient})`,
         timestamp: new Date().toLocaleTimeString(),
-        amount: `${amount} ${chain?.nativeCurrency?.symbol || 'TEST'}`,
+        amount: `${amount} TOKEN`,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`
       }
       setActivities([newAct, ...activities])
@@ -93,10 +82,9 @@ export default function Home() {
     }
   }
 
-  // Execute Practice On-Chain Transaction
   const handlePracticeTx = async () => {
     if (!isConnected) {
-      handleConnect()
+      alert('कृपया पहले कनेक्ट वॉलेट बटन से अपना वॉलेट जोड़ें!')
       return
     }
     try {
@@ -127,7 +115,6 @@ export default function Home() {
     }
   }
 
-  // Download Activity Logs as CSV File
   const handleDownloadCSV = () => {
     const headers = "ID,Title,Timestamp,Amount,TxHash\n"
     const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash}`).join("\n")
@@ -143,7 +130,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
         
-        {/* Header Section */}
+        {/* RainbowKit Header */}
         <header className="flex flex-col sm:flex-row justify-between items-center bg-[#111625] p-5 rounded-2xl border border-slate-800 gap-4 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
@@ -155,43 +142,9 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Wallet & Network Switcher */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {isConnected ? (
-              <div className="flex items-center gap-2 bg-[#0b0e17] px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
-                <span className="text-emerald-400 font-mono">
-                  {address?.slice(0, 6)}...{address?.slice(-4)}
-                </span>
-                {chains.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => switchChain({ chainId: c.id })}
-                    className={`px-2 py-0.5 rounded text-[10px] transition-all ${
-                      chain?.id === c.id ? 'bg-blue-600 text-white font-semibold' : 'bg-slate-800 text-slate-400 hover:text-white'
-                    }`}
-                  >
-                    {c.name}
-                  </button>
-                ))}
-                <button 
-                  onClick={() => disconnect()}
-                  className="text-red-400 text-[10px] ml-1 hover:underline font-medium"
-                >
-                  Disconnect
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={handleConnect}
-                className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-semibold transition-all shadow-md active:scale-95 border border-blue-400/30"
-              >
-                Connect Wallet
-              </button>
-            )}
-          </div>
+          <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
         </header>
 
-        {/* Global Status Notification */}
         {statusMsg && (
           <div className="bg-blue-950/60 border border-blue-500/40 text-blue-300 p-3 rounded-xl text-xs flex justify-between items-center">
             <span>{statusMsg}</span>
@@ -199,7 +152,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Web3 Identity & Royalties */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
             <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">Web3 Identity & Royalties</span>
@@ -220,7 +172,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Builder Onboarding Workflow */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">Builder Onboarding Workflow</h2>
           
@@ -266,7 +217,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Payment & Settlement Layer */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex border-b border-slate-800 gap-2">
             <button 
@@ -317,7 +267,7 @@ export default function Home() {
                   disabled={txLoading}
                   className="w-2/3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99]"
                 >
-                  {txLoading ? 'Processing Tx...' : `Pay via Web3 UPI (${chain?.nativeCurrency?.symbol || 'ETH'})`}
+                  {txLoading ? 'Processing Tx...' : 'Pay via Web3 UPI'}
                 </button>
               </div>
               
@@ -352,7 +302,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* Faucet Controls */}
         <section className="flex gap-3">
           <a 
             href="https://sepolia-faucet.pk910.de/" 
@@ -372,7 +321,6 @@ export default function Home() {
           </a>
         </section>
 
-        {/* Activity Log */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Cross-Border Activity Log</span>

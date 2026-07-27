@@ -32,13 +32,20 @@ const translations = {
     placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
     payBtn: 'Pay via Multi-Chain UPI',
     processing: 'Processing Tx...',
-    noTxConnected: 'No transactions recorded yet.',
+    noTxConnected: 'No transactions recorded yet for this wallet.',
     noTxDisconnected: 'Connect wallet to view multi-chain history.',
     activityHeader: 'Cross-Chain Activity & Verification Log',
     downloadCsv: 'Download CSV ↗',
-    resourcesHeader: 'Official Faucets & Protocol Links',
+    resourcesHeader: 'Ecosystem Protocols & Official Links',
     scanQr: 'Scan QR',
     qrTitle: 'Dynamic Receiver QR Invoice',
+    royaltyHeader: 'Universal Royalty & Fee Distribution Engine',
+    royaltyDesc: 'Distribute creator fees, builder incentives, or cross-chain royalties across any connected network natively.',
+    distributeRoyalty: 'Distribute Royalty',
+    txSuccessTitle: 'Transaction Confirmed!',
+    txSuccessDesc: 'Your transaction was successfully processed on the network.',
+    viewExplorer: 'View on Explorer ↗',
+    close: 'Close',
   },
   ko: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
@@ -66,13 +73,20 @@ const translations = {
     placeholder: '@UP_ID 또는 0x 주소 입력',
     payBtn: '멀티체인 UPI 결제',
     processing: '처리 중...',
-    noTxConnected: '기록된 트랜잭션이 없습니다.',
+    noTxConnected: '이 지갑에 대한 기록된 트랜잭션이 없습니다.',
     noTxDisconnected: '활동 내역을 보려면 지갑을 연결하세요.',
     activityHeader: '크로스체인 활동 및 검증 로그',
     downloadCsv: 'CSV 다운로드 ↗',
-    resourcesHeader: '공식 포셋 및 프로토콜 링크',
+    resourcesHeader: '생태계 프로토콜 및 공식 링크',
     scanQr: 'QR 스캔',
     qrTitle: '동적 수신 QR 인보이스',
+    royaltyHeader: '유니버셜 로열티 및 수수료 분배 엔진',
+    royaltyDesc: '모든 연결된 네트워크에서 크리에이터 수수료, 빌더 인센티브 또는 크로스체인 로열티를 직접 분배합니다.',
+    distributeRoyalty: '로열티 분배하기',
+    txSuccessTitle: '트랜잭션 승인 완료!',
+    txSuccessDesc: '트랜잭션이 네트워크에서 성공적으로 처리되었습니다.',
+    viewExplorer: '탐색기에서 보기 ↗',
+    close: '닫기',
   },
   hi: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
@@ -100,13 +114,20 @@ const translations = {
     placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
     payBtn: 'मल्टी-चेन UPI भुगतान',
     processing: 'प्रॉसेस हो रहा है...',
-    noTxConnected: 'कोई ट्रांजैक्शन दर्ज नहीं है।',
+    noTxConnected: 'इस वॉलेट के लिए कोई ट्रांजैक्शन दर्ज नहीं है।',
     noTxDisconnected: 'गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
     activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
     downloadCsv: 'CSV डाउनलोड ↗',
-    resourcesHeader: 'ऑफ़िशियल फॉसेट और प्रोटोकॉल लिंक्स',
+    resourcesHeader: 'इकोसिस्टम प्रोटोकॉल और ऑफिशियल लिंक्स',
     scanQr: 'QR स्कैन करें',
     qrTitle: 'डायनामिक रिसीविंग QR इनवॉइस',
+    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन इंजन',
+    royaltyDesc: 'किसी भी कनेक्टेड नेटवर्क पर क्रिएटर फ़ीस, बिल्डर इंसेंटिव या क्रॉस-चेन रॉयल्टी सीधे बाटें।',
+    distributeRoyalty: 'रॉयल्टी डिस्ट्रीब्यूट करें',
+    txSuccessTitle: 'ट्रांजैक्शन सफल रहा!',
+    txSuccessDesc: 'आपका ट्रांजैक्शन नेटवर्क पर सफलतापूर्वक पूरा हो गया है।',
+    viewExplorer: 'एक्सप्लोरर पर देखें ↗',
+    close: 'बंद करें',
   },
   es: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
@@ -134,13 +155,20 @@ const translations = {
     placeholder: 'Enviar a @UP_ID o Billetera 0x',
     payBtn: 'Pago vía UPI Multicadena',
     processing: 'Procesando...',
-    noTxConnected: 'No hay transacciones registradas.',
+    noTxConnected: 'No hay transacciones registradas para esta billetera.',
     noTxDisconnected: 'Conecte la billetera para ver el historial.',
     activityHeader: 'Registro de Actividad Multicadena',
     downloadCsv: 'Descargar CSV ↗',
-    resourcesHeader: 'Enlaces Oficiales de Faucets y Protocolo',
+    resourcesHeader: 'Protocolos del Ecosistema y Enlaces Oficiales',
     scanQr: 'Escanear QR',
     qrTitle: 'Factura QR de Recepción Dinámica',
+    royaltyHeader: 'Motor Universal de Distribución de Regalías',
+    royaltyDesc: 'Distribuya tarifas de creador e incentivos en cualquier red conectada de forma nativa.',
+    distributeRoyalty: 'Distribuir Regalías',
+    txSuccessTitle: '¡Transacción Confirmada!',
+    txSuccessDesc: 'Su transacción se procesó con éxito en la red.',
+    viewExplorer: 'Ver en Explorador ↗',
+    close: 'Cerrar',
   }
 }
 
@@ -151,6 +179,13 @@ interface ActivityItem {
   amount: string
   txHash: string
   explorerUrl: string
+}
+
+interface ModalDetails {
+  title: string
+  amount: string
+  hash: string
+  url: string
 }
 
 export default function Home() {
@@ -170,20 +205,17 @@ export default function Home() {
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
+  // Royalty State
+  const [royaltyRecipient, setRoyaltyRecipient] = useState('')
+  const [royaltyAmount, setRoyaltyAmount] = useState('0.0005')
+
+  // Modal & Audio state
+  const [successModal, setSuccessModal] = useState<ModalDetails | null>(null)
+
   const [customUpId, setCustomUpId] = useState('')
   const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
   const [isScannerOpen, setIsScannerOpen] = useState(false)
-
-  useEffect(() => {
-    const saved = localStorage.getItem('giwa_registered_upids')
-    if (saved) {
-      try {
-        setRegisteredIds(JSON.parse(saved))
-      } catch (e) {
-        console.error('Failed to parse saved UP IDs', e)
-      }
-    }
-  }, [])
+  const [activities, setActivities] = useState<ActivityItem[]>([])
 
   const currentWallet = address ? address.toLowerCase() : ''
   const isGiwa = chainId === 91342
@@ -203,28 +235,92 @@ export default function Home() {
     explorerBase = 'https://etherscan.io/tx/'
   }
 
-  // Dynamic fallback handle based on active chain if custom string not specified
+  // Web Audio Chime Sound
+  const playSuccessChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      if (!AudioCtx) return
+      const ctx = new AudioCtx()
+      
+      const now = ctx.currentTime
+      const osc1 = ctx.createOscillator()
+      const osc2 = ctx.createOscillator()
+      const gain = ctx.createGain()
+
+      osc1.type = 'sine'
+      osc2.type = 'sine'
+
+      osc1.frequency.setValueAtTime(523.25, now) // C5
+      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.15) // E5
+      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.3) // G5
+
+      osc2.frequency.setValueAtTime(1046.50, now) // C6
+
+      gain.gain.setValueAtTime(0.15, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6)
+
+      osc1.connect(gain)
+      osc2.connect(gain)
+      gain.connect(ctx.destination)
+
+      osc1.start(now)
+      osc2.start(now + 0.1)
+      osc1.stop(now + 0.6)
+      osc2.stop(now + 0.6)
+    } catch (e) {
+      console.error('Audio playback failed', e)
+    }
+  }
+
+  useEffect(() => {
+    const savedIds = localStorage.getItem('giwa_registered_upids')
+    if (savedIds) {
+      try {
+        setRegisteredIds(JSON.parse(savedIds))
+      } catch (e) {
+        console.error('Failed to parse saved UP IDs', e)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (isConnected && currentWallet) {
+      const savedHistory = localStorage.getItem(`giwa_tx_history_${currentWallet}`)
+      if (savedHistory) {
+        try {
+          setActivities(JSON.parse(savedHistory))
+        } catch (e) {
+          console.error('Failed to parse transaction history', e)
+          setActivities([])
+        }
+      } else {
+        setActivities([])
+      }
+    } else {
+      setActivities([])
+    }
+  }, [isConnected, currentWallet])
+
+  const saveActivity = (newAct: ActivityItem) => {
+    if (!currentWallet) return
+    const updated = [newAct, ...activities]
+    setActivities(updated)
+    localStorage.setItem(`giwa_tx_history_${currentWallet}`, JSON.stringify(updated))
+  }
+
+  const triggerSuccess = (title: string, amountStr: string, hash: string) => {
+    const fullExplorerUrl = `${explorerBase}${hash}`
+    playSuccessChime()
+    setSuccessModal({
+      title,
+      amount: amountStr,
+      hash,
+      url: fullExplorerUrl,
+    })
+  }
+
   const autoDerivedId = address ? `@${networkPrefix}-${address.slice(-5)}` : '--'
   const userUpId = currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId
-
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      id: '1',
-      title: 'Multi-Chain UPI (0x85Bb...A67b)',
-      timestamp: '2:30:02 AM',
-      amount: '4 USDC',
-      txHash: '0x1ef2...e694',
-      explorerUrl: 'https://testnet.arcscan.app/tx/0x1ef259c938932fec8af0443e729165b59e0fa92c7be790a5ec26d6294a55e694'
-    },
-    {
-      id: '2',
-      title: 'Test Tx (GIWA Sepolia)',
-      timestamp: '2:27:51 AM',
-      amount: '0.00001 ETH',
-      txHash: '0x4f8f...28f3',
-      explorerUrl: 'https://sepolia-explorer.giwa.io/tx/0x4f8f28f3'
-    }
-  ])
 
   const handleRegisterUpId = () => {
     if (!currentWallet) {
@@ -291,25 +387,71 @@ export default function Home() {
         ? (recipient as `0x${string}`) 
         : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
+      const parsedValue = parseEther(amount && !isNaN(Number(amount)) ? amount : '0.0001')
+
       const hash = await sendTransactionAsync({
         to: targetAddress,
-        value: parseEther(amount || '0.0001'),
+        value: parsedValue,
       })
 
-      setStatusMsg(`Tx Confirmed: ${hash.slice(0, 10)}...`)
-      
+      const amtSymbol = `${amount} ${balanceData?.symbol || 'USDC'}`
+      const txTitle = `Multi-Chain UPI Payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
+
       const newAct: ActivityItem = {
         id: Date.now().toString(),
-        title: `Multi-Chain UPI (${recipient})`,
+        title: txTitle,
         timestamp: new Date().toLocaleTimeString(),
-        amount: `${amount} ${balanceData?.symbol || 'ETH'}`,
+        amount: amtSymbol,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
         explorerUrl: `${explorerBase}${hash}`
       }
-      setActivities([newAct, ...activities])
+      saveActivity(newAct)
+      triggerSuccess(txTitle, amtSymbol, hash)
+      setStatusMsg('')
     } catch (err: any) {
       console.error(err)
       setStatusMsg('Transaction failed or cancelled.')
+    } finally {
+      setTxLoading(false)
+    }
+  }
+
+  const handleRoyaltyPayout = async () => {
+    if (!isConnected) {
+      alert(t.notConnected)
+      return
+    }
+
+    const targetAddress = royaltyRecipient.startsWith('0x')
+      ? (royaltyRecipient as `0x${string}`)
+      : address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+
+    try {
+      setTxLoading(true)
+      setStatusMsg('Processing Royalty Payout...')
+
+      const hash = await sendTransactionAsync({
+        to: targetAddress,
+        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0005'),
+      })
+
+      const amtSymbol = `${royaltyAmount} ${balanceData?.symbol || 'ETH'}`
+      const txTitle = `Royalty Distribution (${networkName})`
+
+      const newAct: ActivityItem = {
+        id: Date.now().toString(),
+        title: txTitle,
+        timestamp: new Date().toLocaleTimeString(),
+        amount: amtSymbol,
+        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
+        explorerUrl: `${explorerBase}${hash}`
+      }
+      saveActivity(newAct)
+      triggerSuccess(txTitle, amtSymbol, hash)
+      setStatusMsg('')
+    } catch (err) {
+      console.error(err)
+      setStatusMsg('Royalty payout failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
@@ -324,26 +466,30 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
+      const targetAddr = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
       const hash = await sendTransactionAsync({
-        to: address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b',
+        to: targetAddr,
         value: parseEther('0.00001'),
       })
 
       setPracticeCount(prev => prev + 1)
-      setStatusMsg('Multi-chain test transaction successful!')
-      
+      const amtSymbol = `0.00001 ${balanceData?.symbol || 'ETH'}`
+      const txTitle = `Test Tx Execution (${networkName})`
+
       const newAct: ActivityItem = {
         id: Date.now().toString(),
-        title: `Test Tx (${networkName})`,
+        title: txTitle,
         timestamp: new Date().toLocaleTimeString(),
-        amount: `0.00001 ${balanceData?.symbol || 'ETH'}`,
+        amount: amtSymbol,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
         explorerUrl: `${explorerBase}${hash}`
       }
-      setActivities([newAct, ...activities])
+      saveActivity(newAct)
+      triggerSuccess(txTitle, amtSymbol, hash)
+      setStatusMsg('')
     } catch (err) {
       console.error(err)
-      setStatusMsg('Transaction failed.')
+      setStatusMsg('Transaction failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
@@ -366,7 +512,7 @@ export default function Home() {
     : 'Connect Wallet to Generate Receive QR'
 
   return (
-    <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans">
+    <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans relative">
       <div className="max-w-3xl mx-auto space-y-6">
         
         {/* Header */}
@@ -439,14 +585,14 @@ export default function Home() {
             <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
               <input 
                 type="text" 
-                placeholder="Set custom handle (e.g. @upendra)" 
+                placeholder="Set custom handle (e.g. @bhupendra)" 
                 value={customUpId}
                 onChange={(e) => setCustomUpId(e.target.value)}
                 className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1 font-mono"
               />
               <button 
                 onClick={handleRegisterUpId}
-                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
+                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
               >
                 {t.issueUpId}
               </button>
@@ -477,6 +623,39 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Royalty Engine Section */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
+          <div>
+            <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
+            <p className="text-[11px] text-slate-400 mt-0.5">{t.royaltyDesc}</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <input 
+              type="text"
+              placeholder="Creator/Builder Address (or leave empty for self)"
+              value={royaltyRecipient}
+              onChange={(e) => setRoyaltyRecipient(e.target.value)}
+              className="sm:col-span-2 bg-[#0b0e17] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
+            />
+            <div className="flex gap-2">
+              <input 
+                type="text"
+                value={royaltyAmount}
+                onChange={(e) => setRoyaltyAmount(e.target.value)}
+                className="w-1/2 bg-[#0b0e17] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
+              />
+              <button
+                onClick={handleRoyaltyPayout}
+                disabled={txLoading || !isConnected}
+                className="w-1/2 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2 transition-all cursor-pointer"
+              >
+                {t.distributeRoyalty}
+              </button>
+            </div>
+          </div>
+        </section>
+
         {/* Onboarding Workflow */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">{t.workflowHeader}</h2>
@@ -503,7 +682,7 @@ export default function Home() {
             <button 
               onClick={handlePracticeTx}
               disabled={txLoading || !isConnected}
-              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95"
+              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95 cursor-pointer"
             >
               {txLoading ? t.running : t.run}
             </button>
@@ -569,7 +748,7 @@ export default function Home() {
                 />
                 <button
                   onClick={handleSimulateScan}
-                  className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium"
+                  className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium cursor-pointer"
                 >
                   📷 {t.scanQr}
                 </button>
@@ -590,10 +769,10 @@ export default function Home() {
                 />
                 <button 
                   onClick={handlePayment}
-                  disabled={txLoading}
-                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-700 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99]"
+                  disabled={txLoading || !isConnected}
+                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99] cursor-pointer"
                 >
-                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'ETH'})`}
+                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'USDC'})`}
                 </button>
               </div>
               
@@ -638,65 +817,91 @@ export default function Home() {
           )}
         </section>
 
-        {/* Faucets & Links */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
+        {/* Network-Categorized Faucets & Links */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
           
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-            <a 
-              href="https://faucet.giwa.io/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-purple-400 transition-all font-medium flex items-center justify-between"
-            >
-              <span>GIWA Faucet</span>
-              <span className="text-[10px]">↗</span>
-            </a>
-            <a 
-              href="https://faucet.circle.com/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
-            >
-              <span>Circle USDC Faucet</span>
-              <span className="text-[10px]">↗</span>
-            </a>
-            <a 
-              href="http://sepolia-playground.giwa.io" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
-            >
-              <span>GIWA Playground</span>
-              <span className="text-[10px]">↗</span>
-            </a>
-            <a 
-              href="https://faucet.lambda256.io/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-            >
-              <span>Lambda Faucet</span>
-              <span className="text-[10px]">↗</span>
-            </a>
-            <a 
-              href="https://giwa.io/gasok" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-            >
-              <span>GIWA Gasok Docs</span>
-              <span className="text-[10px]">↗</span>
-            </a>
-            <a 
-              href="https://www.arc.io/" 
-              target="_blank" 
-              rel="noreferrer"
-              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-            >
-              <span>Arc Protocol</span>
-              <span className="text-[10px]">↗</span>
-            </a>
+          {/* Arc Protocol Ecosystem */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide">Arc Protocol Ecosystem</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+              <a 
+                href="https://testnet.arcscan.app/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
+              >
+                <span>Arc Testnet Explorer</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://faucet.circle.com/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
+              >
+                <span>Circle USDC Faucet</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://www.arc.io/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              >
+                <span>Arc Protocol Docs</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            </div>
+          </div>
+
+          {/* GIWA Ecosystem */}
+          <div className="space-y-2 pt-2 border-t border-slate-800/60">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide">GIWA L2 Ecosystem</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+              <a 
+                href="https://faucet.giwa.io/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
+              >
+                <span>GIWA Faucet</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="http://sepolia-playground.giwa.io" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
+              >
+                <span>GIWA Playground</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://faucet.lambda256.io/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              >
+                <span>Lambda Faucet</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://giwa.io/gasok" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              >
+                <span>GIWA Gasok Docs</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            </div>
           </div>
         </section>
 
@@ -704,47 +909,124 @@ export default function Home() {
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.activityHeader}</span>
-            <button 
-              onClick={handleDownloadCSV}
-              className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-all"
-            >
-              {t.downloadCsv}
-            </button>
+            {isConnected && activities.length > 0 && (
+              <button 
+                onClick={handleDownloadCSV}
+                className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-all cursor-pointer"
+              >
+                {t.downloadCsv}
+              </button>
+            )}
           </div>
 
           <div className="space-y-2 text-xs">
-            {activities.length > 0 ? (
-              activities.map((act) => (
-                <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
-                  <div>
-                    <p className="text-emerald-400 font-medium">{act.title}</p>
-                    <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
+            {isConnected ? (
+              activities.length > 0 ? (
+                activities.map((act) => (
+                  <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
+                    <div>
+                      <p className="text-emerald-400 font-medium">{act.title}</p>
+                      <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
+                    </div>
+                    <div className="text-right">
+                      <a 
+                        href={act.explorerUrl} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="text-purple-400 hover:underline text-[10px] font-mono block"
+                      >
+                        Verify Tx ↗ ({act.txHash})
+                      </a>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <a 
-                      href={act.explorerUrl} 
-                      target="_blank" 
-                      rel="noreferrer"
-                      className="text-purple-400 hover:underline text-[10px] font-mono block"
-                    >
-                      Verify Tx ↗ ({act.txHash})
-                    </a>
-                  </div>
+                ))
+              ) : (
+                <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
+                  {t.noTxConnected}
                 </div>
-              ))
+              )
             ) : (
               <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
-                {isConnected ? t.noTxConnected : t.noTxDisconnected}
+                {t.noTxDisconnected}
               </div>
             )}
           </div>
         </section>
 
-        <footer className="text-center text-[11px] text-slate-500 py-2">
-          GIWASETU MULTI-CHAIN PROTOCOL — Ethereum • Bitcoin • GIWA • Arc
+        {/* Official Social Links & Builder Credits */}
+        <footer className="bg-[#111625] p-4 rounded-2xl border border-slate-800 text-center space-y-3">
+          <div className="flex justify-center items-center gap-6 text-xs text-slate-400">
+            <a 
+              href="https://x.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
+            >
+              <span>𝕏 (Twitter)</span>
+            </a>
+            <a 
+              href="https://github.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
+            >
+              <span>GitHub</span>
+            </a>
+            <a 
+              href="https://discord.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
+            >
+              <span>Discord</span>
+            </a>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            GIWASETU MULTI-CHAIN PROTOCOL — Settlement Engine for Ethereum • Arc • GIWA
+          </p>
         </footer>
 
       </div>
+
+      {/* SUCCESS MODAL POPUP WITH ANIMATION */}
+      {successModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4 transform transition-all scale-100">
+            <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto border border-emerald-500/40">
+              ✓
+            </div>
+            
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-white">{t.txSuccessTitle}</h3>
+              <p className="text-xs text-slate-400">{t.txSuccessDesc}</p>
+            </div>
+
+            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 text-left space-y-1.5 font-mono text-xs">
+              <p className="text-slate-400 text-[10px]">DETAILS:</p>
+              <p className="text-purple-300 font-semibold">{successModal.title}</p>
+              <p className="text-emerald-400 font-bold">{successModal.amount}</p>
+              <p className="text-slate-500 text-[10px] truncate">Hash: {successModal.hash}</p>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-1">
+              <a 
+                href={successModal.url}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs py-2.5 rounded-xl transition-all shadow-md block"
+              >
+                {t.viewExplorer}
+              </a>
+              <button 
+                onClick={() => setSuccessModal(null)}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2.5 rounded-xl transition-all font-medium cursor-pointer"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

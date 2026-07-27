@@ -3,8 +3,6 @@ import { useAccount, useBalance, useSendTransaction, useWaitForTransactionReceip
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { parseEther } from 'viem';
 
-const CONTRACT_ADDRESS = "0xbABcB2540639b071b4fDF570a8E7c54b5899384c";
-
 interface TxHistory {
   hash: string;
   type: string;
@@ -16,32 +14,29 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
 
-  // Onboarding & Identity States
+  // States
   const [upId, setUpId] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
   const [workflowStep, setWorkflowStep] = useState(0);
   const [practiceTxCount, setPracticeTxCount] = useState(0);
 
-  // Payments & Utility States
   const [activeTab, setActiveTab] = useState<'pay' | 'request' | 'fx'>('pay');
   const [payRecipient, setPayRecipient] = useState('');
   const [payAmount, setPayAmount] = useState('0.0001');
   const [reqAmount, setReqAmount] = useState('0.001');
   const [reqNote, setReqNote] = useState('');
 
-  // History & Royalty
   const [txHistory, setTxHistory] = useState<TxHistory[]>([]);
   const [royaltyEarned, setRoyaltyEarned] = useState(0);
 
   const { data: hash, sendTransaction, isPending } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
-  // 1. Data Auto-Load on Wallet Connect
+  // 1. Persistent Storage Load
   useEffect(() => {
     if (isConnected && address) {
       const cleanAddress = address.toLowerCase();
 
-      // Load Saved UP.ID
       const savedUpId = localStorage.getItem(`upid_${cleanAddress}`);
       if (savedUpId) {
         setUpId(savedUpId);
@@ -51,13 +46,11 @@ export default function Home() {
         setIsRegistered(false);
       }
 
-      // Load Workflow & Practice Progress
       const savedStep = localStorage.getItem(`step_${cleanAddress}`);
       const savedTxCount = localStorage.getItem(`txs_${cleanAddress}`);
       if (savedStep) setWorkflowStep(parseInt(savedStep));
       if (savedTxCount) setPracticeTxCount(parseInt(savedTxCount));
 
-      // Load Royalty & History
       const savedRoyalty = localStorage.getItem(`royalty_${cleanAddress}`);
       if (savedRoyalty) setRoyaltyEarned(parseFloat(savedRoyalty));
 
@@ -73,21 +66,22 @@ export default function Home() {
     }
   }, [address, isConnected]);
 
-  // 2. Save & Bind UP.ID Logic
+  // 2. Register UP.ID
   const handleSaveUpId = () => {
     if (!upId.trim() || !address) return;
     const cleanAddress = address.toLowerCase();
     const cleanId = upId.trim().replace(/^@/, '');
-    
-    // Bind Address to ID and ID to Address in local registry
+
     localStorage.setItem(`upid_${cleanAddress}`, cleanId);
     localStorage.setItem(`upid_lookup_${cleanId.toLowerCase()}`, cleanAddress);
-    
+
     setUpId(cleanId);
     setIsRegistered(true);
+    setWorkflowStep(1);
+    localStorage.setItem(`step_${cleanAddress}`, '1');
   };
 
-  // 3. Workflow Steps (Run Buttons Logic)
+  // 3. Workflow Steps Logic
   const handleWorkflowRun = (stepNumber: number) => {
     if (!address) return;
     const cleanAddress = address.toLowerCase();
@@ -96,29 +90,30 @@ export default function Home() {
       setWorkflowStep(1);
       localStorage.setItem(`step_${cleanAddress}`, '1');
     } else if (stepNumber === 2 && workflowStep >= 1) {
-      const newCount = practiceTxCount + 1;
-      setPracticeTxCount(newCount);
-      localStorage.setItem(`txs_${cleanAddress}`, newCount.toString());
+      // Trigger actual on-chain practice transaction
+      sendTransaction({
+        to: address, // Self transaction for practice
+        value: parseEther('0.0001'),
+      });
     } else if (stepNumber === 3 && practiceTxCount > 0) {
       setWorkflowStep(2);
       localStorage.setItem(`step_${cleanAddress}`, '2');
     }
   };
 
-  // 4. Web3 UPI Pay Logic (@UP.ID or 0x Direct Transfer)
+  // 4. Web3 UPI Pay Logic
   const handleWeb3Pay = () => {
     if (!payRecipient || !payAmount) return;
 
     let targetAddress = payRecipient.trim();
 
-    // Resolving @username to 0x Address
     if (targetAddress.startsWith('@') || !targetAddress.startsWith('0x')) {
       const cleanLookupId = targetAddress.replace(/^@/, '').toLowerCase();
       const resolvedAddress = localStorage.getItem(`upid_lookup_${cleanLookupId}`);
       if (resolvedAddress) {
         targetAddress = resolvedAddress;
       } else {
-        alert(`UP.ID @${cleanLookupId} not found. Please verify the username or use a 0x address.`);
+        alert(`UP.ID @${cleanLookupId} not found in local registry.`);
         return;
       }
     }
@@ -129,22 +124,27 @@ export default function Home() {
     });
   };
 
-  // 5. On-Chain Transaction Confirmation & Cashback Royalty Update
+  // 5. On-Chain Confirmation Handler
   useEffect(() => {
     if (isConfirmed && hash && address) {
       const cleanAddress = address.toLowerCase();
 
-      // Calculate 0.5% Royalty Cashback
-      const addedRoyalty = (parseFloat(payAmount) || 0) * 0.005;
+      // Practice Tx Counter Increment
+      const newTxCount = practiceTxCount + 1;
+      setPracticeTxCount(newTxCount);
+      localStorage.setItem(`txs_${cleanAddress}`, newTxCount.toString());
+
+      // Cashback Royalty
+      const addedRoyalty = (parseFloat(payAmount) || 0.0001) * 0.005;
       const newRoyaltyTotal = royaltyEarned + addedRoyalty;
       setRoyaltyEarned(newRoyaltyTotal);
       localStorage.setItem(`royalty_${cleanAddress}`, newRoyaltyTotal.toString());
 
       const newTx: TxHistory = {
         hash,
-        type: payRecipient.startsWith('@') ? `Web3 UPI Pay (${payRecipient})` : 'P2P Transfer',
+        type: payRecipient ? `Web3 UPI (${payRecipient})` : 'Practice Tx',
         timestamp: new Date().toLocaleTimeString(),
-        amount: `${payAmount} TEST`,
+        amount: `${payAmount || '0.0001'} TEST`,
       };
 
       const updatedHistory = [newTx, ...txHistory];
@@ -153,7 +153,19 @@ export default function Home() {
     }
   }, [isConfirmed, hash, address]);
 
-  // Currency Converter Values
+  // CSV Export Feature
+  const downloadCSVReport = () => {
+    if (txHistory.length === 0) return;
+    const headers = "Hash,Type,Timestamp,Amount\n";
+    const rows = txHistory.map(tx => `${tx.hash},${tx.type},${tx.timestamp},${tx.amount}`).join("\n");
+    const blob = new Blob([headers + rows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `giwasetu_report_${address?.slice(0, 6)}.csv`;
+    a.click();
+  };
+
   const inrValue = (parseFloat(payAmount || '0') * 120).toFixed(2);
   const krwValue = (parseFloat(payAmount || '0') * 1900).toFixed(2);
 
@@ -169,10 +181,10 @@ export default function Home() {
       backgroundImage: 'radial-gradient(circle at top, #1e1b4b 0%, #070d19 60%)'
     }}>
 
-      {/* HEADER WITH 3D EMBOSSED BRIDGE EMBLEM */}
+      {/* HEADER WITH BRANDING & SOCIAL LINKS */}
       <header style={{
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-        paddingBottom: '20px',
+        paddingBottom: '16px',
         marginBottom: '20px',
         textAlign: 'center',
         display: 'flex',
@@ -190,8 +202,7 @@ export default function Home() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '22px',
-            color: '#fff'
+            fontSize: '22px'
           }}>
             🌉
           </div>
@@ -207,10 +218,34 @@ export default function Home() {
             }}>
               GIWASETU
             </h1>
-            <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0, letterSpacing: '0.5px' }}>
+            <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>
               KR 🇰🇷 ⇄ 🇮🇳 IN Web3 Cross-Border Hub
             </p>
           </div>
+        </div>
+
+        {/* SOCIAL MEDIA ICONS BAR */}
+        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', margin: '4px 0' }}>
+          {/* X (Twitter) */}
+          <a href="https://x.com/Bhupendrxsingh" target="_blank" rel="noreferrer" title="X (Twitter)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#94a3b8"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          {/* Telegram */}
+          <a href="https://t.me/vertuareallworld" target="_blank" rel="noreferrer" title="Telegram">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#94a3b8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+          </a>
+          {/* LinkedIn */}
+          <a href="https://www.linkedin.com/in/bhupendrxsingh" target="_blank" rel="noreferrer" title="LinkedIn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#94a3b8"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+          </a>
+          {/* YouTube */}
+          <a href="https://www.youtube.com/@Bhupendrxsingh" target="_blank" rel="noreferrer" title="YouTube">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#94a3b8"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+          {/* Discord */}
+          <a href="https://discord.com/channels/@bhupendrxsingh" target="_blank" rel="noreferrer" title="Discord">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="#94a3b8"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+          </a>
         </div>
 
         <ConnectButton showBalance={false} />
@@ -219,17 +254,9 @@ export default function Home() {
       <main style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
         {/* IDENTITY & ROYALTIES */}
-        <section style={{
-          backgroundColor: 'rgba(19, 31, 55, 0.7)',
-          backdropFilter: 'blur(10px)',
-          padding: '16px',
-          borderRadius: '16px',
-          border: '1px solid rgba(56, 189, 248, 0.2)'
-        }}>
+        <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>
-              WEB3 IDENTITY & ROYALTIES
-            </span>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>WEB3 IDENTITY & ROYALTIES</span>
             {workflowStep >= 2 && (
               <span style={{ fontSize: '10px', backgroundColor: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
                 Verified Dojang Builder
@@ -271,15 +298,11 @@ export default function Home() {
           )}
         </section>
 
-        {/* ONBOARDING PROGRESS & WORKFLOW (RUN BUTTONS RESTORED) */}
+        {/* WORKFLOW WITH WORKING PRACTICE TX RUN BUTTON */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
-            BUILDER ONBOARDING WORKFLOW
-          </span>
-          
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>BUILDER ONBOARDING WORKFLOW</span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             
-            {/* Step 1 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
               <div>
                 <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>1. Create UP.ID & Wallet</p>
@@ -294,7 +317,6 @@ export default function Home() {
               </button>
             </div>
 
-            {/* Step 2 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
               <div>
                 <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>2. Execute Practice Tx</p>
@@ -302,14 +324,13 @@ export default function Home() {
               </div>
               <button
                 onClick={() => handleWorkflowRun(2)}
-                disabled={!isConnected || workflowStep < 1}
-                style={{ backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || workflowStep < 1) ? 0.4 : 1 }}
+                disabled={!isConnected || isPending}
+                style={{ backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || isPending) ? 0.4 : 1 }}
               >
-                Run
+                {isPending ? 'Signing...' : 'Run'}
               </button>
             </div>
 
-            {/* Step 3 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
               <div>
                 <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>3. Issue Dojang Stamp</p>
@@ -327,110 +348,47 @@ export default function Home() {
           </div>
         </section>
 
-        {/* WEB3 UPI PAYMENTS & UTILITIES */}
+        {/* WEB3 UPI PAYMENTS */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #1e2d4a', paddingBottom: '10px', marginBottom: '14px', gap: '8px' }}>
-            <button
-              onClick={() => setActiveTab('pay')}
-              style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: activeTab === 'pay' ? '#0284c7' : 'transparent', color: activeTab === 'pay' ? '#fff' : '#94a3b8', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}
-            >
-              Web3 UPI Pay
-            </button>
-            <button
-              onClick={() => setActiveTab('request')}
-              style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: activeTab === 'request' ? '#0284c7' : 'transparent', color: activeTab === 'request' ? '#fff' : '#94a3b8', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}
-            >
-              QR Invoice
-            </button>
-            <button
-              onClick={() => setActiveTab('fx')}
-              style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: activeTab === 'fx' ? '#0284c7' : 'transparent', color: activeTab === 'fx' ? '#fff' : '#94a3b8', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}
-            >
-              INR ⇄ KRW
-            </button>
+            <button onClick={() => setActiveTab('pay')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: activeTab === 'pay' ? '#0284c7' : 'transparent', color: activeTab === 'pay' ? '#fff' : '#94a3b8', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>Web3 UPI Pay</button>
+            <button onClick={() => setActiveTab('request')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: activeTab === 'request' ? '#0284c7' : 'transparent', color: activeTab === 'request' ? '#fff' : '#94a3b8', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>QR Invoice</button>
+            <button onClick={() => setActiveTab('fx')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: activeTab === 'fx' ? '#0284c7' : 'transparent', color: activeTab === 'fx' ? '#fff' : '#94a3b8', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>INR ⇄ KRW</button>
           </div>
 
-          {/* TAB 1: WEB3 UPI PAYMENTS */}
           {activeTab === 'pay' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <input
-                type="text"
-                placeholder="Send to @UP.ID or 0x Wallet"
-                value={payRecipient}
-                onChange={(e) => setPayRecipient(e.target.value)}
-                style={{ backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '12px', color: '#fff', fontSize: '13px', outline: 'none' }}
-              />
+              <input type="text" placeholder="Send to @UP.ID or 0x Wallet" value={payRecipient} onChange={(e) => setPayRecipient(e.target.value)} style={{ backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '12px', color: '#fff', fontSize: '13px', outline: 'none' }} />
               <div style={{ display: 'flex', gap: '8px' }}>
-                <input
-                  type="text"
-                  placeholder="Amount (TEST)"
-                  value={payAmount}
-                  onChange={(e) => setPayAmount(e.target.value)}
-                  style={{ width: '110px', backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '12px', color: '#fff', fontSize: '13px', outline: 'none' }}
-                />
-                <button
-                  onClick={handleWeb3Pay}
-                  disabled={!isConnected || isPending || !payRecipient}
-                  style={{ flex: 1, backgroundColor: '#6366f1', color: '#fff', border: 'none', borderRadius: '10px', padding: '12px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
-                >
+                <input type="text" placeholder="Amount (TEST)" value={payAmount} onChange={(e) => setPayAmount(e.target.value)} style={{ width: '110px', backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '12px', color: '#fff', fontSize: '13px', outline: 'none' }} />
+                <button onClick={handleWeb3Pay} disabled={!isConnected || isPending || !payRecipient} style={{ flex: 1, backgroundColor: '#6366f1', color: '#fff', border: 'none', borderRadius: '10px', padding: '12px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
                   {isPending ? 'Processing...' : 'Pay via Web3 UPI'}
                 </button>
               </div>
-              <p style={{ fontSize: '10px', color: '#64748b', margin: '2px 0 0 0', textAlign: 'center' }}>
-                ≈ ₹{inrValue} INR | ₩{krwValue} KRW (0.5% Cashback Included)
-              </p>
+              <p style={{ fontSize: '10px', color: '#64748b', margin: '2px 0 0 0', textAlign: 'center' }}>≈ ₹{inrValue} INR | ₩{krwValue} KRW (0.5% Cashback Included)</p>
             </div>
           )}
 
-          {/* TAB 2: QR CODE INVOICING */}
           {activeTab === 'request' && (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', textAlign: 'center' }}>
-              <div style={{ width: '100%' }}>
-                <input
-                  type="text"
-                  placeholder="Request Amount (TEST)"
-                  value={reqAmount}
-                  onChange={(e) => setReqAmount(e.target.value)}
-                  style={{ width: '100%', backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '10px', color: '#fff', fontSize: '12px', outline: 'none', marginBottom: '8px' }}
-                />
-                <input
-                  type="text"
-                  placeholder="Note (e.g., API Fee / Coffee)"
-                  value={reqNote}
-                  onChange={(e) => setReqNote(e.target.value)}
-                  style={{ width: '100%', backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '10px', color: '#fff', fontSize: '12px', outline: 'none' }}
-                />
-              </div>
-
+              <input type="text" placeholder="Request Amount (TEST)" value={reqAmount} onChange={(e) => setReqAmount(e.target.value)} style={{ width: '100%', backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '10px', color: '#fff', fontSize: '12px', outline: 'none' }} />
               <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '12px' }}>
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(address ? `${address}?amount=${reqAmount}` : 'giwasetu')}`}
-                  alt="Payment QR"
-                  style={{ width: '120px', height: '120px', display: 'block' }}
-                />
+                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(address ? `${address}?amount=${reqAmount}` : 'giwasetu')}`} alt="Payment QR" style={{ width: '120px', height: '120px', display: 'block' }} />
               </div>
-              <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>
-                Scan QR to pay <strong>{reqAmount} TEST</strong> to {isRegistered ? `@${upId}` : 'Wallet'}
-              </p>
+              <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>Scan QR to pay <strong>{reqAmount} TEST</strong> to {isRegistered ? `@${upId}` : 'Wallet'}</p>
             </div>
           )}
 
-          {/* TAB 3: LOCAL CURRENCY CONVERTER */}
           {activeTab === 'fx' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div style={{ backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
-                  <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>🇮🇳 INDIA (INR)</p>
-                  <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#38bdf8', margin: '4px 0 0 0' }}>₹120 / TEST</p>
-                </div>
-                <div style={{ backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
-                  <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>🇰🇷 KOREA (KRW)</p>
-                  <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#818cf8', margin: '4px 0 0 0' }}>₩1,900 / TEST</p>
-                </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
+                <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>🇮🇳 INDIA (INR)</p>
+                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#38bdf8', margin: '4px 0 0 0' }}>₹120 / TEST</p>
               </div>
-              <p style={{ fontSize: '11px', color: '#64748b', textAlign: 'center', margin: 0 }}>
-                Enabling seamless trade between Ancient Ayodhya Trade Routes & Modern Seoul Tech Hubs.
-              </p>
+              <div style={{ backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
+                <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>🇰🇷 KOREA (KRW)</p>
+                <p style={{ fontSize: '16px', fontWeight: 'bold', color: '#818cf8', margin: '4px 0 0 0' }}>₩1,900 / TEST</p>
+              </div>
             </div>
           )}
         </section>
@@ -438,32 +396,23 @@ export default function Home() {
         {/* FAUCETS */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.5)', padding: '12px', borderRadius: '14px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <a
-              href="https://faucet.lambda256.io"
-              target="_blank"
-              rel="noreferrer"
-              style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center' }}
-            >
-              Primary Faucet ↗
-            </a>
-            <a
-              href="https://sepolia-faucet.giwa.io"
-              target="_blank"
-              rel="noreferrer"
-              style={{ flex: 1, backgroundColor: '#1e293b', color: '#cbd5e1', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center', border: '1px solid #334155' }}
-            >
-              Backup Faucet ↗
-            </a>
+            <a href="https://faucet.lambda256.io" target="_blank" rel="noreferrer" style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center' }}>Primary Faucet ↗</a>
+            <a href="https://sepolia-faucet.giwa.io" target="_blank" rel="noreferrer" style={{ flex: 1, backgroundColor: '#1e293b', color: '#cbd5e1', textDecoration: 'none', fontSize: '11px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center', border: '1px solid #334155' }}>Backup Faucet ↗</a>
           </div>
         </section>
 
-        {/* RECENT ACTIVITY LOG */}
+        {/* ACTIVITY LOG & REPORT EXPORT */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
-          <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px', display: 'block', marginBottom: '10px' }}>
-            CROSS-BORDER ACTIVITY LOG
-          </span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>CROSS-BORDER ACTIVITY LOG</span>
+            {txHistory.length > 0 && (
+              <button onClick={downloadCSVReport} style={{ backgroundColor: '#1e293b', color: '#38bdf8', border: '1px solid #38bdf8', borderRadius: '6px', padding: '3px 8px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
+                Download CSV ⬇
+              </button>
+            )}
+          </div>
           {txHistory.length === 0 ? (
-            <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center' }}>No transactions in this session.</p>
+            <p style={{ fontSize: '11px', color: '#64748b', margin: 0, textAlign: 'center' }}>No transactions recorded.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               {txHistory.map((item, index) => (
@@ -472,14 +421,7 @@ export default function Home() {
                     <p style={{ fontSize: '12px', fontWeight: 'bold', margin: 0, color: '#34d399' }}>{item.type}</p>
                     <p style={{ fontSize: '10px', color: '#64748b', margin: 0 }}>{item.timestamp} • {item.amount}</p>
                   </div>
-                  <a
-                    href={`https://sepolia-explorer.giwa.io/tx/${item.hash}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ fontSize: '10px', color: '#38bdf8', fontFamily: 'monospace', textDecoration: 'none' }}
-                  >
-                    View ↗
-                  </a>
+                  <a href={`https://sepolia-explorer.giwa.io/tx/${item.hash}`} target="_blank" rel="noreferrer" style={{ fontSize: '10px', color: '#38bdf8', fontFamily: 'monospace', textDecoration: 'none' }}>View ↗</a>
                 </div>
               ))}
             </div>

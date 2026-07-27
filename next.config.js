@@ -2,13 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   typescript: {
-    // TypeScript errors से Vercel build fail नहीं होगी
+    // TypeScript की छोटी-मोटी टाइप चेकिंग एरर्स से Vercel बिल्ड नहीं रुकेगा
     ignoreBuildErrors: true,
   },
   eslint: {
-    // ESLint warnings से भी build fail नहीं होगी
+    // ESLint वार्निंग्स की वजह से बिल्ड फेल नहीं होगा
     ignoreDuringBuilds: true,
   },
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig

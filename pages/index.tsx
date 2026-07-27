@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId } from 'wagmi'
 import { parseEther } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -12,6 +12,8 @@ const translations = {
     verified: 'Verified Multi-Chain Builder',
     notConnected: 'Wallet Not Connected',
     boundId: 'Bound Universal ID',
+    issueUpId: 'Register GIWA UP ID',
+    registeredIdLabel: 'Registered GIWA UP ID',
     liveBalance: 'Live Balance',
     multichainHeader: 'Global Assets & Networks',
     workflowHeader: 'Builder Onboarding Workflow',
@@ -23,19 +25,18 @@ const translations = {
     step2Sub: 'Count: {count} test txns',
     run: 'Run Tx',
     running: 'Running...',
-    step3: '3. Issue Multi-Chain Stamp',
-    step3Sub: 'Marks multi-chain completion',
+    step3: '3. Issue Multi-Chain Stamp (Dojang)',
+    step3Sub: 'Marks multi-chain verification',
     issued: 'Issued ✓',
-    claim: 'Claim Stamp',
-    placeholder: 'Send to @ID or 0x Wallet / BTC Address',
+    claim: 'Issue Dojang',
+    placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
     payBtn: 'Pay via Multi-Chain UPI',
     processing: 'Processing Tx...',
     noTxConnected: 'No transactions recorded yet.',
     noTxDisconnected: 'Connect wallet to view multi-chain history.',
     activityHeader: 'Cross-Chain Activity & Verification Log',
     downloadCsv: 'Download CSV ↗',
-    primaryFaucet: 'Primary Faucet ↗',
-    backupFaucet: 'Backup Faucet ↗',
+    resourcesHeader: 'Official Faucets & Protocol Links',
   },
   ko: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
@@ -43,6 +44,8 @@ const translations = {
     verified: '검증된 멀티체인 빌더',
     notConnected: '지갑 미연결',
     boundId: '연결된 유니버셜 ID',
+    issueUpId: 'GIWA UP ID 등록',
+    registeredIdLabel: '등록된 GIWA UP ID',
     liveBalance: '실시간 잔액',
     multichainHeader: '글로벌 자산 및 네트워크',
     workflowHeader: '빌더 온보딩 워크플로우',
@@ -54,19 +57,18 @@ const translations = {
     step2Sub: '횟수: {count}회 실행됨',
     run: '실행',
     running: '실행 중...',
-    step3: '3. 멀티체인 스탬프 발급',
-    step3Sub: '온보딩 완료 표시',
+    step3: '3. 멀티체인 도장 발급',
+    step3Sub: '온보딩 검증 완료 표시',
     issued: '발급됨 ✓',
-    claim: '스탬프 받기',
-    placeholder: '@ID 또는 0x 주소 입력',
+    claim: '도장 발급받기',
+    placeholder: '@UP_ID 또는 0x 주소 입력',
     payBtn: '멀티체인 UPI 결제',
     processing: '처리 중...',
     noTxConnected: '기록된 트랜잭션이 없습니다.',
     noTxDisconnected: '활동 내역을 보려면 지갑을 연결하세요.',
     activityHeader: '크로스체인 활동 및 검증 로그',
     downloadCsv: 'CSV 다운로드 ↗',
-    primaryFaucet: '기본 포셋 ↗',
-    backupFaucet: '백업 포셋 ↗',
+    resourcesHeader: '공식 포셋 및 프로토콜 링크',
   },
   hi: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
@@ -74,6 +76,8 @@ const translations = {
     verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
     boundId: 'बाउंड यूनिवर्सल ID',
+    issueUpId: 'GIWA UP ID रजिस्टर करें',
+    registeredIdLabel: 'रजिस्टर्ड GIWA UP ID',
     liveBalance: 'लाइव बैलेंस',
     multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
@@ -85,19 +89,18 @@ const translations = {
     step2Sub: 'गिनती: {count} टेस्ट ट्रांजैक्शन',
     run: 'चलाएं',
     running: 'चल रहा है...',
-    step3: '3. मल्टी-चेन स्टाम्प जारी करें',
-    step3Sub: 'ऑनबोर्डिंग पूर्ण चिह्नित करता है',
+    step3: '3. मल्टी-चेन स्टाम्प (Dojang) जारी करें',
+    step3Sub: 'मल्टी-चेन वेरिफिकेशन पूर्ण चिह्नित करता है',
     issued: 'जारी हुआ ✓',
-    claim: 'स्टाम्प लें',
-    placeholder: '@ID या 0x वॉलेट / BTC पता दर्ज करें',
+    claim: 'Dojang जारी करें',
+    placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
     payBtn: 'मल्टी-चेन UPI भुगतान',
     processing: 'प्रॉसेस हो रहा है...',
     noTxConnected: 'कोई ट्रांजैक्शन दर्ज नहीं है।',
     noTxDisconnected: 'गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
     activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
     downloadCsv: 'CSV डाउनलोड ↗',
-    primaryFaucet: 'प्राथमिक फॉसेट ↗',
-    backupFaucet: 'बैकअप फॉसेट ↗',
+    resourcesHeader: 'ऑफ़िशियल फॉसेट और प्रोटोकॉल लिंक्स',
   },
   es: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
@@ -105,6 +108,8 @@ const translations = {
     verified: 'Creador Multicadena Verificado',
     notConnected: 'Billetera No Conectada',
     boundId: 'ID Universal Vinculado',
+    issueUpId: 'Registrar GIWA UP ID',
+    registeredIdLabel: 'GIWA UP ID Registrado',
     liveBalance: 'Saldo en Vivo',
     multichainHeader: 'Activos y Redes Globales',
     workflowHeader: 'Flujo de Trabajo de Incorporación',
@@ -116,19 +121,18 @@ const translations = {
     step2Sub: 'Conteo: {count} txs de prueba',
     run: 'Ejecutar',
     running: 'Ejecutando...',
-    step3: '3. Emitir Sello Multicadena',
-    step3Sub: 'Marca la incorporación como completada',
+    step3: '3. Emitir Sello Multicadena (Dojang)',
+    step3Sub: 'Marca la verificación completada',
     issued: 'Emitido ✓',
-    claim: 'Reclamar Sello',
-    placeholder: 'Enviar a @ID o Billetera 0x',
+    claim: 'Emitir Dojang',
+    placeholder: 'Enviar a @UP_ID o Billetera 0x',
     payBtn: 'Pago vía UPI Multicadena',
     processing: 'Procesando...',
     noTxConnected: 'No hay transacciones registradas.',
     noTxDisconnected: 'Conecte la billetera para ver el historial.',
     activityHeader: 'Registro de Actividad Multicadena',
     downloadCsv: 'Descargar CSV ↗',
-    primaryFaucet: 'Faucet Principal ↗',
-    backupFaucet: 'Faucet de Respaldo ↗',
+    resourcesHeader: 'Enlaces Oficiales de Faucets y Protocolo',
   }
 }
 
@@ -153,16 +157,53 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.0001')
-  const [practiceCount, setPracticeCount] = useState(0)
-  const [stampIssued, setStampIssued] = useState(false)
+  const [practiceCount, setPracticeCount] = useState(1)
+  const [stampIssued, setStampIssued] = useState(true)
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
-  const [activities, setActivities] = useState<ActivityItem[]>([])
 
-  // Network checks
+  // Unique UP ID state per wallet address
+  const [customUpId, setCustomUpId] = useState('')
+  const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
+
+  // Load stored IDs from local storage on load
+  useEffect(() => {
+    const saved = localStorage.getItem('giwa_registered_upids')
+    if (saved) {
+      try {
+        setRegisteredIds(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to parse saved UP IDs', e)
+      }
+    }
+  }, [])
+
+  const currentWallet = address ? address.toLowerCase() : ''
+  const userUpId = currentWallet ? registeredIds[currentWallet] : null
+  const hasExistingId = Boolean(userUpId)
+
   const isGiwa = chainId === 91342
   const isArc = chainId === 5042002
-  
+
+  const [activities, setActivities] = useState<ActivityItem[]>([
+    {
+      id: '1',
+      title: 'Multi-Chain UPI (0x85Bb...A67b)',
+      timestamp: '2:30:02 AM',
+      amount: '4 USDC',
+      txHash: '0x1ef2...e694',
+      explorerUrl: 'https://testnet.arcscan.app/tx/0x1ef259c938932fec8af0443e729165b59e0fa92c7be790a5ec26d6294a55e694'
+    },
+    {
+      id: '2',
+      title: 'Test Tx (GIWA Sepolia)',
+      timestamp: '2:27:51 AM',
+      amount: '0.00001 ETH',
+      txHash: '0x4f8f...28f3',
+      explorerUrl: 'https://sepolia-explorer.giwa.io/tx/0x4f8f28f3'
+    }
+  ])
+
   let networkName = 'GIWA Sepolia'
   let upIdPrefix = 'GIWA'
   let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
@@ -175,6 +216,21 @@ export default function Home() {
     networkName = 'Ethereum Mainnet'
     upIdPrefix = 'ETH'
     explorerBase = 'https://etherscan.io/tx/'
+  }
+
+  const handleRegisterUpId = () => {
+    if (!customUpId.trim() || !currentWallet) return
+    const formattedId = customUpId.startsWith('@') ? customUpId : `@${customUpId}`
+    
+    const updated = {
+      ...registeredIds,
+      [currentWallet]: formattedId
+    }
+
+    setRegisteredIds(updated)
+    localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
+    setCustomUpId('')
+    setStatusMsg(`UP ID ${formattedId} successfully registered on GIWA Network!`)
   }
 
   const handlePayment = async () => {
@@ -193,7 +249,7 @@ export default function Home() {
       
       const targetAddress = recipient.startsWith('0x') 
         ? (recipient as `0x${string}`) 
-        : '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
+        : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
       const hash = await sendTransactionAsync({
         to: targetAddress,
@@ -229,7 +285,7 @@ export default function Home() {
       setStatusMsg(t.processing)
       
       const hash = await sendTransactionAsync({
-        to: address || '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+        to: address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b',
         value: parseEther('0.00001'),
       })
 
@@ -258,7 +314,7 @@ export default function Home() {
     const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
     const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
+    const url = window.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
     const a = document.createElement('a')
     a.href = url
     a.download = `multichain_activity_${Date.now()}.csv`
@@ -321,7 +377,7 @@ export default function Home() {
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">{t.boundId}</span>
               <span className="text-sm font-mono font-semibold text-purple-300">
-                {isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--'}
+                {hasExistingId ? userUpId : (isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--')}
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
@@ -333,6 +389,34 @@ export default function Home() {
               </span>
             </div>
           </div>
+
+          {/* Conditional UP ID Registration Section: ONLY shown on GIWA network when wallet is connected */}
+          {isGiwa && isConnected && (
+            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
+              {hasExistingId ? (
+                <div className="w-full text-xs text-slate-400 py-1 flex justify-between items-center px-1">
+                  <span>{t.registeredIdLabel}:</span>
+                  <span className="font-mono text-purple-400 font-semibold">{userUpId}</span>
+                </div>
+              ) : (
+                <>
+                  <input 
+                    type="text" 
+                    placeholder="Enter custom GIWA UP ID (e.g. @upendra)" 
+                    value={customUpId}
+                    onChange={(e) => setCustomUpId(e.target.value)}
+                    className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
+                  />
+                  <button 
+                    onClick={handleRegisterUpId}
+                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
+                  >
+                    {t.issueUpId}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Multi-Chain Cards Grid */}
           <div className="pt-2">
@@ -495,24 +579,66 @@ export default function Home() {
           )}
         </section>
 
-        {/* Faucets */}
-        <section className="flex gap-3">
-          <a 
-            href={isGiwa ? "https://sepolia-faucet.pk910.de/" : "https://faucets.chain.link/"} 
-            target="_blank" 
-            rel="noreferrer"
-            className="flex-1 bg-[#111625] hover:bg-[#161c2e] border border-slate-800 py-2.5 rounded-xl text-xs text-purple-400 font-medium transition-all text-center block"
-          >
-            {t.primaryFaucet}
-          </a>
-          <a 
-            href="https://mempool.space/" 
-            target="_blank" 
-            rel="noreferrer"
-            className="flex-1 bg-[#111625] hover:bg-[#161c2e] border border-slate-800 py-2.5 rounded-xl text-xs text-slate-400 hover:text-slate-200 font-medium transition-all text-center block"
-          >
-            Bitcoin Explorer ↗
-          </a>
+        {/* Official Faucets & Ecosystem Resources */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
+          <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+            <a 
+              href="https://faucet.giwa.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-purple-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://faucet.circle.com/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Circle USDC Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="http://sepolia-playground.giwa.io" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Playground</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://faucet.lambda256.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Lambda Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://giwa.io/gasok" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Gasok Docs</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://www.arc.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Arc Protocol</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+          </div>
         </section>
 
         {/* Activity & Verification Log */}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { useAccount, useSendTransaction, useBalance, useChainId } from 'wagmi'
-import { parseEther } from 'viem'
+import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
+import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
 type Lang = 'en' | 'ko' | 'hi' | 'es'
@@ -188,11 +188,15 @@ interface ModalDetails {
   url: string
 }
 
+// Known Arc Testnet USDC Contract Address
+const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
+
 export default function Home() {
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
   const { data: balanceData } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
+  const { writeContractAsync } = useWriteContract()
 
   const [lang, setLang] = useState<Lang>('en')
   const t = translations[lang]
@@ -235,8 +239,10 @@ export default function Home() {
     explorerBase = 'https://etherscan.io/tx/'
   }
 
-  // Web Audio Chime Sound
+  // Safe SSR Web Audio Chime Sound
   const playSuccessChime = () => {
+    if (typeof window === 'undefined') return
+
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
       if (!AudioCtx) return
@@ -250,11 +256,11 @@ export default function Home() {
       osc1.type = 'sine'
       osc2.type = 'sine'
 
-      osc1.frequency.setValueAtTime(523.25, now) // C5
-      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.15) // E5
-      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.3) // G5
+      osc1.frequency.setValueAtTime(523.25, now)
+      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.15)
+      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.3)
 
-      osc2.frequency.setValueAtTime(1046.50, now) // C6
+      osc2.frequency.setValueAtTime(1046.50, now)
 
       gain.gain.setValueAtTime(0.15, now)
       gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6)
@@ -273,6 +279,7 @@ export default function Home() {
   }
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     const savedIds = localStorage.getItem('giwa_registered_upids')
     if (savedIds) {
       try {
@@ -284,6 +291,7 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
     if (isConnected && currentWallet) {
       const savedHistory = localStorage.getItem(`giwa_tx_history_${currentWallet}`)
       if (savedHistory) {
@@ -302,7 +310,7 @@ export default function Home() {
   }, [isConnected, currentWallet])
 
   const saveActivity = (newAct: ActivityItem) => {
-    if (!currentWallet) return
+    if (!currentWallet || typeof window === 'undefined') return
     const updated = [newAct, ...activities]
     setActivities(updated)
     localStorage.setItem(`giwa_tx_history_${currentWallet}`, JSON.stringify(updated))
@@ -355,7 +363,9 @@ export default function Home() {
     }
 
     setRegisteredIds(updated)
-    localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
+    }
     setCustomUpId('')
     setStatusMsg(`Custom handle updated to ${cleanId}`)
   }
@@ -369,6 +379,7 @@ export default function Home() {
     }, 1200)
   }
 
+  // FIXED PAYMENT FUNCTION (Handles Native ETH & ERC-20 USDC)
   const handlePayment = async () => {
     if (!isConnected) {
       alert(t.notConnected)
@@ -387,14 +398,28 @@ export default function Home() {
         ? (recipient as `0x${string}`) 
         : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
-      const parsedValue = parseEther(amount && !isNaN(Number(amount)) ? amount : '0.0001')
+      const inputAmount = amount && !isNaN(Number(amount)) ? amount : '0.0001'
+      let hash = ''
 
-      const hash = await sendTransactionAsync({
-        to: targetAddress,
-        value: parsedValue,
-      })
+      if (isArc) {
+        // USDC Token Transfer on Arc Testnet (ERC-20 - 6 Decimals)
+        const parsedValue = parseUnits(inputAmount, 6)
+        hash = await writeContractAsync({
+          address: ARC_USDC_ADDRESS as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [targetAddress, parsedValue],
+        })
+      } else {
+        // Native Transfer for ETH / GIWA (18 Decimals)
+        const parsedValue = parseEther(inputAmount)
+        hash = await sendTransactionAsync({
+          to: targetAddress,
+          value: parsedValue,
+        })
+      }
 
-      const amtSymbol = `${amount} ${balanceData?.symbol || 'USDC'}`
+      const amtSymbol = `${inputAmount} ${balanceData?.symbol || 'USDC'}`
       const txTitle = `Multi-Chain UPI Payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
 
       const newAct: ActivityItem = {
@@ -496,7 +521,7 @@ export default function Home() {
   }
 
   const handleDownloadCSV = () => {
-    if (activities.length === 0) return
+    if (activities.length === 0 || typeof window === 'undefined') return
     const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
     const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
@@ -990,8 +1015,8 @@ export default function Home() {
 
       {/* SUCCESS MODAL POPUP WITH ANIMATION */}
       {successModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4 transform transition-all scale-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
             <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto border border-emerald-500/40">
               ✓
             </div>

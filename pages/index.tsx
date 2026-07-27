@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useBalance, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { parseEther } from 'viem';
 
 const CONTRACT_ADDRESS = "0xbABcB2540639b071b4fDF570a8E7c54b5899384c";
@@ -20,6 +21,7 @@ export default function Home() {
   const { data: hash, sendTransaction, isPending } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
+  // वॉलेट एड्रेस के आधार पर UP.ID और प्रोग्रेस ऑटो-लोड करना
   useEffect(() => {
     if (isConnected && address) {
       const savedUpId = localStorage.getItem(`upid_${address.toLowerCase()}`);
@@ -73,16 +75,26 @@ export default function Home() {
   };
 
   return (
-    <div style={{ backgroundColor: '#0f172a', color: '#f8fafc', minHeight: '100vh', padding: '16px', fontFamily: 'sans-serif', maxWidth: '480px', margin: '0 auto' }}>
-      <header style={{ borderBottom: '1px solid #1e293b', paddingBottom: '16px', marginBottom: '24px', textAlign: 'center' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, letterSpacing: '0.5px' }}>GIWASETU</h1>
-        <p style={{ fontSize: '12px', color: '#94a3b8', margin: '4px 0 0 0' }}>GASOK Builder Onboarding Hub</p>
+    <div style={{ backgroundColor: '#0b1329', color: '#f8fafc', minHeight: '100vh', padding: '20px 16px', fontFamily: 'sans-serif', maxWidth: '460px', margin: '0 auto' }}>
+      
+      {/* HEADER WITH RAINBOWKIT CONNECT BUTTON */}
+      <header style={{ borderBottom: '1px solid #1e293b', paddingBottom: '20px', marginBottom: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+        <div>
+          <h1 style={{ fontSize: '26px', fontWeight: '800', margin: 0, letterSpacing: '0.5px' }}>GIWASETU</h1>
+          <p style={{ fontSize: '13px', color: '#94a3b8', margin: '4px 0 0 0' }}>GASOK Builder Onboarding Hub</p>
+        </div>
+        
+        {/* RainbowKit Connect Button Integration */}
+        <div style={{ marginTop: '8px' }}>
+          <ConnectButton showBalance={false} />
+        </div>
       </header>
 
       <main style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {/* FAUCETS */}
-        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
+        
+        {/* FAUCETS SECTION */}
+        <section style={{ backgroundColor: '#131f37', padding: '16px', borderRadius: '14px', border: '1px solid #1e2d4a' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '12px' }}>
             GIWA Testnet Faucets
           </h2>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -90,7 +102,7 @@ export default function Home() {
               href="https://faucet.lambda256.io"
               target="_blank"
               rel="noreferrer"
-              style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center' }}
+              style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}
             >
               Primary Faucet (10 TEST)
             </a>
@@ -98,22 +110,22 @@ export default function Home() {
               href="https://sepolia-faucet.giwa.io"
               target="_blank"
               rel="noreferrer"
-              style={{ flex: 1, backgroundColor: '#334155', color: '#fff', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '10px', borderRadius: '8px', textAlign: 'center' }}
+              style={{ flex: 1, backgroundColor: '#1e293b', color: '#cbd5e1', textDecoration: 'none', fontSize: '12px', fontWeight: 'bold', padding: '12px 8px', borderRadius: '8px', textAlign: 'center', border: '1px solid #334155' }}
             >
               Backup Faucet
             </a>
           </div>
         </section>
 
-        {/* UP.ID */}
-        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
+        {/* UP.ID USER IDENTITY */}
+        <section style={{ backgroundColor: '#131f37', padding: '16px', borderRadius: '14px', border: '1px solid #1e2d4a' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '12px' }}>
             User Identity (UP.ID)
           </h2>
           {isRegistered ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
-              <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#7dd3fc', fontWeight: 'bold' }}>@{upId}</span>
-              <span style={{ fontSize: '11px', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '2px 8px', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0b1329', padding: '12px 14px', borderRadius: '8px', border: '1px solid #1e2d4a' }}>
+              <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#38bdf8', fontWeight: 'bold' }}>@{upId}</span>
+              <span style={{ fontSize: '11px', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: '#34d399', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '3px 10px', borderRadius: '20px', fontWeight: '600' }}>
                 Bound to Wallet
               </span>
             </div>
@@ -125,12 +137,12 @@ export default function Home() {
                 value={upId}
                 onChange={(e) => setUpId(e.target.value)}
                 disabled={!isConnected}
-                style={{ flex: 1, backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '14px' }}
+                style={{ flex: 1, backgroundColor: '#0b1329', border: '1px solid #1e2d4a', borderRadius: '8px', padding: '10px 12px', color: '#fff', fontSize: '13px', outline: 'none' }}
               />
               <button
                 onClick={handleSaveUpId}
                 disabled={!isConnected || !upId.trim()}
-                style={{ backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 16px', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', opacity: (!isConnected || !upId.trim()) ? 0.5 : 1 }}
+                style={{ backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 18px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', opacity: (!isConnected || !upId.trim()) ? 0.4 : 1 }}
               >
                 Save
               </button>
@@ -138,23 +150,23 @@ export default function Home() {
           )}
         </section>
 
-        {/* PROGRESS */}
-        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
+        {/* YOUR ONBOARDING PROGRESS */}
+        <section style={{ backgroundColor: '#131f37', padding: '16px', borderRadius: '14px', border: '1px solid #1e2d4a' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '12px' }}>
             Your Onboarding Progress
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', textAlign: 'center' }}>
-            <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155' }}>
+            <div style={{ backgroundColor: '#0b1329', padding: '12px 8px', borderRadius: '8px', border: '1px solid #1e2d4a' }}>
               <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>UP.ID Step</p>
               <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '4px 0 0 0', color: workflowStep >= 1 ? '#34d399' : '#fff' }}>
                 {workflowStep >= 1 ? '✓' : '-'}
               </p>
             </div>
-            <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155' }}>
+            <div style={{ backgroundColor: '#0b1329', padding: '12px 8px', borderRadius: '8px', border: '1px solid #1e2d4a' }}>
               <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>Practice Txns</p>
               <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '4px 0 0 0' }}>{practiceTxCount}</p>
             </div>
-            <div style={{ backgroundColor: '#0f172a', padding: '10px', borderRadius: '8px', border: '1px solid #334155' }}>
+            <div style={{ backgroundColor: '#0b1329', padding: '12px 8px', borderRadius: '8px', border: '1px solid #1e2d4a' }}>
               <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>Dojang Issued</p>
               <p style={{ fontSize: '16px', fontWeight: 'bold', margin: '4px 0 0 0', color: workflowStep >= 2 ? '#34d399' : '#fff' }}>
                 {workflowStep >= 2 ? '✓' : '-'}
@@ -163,13 +175,13 @@ export default function Home() {
           </div>
         </section>
 
-        {/* WORKFLOW */}
-        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
+        {/* INTERACTIVE WORKFLOW */}
+        <section style={{ backgroundColor: '#131f37', padding: '16px', borderRadius: '14px', border: '1px solid #1e2d4a' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '12px' }}>
             Interactive Workflow
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0b1329', padding: '12px', borderRadius: '8px', border: '1px solid #1e2d4a' }}>
               <div>
                 <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>1. Create UP.ID & Wallet</p>
                 <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Registers wallet on-chain</p>
@@ -177,13 +189,13 @@ export default function Home() {
               <button
                 onClick={() => handleWorkflowRun(1)}
                 disabled={!isConnected || !isRegistered}
-                style={{ backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || !isRegistered) ? 0.5 : 1 }}
+                style={{ backgroundColor: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || !isRegistered) ? 0.4 : 1 }}
               >
                 Run
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0b1329', padding: '12px', borderRadius: '8px', border: '1px solid #1e2d4a' }}>
               <div>
                 <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>2. Execute Practice Tx</p>
                 <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Logs practice transaction</p>
@@ -191,13 +203,13 @@ export default function Home() {
               <button
                 onClick={() => handleWorkflowRun(2)}
                 disabled={!isConnected || workflowStep < 1}
-                style={{ backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || workflowStep < 1) ? 0.5 : 1 }}
+                style={{ backgroundColor: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || workflowStep < 1) ? 0.4 : 1 }}
               >
                 Run
               </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0f172a', padding: '12px', borderRadius: '8px', border: '1px solid #334155' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#0b1329', padding: '12px', borderRadius: '8px', border: '1px solid #1e2d4a' }}>
               <div>
                 <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>3. Issue Dojang Stamp</p>
                 <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Marks onboarding completed</p>
@@ -205,7 +217,7 @@ export default function Home() {
               <button
                 onClick={() => handleWorkflowRun(3)}
                 disabled={!isConnected || practiceTxCount === 0}
-                style={{ backgroundColor: '#334155', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 12px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || practiceTxCount === 0) ? 0.5 : 1 }}
+                style={{ backgroundColor: '#1e293b', color: '#fff', border: '1px solid #334155', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || practiceTxCount === 0) ? 0.4 : 1 }}
               >
                 Run
               </button>
@@ -213,18 +225,18 @@ export default function Home() {
           </div>
         </section>
 
-        {/* P2P TRANSFER */}
-        <section style={{ backgroundColor: '#1e293b', padding: '16px', borderRadius: '12px', border: '1px solid #334155' }}>
-          <h2 style={{ fontSize: '12px', fontWeight: 'bold', color: '#38bdf8', textTransform: 'uppercase', marginTop: 0, marginBottom: '12px' }}>
+        {/* P2P TOKEN TRANSFER */}
+        <section style={{ backgroundColor: '#131f37', padding: '16px', borderRadius: '14px', border: '1px solid #1e2d4a' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: '700', color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: 0, marginBottom: '12px' }}>
             P2P Token Transfer (Send TEST)
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <input
               type="text"
               placeholder="Recipient Address (0x...)"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '13px', fontFamily: 'monospace' }}
+              style={{ backgroundColor: '#0b1329', border: '1px solid #1e2d4a', borderRadius: '8px', padding: '10px 12px', color: '#fff', fontSize: '12px', fontFamily: 'monospace', outline: 'none' }}
             />
             <div style={{ display: 'flex', gap: '8px' }}>
               <input
@@ -232,12 +244,12 @@ export default function Home() {
                 placeholder="Amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                style={{ width: '80px', backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '13px' }}
+                style={{ width: '80px', backgroundColor: '#0b1329', border: '1px solid #1e2d4a', borderRadius: '8px', padding: '10px', color: '#fff', fontSize: '13px', outline: 'none' }}
               />
               <button
                 onClick={handleSendTokens}
                 disabled={!isConnected || isPending || !recipient}
-                style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', opacity: (!isConnected || isPending || !recipient) ? 0.5 : 1 }}
+                style={{ flex: 1, backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer', opacity: (!isConnected || isPending || !recipient) ? 0.4 : 1 }}
               >
                 {isPending ? 'Sending...' : 'Send TEST Tokens'}
               </button>
@@ -250,24 +262,25 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CONTRACT INFO */}
-        <section style={{ backgroundColor: 'rgba(30, 41, 59, 0.5)', padding: '12px', borderRadius: '12px', border: '1px solid #1e293b', fontSize: '12px', color: '#94a3b8' }}>
+        {/* CONTRACT DETAILS */}
+        <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.5)', padding: '14px', borderRadius: '14px', border: '1px solid #1e2d4a', fontSize: '12px', color: '#94a3b8' }}>
           <p style={{ fontWeight: 'bold', color: '#cbd5e1', margin: 0 }}>Contract Details</p>
-          <p style={{ fontFamily: 'monospace', margin: '4px 0' }}>{CONTRACT_ADDRESS}</p>
+          <p style={{ fontFamily: 'monospace', margin: '4px 0', wordBreak: 'break-all' }}>{CONTRACT_ADDRESS}</p>
           <a
             href={`https://sepolia-explorer.giwa.io/address/${CONTRACT_ADDRESS}`}
             target="_blank"
             rel="noreferrer"
-            style={{ color: '#38bdf8', textDecoration: 'none' }}
+            style={{ color: '#38bdf8', textDecoration: 'none', display: 'inline-block', marginTop: '4px' }}
           >
-            View on GIWA Explorer
+            View on GIWA Explorer ↗
           </a>
         </section>
       </main>
 
+      {/* FOOTER */}
       <footer style={{ marginTop: '32px', textAlign: 'center', fontSize: '12px', color: '#64748b' }}>
         <p style={{ margin: 0 }}>GIWASETU — Built for GIWA GASOK Builder Program.</p>
-        {balanceData && <p style={{ fontFamily: 'monospace', margin: '4px 0 0 0' }}>Native Balance: {balanceData.formatted.slice(0, 8)} {balanceData.symbol}</p>}
+        {balanceData && <p style={{ fontFamily: 'monospace', margin: '6px 0 0 0', color: '#94a3b8' }}>Native Balance: {balanceData.formatted.slice(0, 8)} {balanceData.symbol}</p>}
       </footer>
     </div>
   );

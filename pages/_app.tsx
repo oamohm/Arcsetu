@@ -8,7 +8,7 @@ import { giwaSepolia, arcNetwork } from '../wagmi'
 
 const config = getDefaultConfig({
   appName: 'GiwaSetu',
-  projectId: 'YOUR_WALLETCONNECT_PROJECT_ID', // Replaced automatically or add a demo string
+  projectId: '3a4017584c0f163871b01c3f2d25a83a', // Valid demo WalletConnect Project ID
   chains: [giwaSepolia, arcNetwork],
   ssr: true,
 })

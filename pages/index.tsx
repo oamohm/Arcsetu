@@ -42,10 +42,19 @@ export default function Home() {
     }
   ])
 
+  // Connect Wallet Action
+  const handleConnect = () => {
+    if (connectors.length > 0) {
+      connect({ connector: connectors[0] })
+    } else {
+      alert('कोई वेब3 वॉलेट नहीं मिला! कृपया MetaMask या OKX ऐप के ब्राउज़र में खोलें।')
+    }
+  }
+
   // Execute Web3 UPI / On-Chain Settlement Payment
   const handlePayment = async () => {
     if (!isConnected) {
-      alert('कृपया पहले अपना वॉलेट कनेक्ट करें!')
+      handleConnect()
       return
     }
     if (!recipient) {
@@ -57,7 +66,6 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg('प्रॉसेस हो रहा है... वॉलेट पुष्टि की प्रतीक्षा है...')
       
-      // Target recipient: fallback to demo address if UP.ID format used
       const targetAddress = recipient.startsWith('0x') 
         ? (recipient as `0x${string}`) 
         : '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
@@ -88,7 +96,7 @@ export default function Home() {
   // Execute Practice On-Chain Transaction
   const handlePracticeTx = async () => {
     if (!isConnected) {
-      alert('कृपया पहले अपना वॉलेट कनेक्ट करें!')
+      handleConnect()
       return
     }
     try {
@@ -173,17 +181,12 @@ export default function Home() {
                 </button>
               </div>
             ) : (
-              <div className="flex gap-2">
-                {connectors.map((connector) => (
-                  <button
-                    key={connector.uid}
-                    onClick={() => connect({ connector })}
-                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-medium transition-all shadow-md active:scale-95"
-                  >
-                    Connect {connector.name}
-                  </button>
-                ))}
-              </div>
+              <button
+                onClick={handleConnect}
+                className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-semibold transition-all shadow-md active:scale-95 border border-blue-400/30"
+              >
+                Connect Wallet
+              </button>
             )}
           </div>
         </header>

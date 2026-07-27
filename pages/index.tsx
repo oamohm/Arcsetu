@@ -16,17 +16,17 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
 
-  // State Management
+  // Onboarding & Identity States
   const [upId, setUpId] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
+  const [workflowStep, setWorkflowStep] = useState(0);
+  const [practiceTxCount, setPracticeTxCount] = useState(0);
+
+  // Payments & Utility States
   const [activeTab, setActiveTab] = useState<'pay' | 'request' | 'fx'>('pay');
-
-  // Payment Form States
   const [payRecipient, setPayRecipient] = useState('');
-  const [payAmount, setPayAmount] = useState('0.1');
-
-  // Invoice / Request States
-  const [reqAmount, setReqAmount] = useState('1');
+  const [payAmount, setPayAmount] = useState('0.0001');
+  const [reqAmount, setReqAmount] = useState('0.001');
   const [reqNote, setReqNote] = useState('');
 
   // History & Royalty
@@ -36,12 +36,12 @@ export default function Home() {
   const { data: hash, sendTransaction, isPending } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
-  // 1. Persistent Storage Load
+  // 1. Data Auto-Load on Wallet Connect
   useEffect(() => {
     if (isConnected && address) {
       const cleanAddress = address.toLowerCase();
 
-      // UP.ID Persistent Load
+      // Load Saved UP.ID
       const savedUpId = localStorage.getItem(`upid_${cleanAddress}`);
       if (savedUpId) {
         setUpId(savedUpId);
@@ -50,6 +50,12 @@ export default function Home() {
         setUpId('');
         setIsRegistered(false);
       }
+
+      // Load Workflow & Practice Progress
+      const savedStep = localStorage.getItem(`step_${cleanAddress}`);
+      const savedTxCount = localStorage.getItem(`txs_${cleanAddress}`);
+      if (savedStep) setWorkflowStep(parseInt(savedStep));
+      if (savedTxCount) setPracticeTxCount(parseInt(savedTxCount));
 
       // Load Royalty & History
       const savedRoyalty = localStorage.getItem(`royalty_${cleanAddress}`);
@@ -60,36 +66,59 @@ export default function Home() {
     } else {
       setUpId('');
       setIsRegistered(false);
+      setWorkflowStep(0);
+      setPracticeTxCount(0);
       setTxHistory([]);
       setRoyaltyEarned(0);
     }
   }, [address, isConnected]);
 
-  // 2. Save UP.ID
+  // 2. Save & Bind UP.ID Logic
   const handleSaveUpId = () => {
     if (!upId.trim() || !address) return;
     const cleanAddress = address.toLowerCase();
     const cleanId = upId.trim().replace(/^@/, '');
+    
+    // Bind Address to ID and ID to Address in local registry
     localStorage.setItem(`upid_${cleanAddress}`, cleanId);
     localStorage.setItem(`upid_lookup_${cleanId.toLowerCase()}`, cleanAddress);
+    
     setUpId(cleanId);
     setIsRegistered(true);
   };
 
-  // 3. Web3 UPI Smart Send (Supports @UP.ID & 0x Address)
+  // 3. Workflow Steps (Run Buttons Logic)
+  const handleWorkflowRun = (stepNumber: number) => {
+    if (!address) return;
+    const cleanAddress = address.toLowerCase();
+
+    if (stepNumber === 1 && isRegistered) {
+      setWorkflowStep(1);
+      localStorage.setItem(`step_${cleanAddress}`, '1');
+    } else if (stepNumber === 2 && workflowStep >= 1) {
+      const newCount = practiceTxCount + 1;
+      setPracticeTxCount(newCount);
+      localStorage.setItem(`txs_${cleanAddress}`, newCount.toString());
+    } else if (stepNumber === 3 && practiceTxCount > 0) {
+      setWorkflowStep(2);
+      localStorage.setItem(`step_${cleanAddress}`, '2');
+    }
+  };
+
+  // 4. Web3 UPI Pay Logic (@UP.ID or 0x Direct Transfer)
   const handleWeb3Pay = () => {
     if (!payRecipient || !payAmount) return;
 
     let targetAddress = payRecipient.trim();
 
-    // If recipient is UP.ID (@username), resolve to address
+    // Resolving @username to 0x Address
     if (targetAddress.startsWith('@') || !targetAddress.startsWith('0x')) {
       const cleanLookupId = targetAddress.replace(/^@/, '').toLowerCase();
       const resolvedAddress = localStorage.getItem(`upid_lookup_${cleanLookupId}`);
       if (resolvedAddress) {
         targetAddress = resolvedAddress;
       } else {
-        alert(`UP.ID @${cleanLookupId} not found in GIWASETU registry.`);
+        alert(`UP.ID @${cleanLookupId} not found. Please verify the username or use a 0x address.`);
         return;
       }
     }
@@ -100,12 +129,12 @@ export default function Home() {
     });
   };
 
-  // 4. Update History and Add Royalty Reward on Success
+  // 5. On-Chain Transaction Confirmation & Cashback Royalty Update
   useEffect(() => {
     if (isConfirmed && hash && address) {
       const cleanAddress = address.toLowerCase();
 
-      // Calculate 0.5% Royalty Reward
+      // Calculate 0.5% Royalty Cashback
       const addedRoyalty = (parseFloat(payAmount) || 0) * 0.005;
       const newRoyaltyTotal = royaltyEarned + addedRoyalty;
       setRoyaltyEarned(newRoyaltyTotal);
@@ -113,7 +142,7 @@ export default function Home() {
 
       const newTx: TxHistory = {
         hash,
-        type: payRecipient.startsWith('@') ? `Web3 UPI (${payRecipient})` : 'P2P Transfer',
+        type: payRecipient.startsWith('@') ? `Web3 UPI Pay (${payRecipient})` : 'P2P Transfer',
         timestamp: new Date().toLocaleTimeString(),
         amount: `${payAmount} TEST`,
       };
@@ -124,9 +153,9 @@ export default function Home() {
     }
   }, [isConfirmed, hash, address]);
 
-  // Quick Currency Rates (1 TEST = ~₹120 INR = ~₩1,900 KRW)
+  // Currency Converter Values
   const inrValue = (parseFloat(payAmount || '0') * 120).toFixed(2);
-  const krwValue = (parseFloat(payAmount || '0') * 1900).toLocaleString();
+  const krwValue = (parseFloat(payAmount || '0') * 1900).toFixed(2);
 
   return (
     <div style={{
@@ -152,20 +181,17 @@ export default function Home() {
         gap: '12px'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {/* 3D Embossed Bridge Logo */}
           <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '12px',
+            width: '44px',
+            height: '44px',
+            borderRadius: '14px',
             background: 'linear-gradient(135deg, #0284c7 0%, #6366f1 100%)',
             boxShadow: 'inset 2px 2px 4px rgba(255,255,255,0.4), inset -2px -2px 4px rgba(0,0,0,0.4), 0 8px 16px rgba(99, 102, 241, 0.3)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#fff',
-            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+            fontSize: '22px',
+            color: '#fff'
           }}>
             🌉
           </div>
@@ -192,22 +218,21 @@ export default function Home() {
 
       <main style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        {/* IDENTITY & ROYALTY DASHBOARD */}
+        {/* IDENTITY & ROYALTIES */}
         <section style={{
           backgroundColor: 'rgba(19, 31, 55, 0.7)',
           backdropFilter: 'blur(10px)',
           padding: '16px',
           borderRadius: '16px',
-          border: '1px solid rgba(56, 189, 248, 0.2)',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)'
+          border: '1px solid rgba(56, 189, 248, 0.2)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>
               WEB3 IDENTITY & ROYALTIES
             </span>
-            {isRegistered && (
+            {workflowStep >= 2 && (
               <span style={{ fontSize: '10px', backgroundColor: 'rgba(52, 211, 153, 0.15)', color: '#34d399', border: '1px solid rgba(52, 211, 153, 0.3)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                Verified Builder
+                Verified Dojang Builder
               </span>
             )}
           </div>
@@ -219,8 +244,10 @@ export default function Home() {
                 <span style={{ fontFamily: 'monospace', fontSize: '15px', color: '#38bdf8', fontWeight: 'bold' }}>@{upId}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#070d19', padding: '10px 14px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
-                <span style={{ fontSize: '13px', color: '#94a3b8' }}>Dojang Royalty Earned</span>
-                <span style={{ fontFamily: 'monospace', fontSize: '14px', color: '#34d399', fontWeight: 'bold' }}>+{royaltyEarned.toFixed(4)} TEST</span>
+                <div>
+                  <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>Dojang Royalty Earned</p>
+                  <p style={{ fontFamily: 'monospace', fontSize: '14px', color: '#34d399', fontWeight: 'bold', margin: '2px 0 0 0' }}>+{royaltyEarned.toFixed(6)} TEST</p>
+                </div>
               </div>
             </div>
           ) : (
@@ -238,13 +265,69 @@ export default function Home() {
                 disabled={!isConnected || !upId.trim()}
                 style={{ backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 16px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
               >
-                Claim ID
+                Save ID
               </button>
             </div>
           )}
         </section>
 
-        {/* APP TABS (WEB3 UPI / QR INVOICE / FX CONVERTER) */}
+        {/* ONBOARDING PROGRESS & WORKFLOW (RUN BUTTONS RESTORED) */}
+        <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
+          <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px', display: 'block', marginBottom: '12px' }}>
+            BUILDER ONBOARDING WORKFLOW
+          </span>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            
+            {/* Step 1 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>1. Create UP.ID & Wallet</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Binds identity to wallet</p>
+              </div>
+              <button
+                onClick={() => handleWorkflowRun(1)}
+                disabled={!isConnected || !isRegistered}
+                style={{ backgroundColor: workflowStep >= 1 ? '#059669' : '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || !isRegistered) ? 0.4 : 1 }}
+              >
+                {workflowStep >= 1 ? 'Done ✓' : 'Run'}
+              </button>
+            </div>
+
+            {/* Step 2 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>2. Execute Practice Tx</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Count: {practiceTxCount} practice txns</p>
+              </div>
+              <button
+                onClick={() => handleWorkflowRun(2)}
+                disabled={!isConnected || workflowStep < 1}
+                style={{ backgroundColor: '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || workflowStep < 1) ? 0.4 : 1 }}
+              >
+                Run
+              </button>
+            </div>
+
+            {/* Step 3 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#070d19', padding: '12px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
+              <div>
+                <p style={{ fontSize: '13px', fontWeight: 'bold', margin: 0 }}>3. Issue Dojang Stamp</p>
+                <p style={{ fontSize: '11px', color: '#94a3b8', margin: '2px 0 0 0' }}>Marks onboarding completed</p>
+              </div>
+              <button
+                onClick={() => handleWorkflowRun(3)}
+                disabled={!isConnected || practiceTxCount === 0}
+                style={{ backgroundColor: workflowStep >= 2 ? '#059669' : '#0284c7', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', opacity: (!isConnected || practiceTxCount === 0) ? 0.4 : 1 }}
+              >
+                {workflowStep >= 2 ? 'Issued ✓' : 'Run'}
+              </button>
+            </div>
+
+          </div>
+        </section>
+
+        {/* WEB3 UPI PAYMENTS & UTILITIES */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #1e2d4a', paddingBottom: '10px', marginBottom: '14px', gap: '8px' }}>
             <button
@@ -319,7 +402,6 @@ export default function Home() {
                 />
               </div>
 
-              {/* Dynamic QR Code Image */}
               <div style={{ backgroundColor: '#fff', padding: '12px', borderRadius: '12px' }}>
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(address ? `${address}?amount=${reqAmount}` : 'giwasetu')}`}
@@ -375,7 +457,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* RECENT ACTIVITY & EXPLORER */}
+        {/* RECENT ACTIVITY LOG */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px', display: 'block', marginBottom: '10px' }}>
             CROSS-BORDER ACTIVITY LOG

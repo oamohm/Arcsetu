@@ -1,36 +1,33 @@
-import { createConfig, http } from 'wagmi'
-import { mainnet, sepolia } from 'wagmi/chains'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import { defineChain } from 'viem'
 
-export const giwaSepolia = {
-  id: 9111,
+export const giwaSepolia = defineChain({
+  id: 910001,
   name: 'GIWA Sepolia',
-  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://sepolia-rpc.giwa.io'] },
   },
   blockExplorers: {
-    default: { name: 'GiwaExplorer', url: 'https://sepolia-explorer.giwa.io' },
+    default: { name: 'GIWA Explorer', url: 'https://sepolia-explorer.giwa.io' },
   },
-  testnet: true,
-} as const
+})
 
-export const arcNetwork = {
-  id: 12345,
-  name: 'Arc Network',
-  nativeCurrency: { name: 'Arc USDC', symbol: 'USDC', decimals: 18 },
+export const arcTestnet = defineChain({
+  id: 5042002,
+  name: 'Arc Testnet',
+  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc.arc.network'] },
+    default: { http: ['https://rpc.testnet.arc.network'] },
   },
   blockExplorers: {
-    default: { name: 'ArcScan', url: 'https://explorer.arc.network' },
+    default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
   },
-  testnet: true,
-} as const
+})
 
-export const config = createConfig({
-  chains: [giwaSepolia, arcNetwork],
-  transports: {
-    [giwaSepolia.id]: http(),
-    [arcNetwork.id]: http(),
-  },
+export const config = getDefaultConfig({
+  appName: 'GIWASETU',
+  projectId: '044601f652123a476740d132b8e83b3e',
+  chains: [giwaSepolia, arcTestnet],
+  ssr: true,
 })

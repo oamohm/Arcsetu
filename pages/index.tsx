@@ -12,8 +12,8 @@ const translations = {
     verified: 'Verified Multi-Chain Builder',
     notConnected: 'Wallet Not Connected',
     boundId: 'Bound Universal ID',
-    issueUpId: 'Register GIWA UP ID',
-    registeredIdLabel: 'Registered GIWA UP ID (Permanent)',
+    issueUpId: 'Set Custom UP ID',
+    registeredIdLabel: 'Registered UP ID',
     liveBalance: 'Live Balance',
     multichainHeader: 'Global Assets & Networks',
     workflowHeader: 'Builder Onboarding Workflow',
@@ -37,6 +37,8 @@ const translations = {
     activityHeader: 'Cross-Chain Activity & Verification Log',
     downloadCsv: 'Download CSV ↗',
     resourcesHeader: 'Official Faucets & Protocol Links',
+    scanQr: 'Scan QR',
+    qrTitle: 'Dynamic Receiver QR Invoice',
   },
   ko: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
@@ -44,8 +46,8 @@ const translations = {
     verified: '검증된 멀티체인 빌더',
     notConnected: '지갑 미연결',
     boundId: '연결된 유니버셜 ID',
-    issueUpId: 'GIWA UP ID 등록',
-    registeredIdLabel: '등록된 GIWA UP ID (영구)',
+    issueUpId: '커스텀 UP ID 설정',
+    registeredIdLabel: '등록된 UP ID',
     liveBalance: '실시간 잔액',
     multichainHeader: '글로벌 자산 및 네트워크',
     workflowHeader: '빌더 온보딩 워크플로우',
@@ -69,6 +71,8 @@ const translations = {
     activityHeader: '크로스체인 활동 및 검증 로그',
     downloadCsv: 'CSV 다운로드 ↗',
     resourcesHeader: '공식 포셋 및 프로토콜 링크',
+    scanQr: 'QR 스캔',
+    qrTitle: '동적 수신 QR 인보이스',
   },
   hi: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
@@ -76,8 +80,8 @@ const translations = {
     verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
     boundId: 'बाउंड यूनिवर्सल ID',
-    issueUpId: 'GIWA UP ID रजिस्टर करें',
-    registeredIdLabel: 'रजिस्टर्ड GIWA UP ID (स्थायी)',
+    issueUpId: 'कस्टम UP ID सेट करें',
+    registeredIdLabel: 'रजिस्टर्ड UP ID',
     liveBalance: 'लाइव बैलेंस',
     multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
@@ -101,6 +105,8 @@ const translations = {
     activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
     downloadCsv: 'CSV डाउनलोड ↗',
     resourcesHeader: 'ऑफ़िशियल फॉसेट और प्रोटोकॉल लिंक्स',
+    scanQr: 'QR स्कैन करें',
+    qrTitle: 'डायनामिक रिसीविंग QR इनवॉइस',
   },
   es: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
@@ -108,8 +114,8 @@ const translations = {
     verified: 'Creador Multicadena Verificado',
     notConnected: 'Billetera No Conectada',
     boundId: 'ID Universal Vinculado',
-    issueUpId: 'Registrar GIWA UP ID',
-    registeredIdLabel: 'GIWA UP ID Registrado (Permanente)',
+    issueUpId: 'Configurar UP ID Personalizado',
+    registeredIdLabel: 'UP ID Registrado',
     liveBalance: 'Saldo en Vivo',
     multichainHeader: 'Activos y Redes Globales',
     workflowHeader: 'Flujo de Trabajo de Incorporación',
@@ -133,6 +139,8 @@ const translations = {
     activityHeader: 'Registro de Actividad Multicadena',
     downloadCsv: 'Descargar CSV ↗',
     resourcesHeader: 'Enlaces Oficiales de Faucets y Protocolo',
+    scanQr: 'Escanear QR',
+    qrTitle: 'Factura QR de Recepción Dinámica',
   }
 }
 
@@ -162,11 +170,10 @@ export default function Home() {
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
-  // Unique UP ID state mapping: { [walletAddress]: "@unique_id" }
   const [customUpId, setCustomUpId] = useState('')
   const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
 
-  // Load stored IDs on initial render
   useEffect(() => {
     const saved = localStorage.getItem('giwa_registered_upids')
     if (saved) {
@@ -179,11 +186,26 @@ export default function Home() {
   }, [])
 
   const currentWallet = address ? address.toLowerCase() : ''
-  const userUpId = currentWallet ? registeredIds[currentWallet] : null
-  const hasExistingId = Boolean(userUpId)
-
   const isGiwa = chainId === 91342
   const isArc = chainId === 5042002
+
+  let networkName = 'GIWA Sepolia'
+  let networkPrefix = 'GIWA'
+  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
+
+  if (isArc) {
+    networkName = 'Arc Testnet'
+    networkPrefix = 'ARC'
+    explorerBase = 'https://testnet.arcscan.app/tx/'
+  } else if (chainId === 1) {
+    networkName = 'Ethereum Mainnet'
+    networkPrefix = 'ETH'
+    explorerBase = 'https://etherscan.io/tx/'
+  }
+
+  // Dynamic fallback handle based on active chain if custom string not specified
+  const autoDerivedId = address ? `@${networkPrefix}-${address.slice(-5)}` : '--'
+  const userUpId = currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId
 
   const [activities, setActivities] = useState<ActivityItem[]>([
     {
@@ -204,32 +226,15 @@ export default function Home() {
     }
   ])
 
-  let networkName = 'GIWA Sepolia'
-  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
-
-  if (isArc) {
-    networkName = 'Arc Testnet'
-    explorerBase = 'https://testnet.arcscan.app/tx/'
-  } else if (chainId === 1) {
-    networkName = 'Ethereum Mainnet'
-    explorerBase = 'https://etherscan.io/tx/'
-  }
-
-  // Check uniqueness and handle strict registration rules
   const handleRegisterUpId = () => {
     if (!currentWallet) {
       setStatusMsg('Please connect your wallet first.')
       return
     }
 
-    if (hasExistingId) {
-      setStatusMsg('Wallet already has a registered UP ID. Duplicates not allowed.')
-      return
-    }
-
     let cleanId = customUpId.trim().toLowerCase()
     if (!cleanId) {
-      setStatusMsg('Please enter a valid UP ID.')
+      setStatusMsg('Please enter a valid handle.')
       return
     }
 
@@ -238,18 +243,16 @@ export default function Home() {
     }
 
     if (cleanId.length < 3) {
-      setStatusMsg('UP ID must be at least 2 characters long.')
+      setStatusMsg('Handle must be at least 2 characters long.')
       return
     }
 
-    // Check across all registered IDs to prevent duplicates
     const allExistingValues = Object.values(registeredIds).map(id => id.toLowerCase())
-    if (allExistingValues.includes(cleanId)) {
-      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet. Choose a unique ID.`)
+    if (allExistingValues.includes(cleanId) && registeredIds[currentWallet] !== cleanId) {
+      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet.`)
       return
     }
 
-    // Register & store permanently for this wallet
     const updated = {
       ...registeredIds,
       [currentWallet]: cleanId
@@ -258,7 +261,16 @@ export default function Home() {
     setRegisteredIds(updated)
     localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
     setCustomUpId('')
-    setStatusMsg(`Success: ${cleanId} bound permanently to ${currentWallet.slice(0, 6)}...${currentWallet.slice(-4)}`)
+    setStatusMsg(`Custom handle updated to ${cleanId}`)
+  }
+
+  const handleSimulateScan = () => {
+    setIsScannerOpen(true)
+    setTimeout(() => {
+      setRecipient('0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b')
+      setIsScannerOpen(false)
+      setStatusMsg('QR Code scanned successfully!')
+    }, 1200)
   }
 
   const handlePayment = async () => {
@@ -349,6 +361,10 @@ export default function Home() {
     a.click()
   }
 
+  const receiveQrData = isConnected && address
+    ? `ethereum:${address}@${chainId}?label=${encodeURIComponent(userUpId)}`
+    : 'Connect Wallet to Generate Receive QR'
+
   return (
     <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -404,8 +420,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">{t.boundId}</span>
-              <span className={`text-sm font-mono font-semibold ${hasExistingId ? 'text-purple-300' : 'text-slate-500 italic'}`}>
-                {isConnected ? (hasExistingId ? userUpId : 'Not Registered') : '--'}
+              <span className="text-sm font-mono font-semibold text-purple-300">
+                {isConnected ? userUpId : '--'}
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
@@ -418,31 +434,22 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Registration Input: Only visible when connected & no ID bound yet */}
+          {/* Custom Handle Input */}
           {isConnected && (
             <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
-              {hasExistingId ? (
-                <div className="w-full text-xs text-slate-400 py-1 flex justify-between items-center px-1">
-                  <span>{t.registeredIdLabel}:</span>
-                  <span className="font-mono text-purple-400 font-semibold">{userUpId}</span>
-                </div>
-              ) : (
-                <>
-                  <input 
-                    type="text" 
-                    placeholder="Enter unique UP ID (e.g. @upendra)" 
-                    value={customUpId}
-                    onChange={(e) => setCustomUpId(e.target.value)}
-                    className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
-                  />
-                  <button 
-                    onClick={handleRegisterUpId}
-                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
-                  >
-                    {t.issueUpId}
-                  </button>
-                </>
-              )}
+              <input 
+                type="text" 
+                placeholder="Set custom handle (e.g. @upendra)" 
+                value={customUpId}
+                onChange={(e) => setCustomUpId(e.target.value)}
+                className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1 font-mono"
+              />
+              <button 
+                onClick={handleRegisterUpId}
+                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
+              >
+                {t.issueUpId}
+              </button>
             </div>
           )}
 
@@ -521,7 +528,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Payments */}
+        {/* Payments Section with QR & Send Scanner */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex border-b border-slate-800 gap-2">
             <button 
@@ -538,7 +545,7 @@ export default function Home() {
                 activeTab === 'qr' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              QR Invoice
+              Receive QR Invoice
             </button>
             <button 
               onClick={() => setActiveTab('fx')}
@@ -552,13 +559,27 @@ export default function Home() {
 
           {activeTab === 'upi' && (
             <div className="space-y-3 pt-2">
-              <input 
-                type="text" 
-                placeholder={t.placeholder} 
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                className="w-full bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all"
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder={t.placeholder} 
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  className="flex-1 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all font-mono"
+                />
+                <button
+                  onClick={handleSimulateScan}
+                  className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium"
+                >
+                  📷 {t.scanQr}
+                </button>
+              </div>
+
+              {isScannerOpen && (
+                <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 text-center text-xs text-purple-300 animate-pulse">
+                  Scanning Camera Feed / Processing Image...
+                </div>
+              )}
               
               <div className="flex gap-2">
                 <input 
@@ -584,11 +605,21 @@ export default function Home() {
 
           {activeTab === 'qr' && (
             <div className="bg-[#0b0e17] p-6 rounded-xl border border-slate-800 text-center space-y-3">
-              <div className="w-32 h-32 bg-slate-800 mx-auto rounded-lg flex items-center justify-center text-slate-500 text-xs border border-slate-700">
-                [ QR Code Generator ]
+              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{t.qrTitle}</p>
+              
+              <div className="w-40 h-40 bg-slate-900 border-2 border-purple-500/30 mx-auto rounded-xl flex flex-col items-center justify-center p-2 shadow-inner">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(receiveQrData)}`} 
+                  alt="Receiver QR Code"
+                  className="w-32 h-32 rounded bg-white p-1"
+                />
               </div>
-              <p className="text-xs text-slate-300 font-mono">Invoice ID: #MULTI-9982</p>
-              <p className="text-[10px] text-slate-500">Scan to pay cross-chain via WalletConnect</p>
+
+              <div className="space-y-1">
+                <p className="text-xs font-mono font-bold text-purple-400">{userUpId}</p>
+                <p className="text-[11px] font-mono text-slate-400 break-all">{address || 'No wallet connected'}</p>
+                <p className="text-[10px] text-emerald-400 font-semibold pt-1">Network: {networkName}</p>
+              </div>
             </div>
           )}
 

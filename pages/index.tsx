@@ -30,10 +30,12 @@ export default function Home() {
     }
   }, [address]);
 
-  const { data: balanceData } = useBalance({ address });
+  const { data: balanceData } = useBalance({ 
+    address: address ? (address as `0x${string}`) : undefined 
+  });
 
   const { data: userProgressData, refetch } = useReadContract({
-    address: CONTRACT_ADDRESS,
+    address: CONTRACT_ADDRESS as `0x${string}`,
     abi: [
       {
         inputs: [{ name: '', type: 'address' }],
@@ -48,7 +50,7 @@ export default function Home() {
       },
     ],
     functionName: 'progress',
-    args: address ? [address] : undefined,
+    args: address ? [address as `0x${string}`] : undefined,
   });
 
   const { data: hash, isPending, writeContract, error: writeError } = useWriteContract();
@@ -76,7 +78,7 @@ export default function Home() {
   const runStep = (fnName: string, label: string) => {
     setActiveAction(label);
     writeContract({
-      address: CONTRACT_ADDRESS,
+      address: CONTRACT_ADDRESS as `0x${string}`,
       abi: [
         {
           inputs: [],
@@ -113,7 +115,6 @@ export default function Home() {
         <main style={{ padding: '22px' }}>
           <FaucetModule />
 
-          {/* User Identity Section */}
           <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', borderRadius: '12px', padding: '14px', marginBottom: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '6px' }}>
               User Identity (UP.ID)
@@ -160,7 +161,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
             Interactive Workflow
           </div>
           

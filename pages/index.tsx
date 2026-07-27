@@ -14,20 +14,20 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
 
-  // Identity States
+  // Identity & Workflow States
   const [upId, setUpId] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
   const [inputUpId, setInputUpId] = useState('');
-
-  // Workflow & Payment States
   const [workflowStep, setWorkflowStep] = useState(0);
   const [practiceTxCount, setPracticeTxCount] = useState(0);
+  
+  // Payment & FX States
   const [activeTab, setActiveTab] = useState<'pay' | 'request' | 'fx'>('pay');
   const [payRecipient, setPayRecipient] = useState('');
   const [payAmount, setPayAmount] = useState('0.0001');
   const [reqAmount, setReqAmount] = useState('0.001');
 
-  // FX Calculator State
+  // FX Calculator
   const [fxTestAmount, setFxTestAmount] = useState('1');
   const [fxInrAmount, setFxInrAmount] = useState('120');
   const [fxKrwAmount, setFxKrwAmount] = useState('1900');
@@ -38,19 +38,19 @@ export default function Home() {
   const { data: hash, sendTransaction, isPending } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
-  // 1. Automatic Identity Detection on Wallet Connect
-  const fetchWalletIdentity = useCallback((walletAddress: string) => {
-    const cleanAddr = walletAddress.toLowerCase();
+  // 1. Instantly Sync Data Whenever Wallet Changes
+  const syncWalletState = useCallback((currentAddr: string) => {
+    const cleanAddr = currentAddr.toLowerCase();
     
-    // Global Registry Check
-    const globalRegistry = JSON.parse(localStorage.getItem('giwa_global_identity_registry') || '{}');
-    const existingId = globalRegistry[cleanAddr];
+    // Check Global ID Registry
+    const registry = JSON.parse(localStorage.getItem('giwa_global_identity_registry') || '{}');
+    const existingId = registry[cleanAddr];
 
     if (existingId) {
       setUpId(existingId);
       setIsRegistered(true);
       
-      // Load associated states for this unique bound wallet
+      // Load specific wallet state
       const savedStep = localStorage.getItem(`step_${cleanAddr}`) || '1';
       const savedTxCount = localStorage.getItem(`txs_${cleanAddr}`) || '0';
       const savedRoyalty = localStorage.getItem(`royalty_${cleanAddr}`) || '0';
@@ -61,7 +61,7 @@ export default function Home() {
       setRoyaltyEarned(parseFloat(savedRoyalty));
       setTxHistory(JSON.parse(savedHistory));
     } else {
-      // Unregistered Wallet
+      // Clean state for fresh wallet
       setUpId('');
       setIsRegistered(false);
       setWorkflowStep(0);
@@ -71,9 +71,10 @@ export default function Home() {
     }
   }, []);
 
+  // Trigger on wallet connect or account change
   useEffect(() => {
     if (isConnected && address) {
-      fetchWalletIdentity(address);
+      syncWalletState(address);
     } else {
       setUpId('');
       setIsRegistered(false);
@@ -82,37 +83,36 @@ export default function Home() {
       setTxHistory([]);
       setRoyaltyEarned(0);
     }
-  }, [address, isConnected, fetchWalletIdentity]);
+  }, [address, isConnected, syncWalletState]);
 
-  // 2. Strict 1:1 Identity Registration & Binding
+  // 2. Strict 1:1 Identity Registration
   const handleRegisterIdentity = () => {
     if (!inputUpId.trim() || !address) return;
     const cleanAddr = address.toLowerCase();
     const cleanId = inputUpId.trim().replace(/^@/, '');
 
-    const globalRegistry = JSON.parse(localStorage.getItem('giwa_global_identity_registry') || '{}');
+    const registry = JSON.parse(localStorage.getItem('giwa_global_identity_registry') || '{}');
 
-    // Check if ID is taken by another wallet
-    const existingOwner = Object.keys(globalRegistry).find(
-      (key) => globalRegistry[key].toLowerCase() === cleanId.toLowerCase()
+    // Prevent ID duplication across wallets
+    const isTaken = Object.keys(registry).some(
+      (key) => key !== cleanAddr && registry[key].toLowerCase() === cleanId.toLowerCase()
     );
 
-    if (existingOwner && existingOwner !== cleanAddr) {
-      alert(`@${cleanId} is already bound to another wallet! Choose a unique ID.`);
+    if (isTaken) {
+      alert(`ID @${cleanId} किसी और वॉलेट से जुड़ी है! कोई अलग ID चुनें।`);
       return;
     }
 
-    // Permanent 1:1 Binding
-    globalRegistry[cleanAddr] = cleanId;
-    localStorage.setItem('giwa_global_identity_registry', JSON.stringify(globalRegistry));
-    
-    // Reverse Lookup Mapping
+    // Save 1:1 Mapping
+    registry[cleanAddr] = cleanId;
+    localStorage.setItem('giwa_global_identity_registry', JSON.stringify(registry));
     localStorage.setItem(`upid_lookup_${cleanId.toLowerCase()}`, cleanAddr);
 
     setUpId(cleanId);
     setIsRegistered(true);
     setWorkflowStep(1);
     localStorage.setItem(`step_${cleanAddr}`, '1');
+    setInputUpId('');
   };
 
   // FX Converters
@@ -139,7 +139,7 @@ export default function Home() {
     setFxInrAmount((testVal * 120).toFixed(2));
   };
 
-  // Workflow Step Actions
+  // Workflow Handlers
   const handleWorkflowRun = (stepNumber: number) => {
     if (!address) return;
     const cleanAddr = address.toLowerCase();
@@ -158,7 +158,7 @@ export default function Home() {
     }
   };
 
-  // Web3 UPI Pay Logic
+  // Web3 UPI Transfer
   const handleWeb3Pay = () => {
     if (!payRecipient || !payAmount) return;
     let targetAddress = payRecipient.trim();
@@ -169,7 +169,7 @@ export default function Home() {
       if (resolvedAddress) {
         targetAddress = resolvedAddress;
       } else {
-        alert(`UP.ID @${cleanLookupId} not found.`);
+        alert(`ID @${cleanLookupId} नहीं मिली। सही ID दर्ज करें।`);
         return;
       }
     }
@@ -180,7 +180,7 @@ export default function Home() {
     });
   };
 
-  // On-chain confirmation handler
+  // Transaction Receipt Listener
   useEffect(() => {
     if (isConfirmed && hash && address) {
       const cleanAddr = address.toLowerCase();

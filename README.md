@@ -1,26 +1,18 @@
-# giwasetu — gasok builder onboarding hub
+# 🌉 GiwaSetu (giwasetu.vercel.app)
 
-giwasetu is a streamlined web3 onboarding and p2p token transfer interface built for the giwa gasok builder program. it focuses on deterministic execution and optimal payment ux on the giwa sepolia testnet.
+> **Decentralized Infrastructure for Programmable Asset Settlement & Cross-Border Payment UX on EVM Networks.**
 
-## live infrastructure
-* live environment: [giwasetu-contract.vercel.app](https://giwasetu-contract-bhupendrxsingh.vercel.app)
-* block explorer: [sepolia-explorer.giwa.io](https://sepolia-explorer.giwa.io)
-* contract address: `0xbABcB2540639b071b4fDF570a8E7c54b5899384c`
+GiwaSetu is an end-to-end Web3 settlement and identity platform engineered for deterministic execution, cross-border payment UX (Web3 UPI), and verified builder onboarding on GIWA / Sepolia testnet environments[span_0](start_span)[span_0](end_span).
 
-## core systems
-1. native testnet faucets: integrated routing to lambda256 primary and backup faucets.
-2. up.id identity state: on-chain user identity registration linked with local state persistence.
-3. execution workflow: step-by-step state tracking for wallet creation, practice transactions, and dojang stamp issuance.
-4. p2p payment ux: lightweight native token transfer module with real-time explorer validation.
+---
 
-## technical stack
-* smart contract: solidity
-* frontend execution: next.js, typescript, wagmi v2, viem
-* deployment: vercel ci/cd pipeline
+## 📌 Live Deployment & Verification
 
-## local environment
-```bash
-git clone [https://github.com/oamohm/giwasetu-contract.git](https://github.com/oamohm/giwasetu-contract.git)
-cd giwasetu-contract
-npm install
-npm run dev
+* **Production URL:** [https://giwasetu.vercel.app](https://giwasetu.vercel.app)[span_1](start_span)[span_1](end_span)
+* **Explorer Verification:** Verified transactions on `sepolia-explorer.giwa.io`[span_2](start_span)[span_2](end_span)
+* **Network Target:** GIWA Sepolia Testnet (EVM Compatible)[span_3](start_span)[span_3](end_span)
+
+---
+
+## 🏗 Architecture & System Flow
+

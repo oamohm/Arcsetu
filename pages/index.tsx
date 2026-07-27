@@ -13,12 +13,12 @@ const translations = {
     notConnected: 'Wallet Not Connected',
     boundId: 'Bound Universal ID',
     issueUpId: 'Register GIWA UP ID',
-    registeredIdLabel: 'Registered GIWA UP ID',
+    registeredIdLabel: 'Registered GIWA UP ID (Permanent)',
     liveBalance: 'Live Balance',
     multichainHeader: 'Global Assets & Networks',
     workflowHeader: 'Builder Onboarding Workflow',
     step1: '1. Create Universal ID & Wallet',
-    step1Sub: 'Binds identity across chains',
+    step1Sub: 'Binds identity deterministically across chains',
     done: 'Done ✓',
     pending: 'Pending',
     step2: '2. Execute Cross-Chain Tx',
@@ -45,12 +45,12 @@ const translations = {
     notConnected: '지갑 미연결',
     boundId: '연결된 유니버셜 ID',
     issueUpId: 'GIWA UP ID 등록',
-    registeredIdLabel: '등록된 GIWA UP ID',
+    registeredIdLabel: '등록된 GIWA UP ID (영구)',
     liveBalance: '실시간 잔액',
     multichainHeader: '글로벌 자산 및 네트워크',
     workflowHeader: '빌더 온보딩 워크플로우',
     step1: '1. 유니버셜 ID 및 지갑 생성',
-    step1Sub: '체인 간 신원 연결',
+    step1Sub: '체인 간 신원 확정적 연결',
     done: '완료 ✓',
     pending: '대기 중',
     step2: '2. 크로스체인 트랜잭션 실행',
@@ -77,12 +77,12 @@ const translations = {
     notConnected: 'वॉलेट कनेक्ट नहीं है',
     boundId: 'बाउंड यूनिवर्सल ID',
     issueUpId: 'GIWA UP ID रजिस्टर करें',
-    registeredIdLabel: 'रजिस्टर्ड GIWA UP ID',
+    registeredIdLabel: 'रजिस्टर्ड GIWA UP ID (स्थायी)',
     liveBalance: 'लाइव बैलेंस',
     multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
     step1: '1. यूनिवर्सल ID और वॉलेट बनाएं',
-    step1Sub: 'सभी चेन पर पहचान जोड़ता है',
+    step1Sub: 'सभी चेन पर पहचान सुरक्षित रूप से जोड़ता है',
     done: 'हो गया ✓',
     pending: 'लंबित',
     step2: '2. क्रॉस-चेन ट्रांजैक्शन निष्पादित करें',
@@ -109,12 +109,12 @@ const translations = {
     notConnected: 'Billetera No Conectada',
     boundId: 'ID Universal Vinculado',
     issueUpId: 'Registrar GIWA UP ID',
-    registeredIdLabel: 'GIWA UP ID Registrado',
+    registeredIdLabel: 'GIWA UP ID Registrado (Permanente)',
     liveBalance: 'Saldo en Vivo',
     multichainHeader: 'Activos y Redes Globales',
     workflowHeader: 'Flujo de Trabajo de Incorporación',
     step1: '1. Crear ID Universal y Billetera',
-    step1Sub: 'Vincula la identidad en cadenas',
+    step1Sub: 'Vincula la identidad en cadenas de forma determinista',
     done: 'Hecho ✓',
     pending: 'Pendiente',
     step2: '2. Ejecutar Tx Multicadena',
@@ -162,11 +162,11 @@ export default function Home() {
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
-  // Unique UP ID state per wallet address
+  // Unique UP ID state mapping: { [walletAddress]: "@unique_id" }
   const [customUpId, setCustomUpId] = useState('')
   const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
 
-  // Load stored IDs from local storage on load
+  // Load stored IDs on initial render
   useEffect(() => {
     const saved = localStorage.getItem('giwa_registered_upids')
     if (saved) {
@@ -205,32 +205,60 @@ export default function Home() {
   ])
 
   let networkName = 'GIWA Sepolia'
-  let upIdPrefix = 'GIWA'
   let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
 
   if (isArc) {
     networkName = 'Arc Testnet'
-    upIdPrefix = 'ARC'
     explorerBase = 'https://testnet.arcscan.app/tx/'
   } else if (chainId === 1) {
     networkName = 'Ethereum Mainnet'
-    upIdPrefix = 'ETH'
     explorerBase = 'https://etherscan.io/tx/'
   }
 
+  // Check uniqueness and handle strict registration rules
   const handleRegisterUpId = () => {
-    if (!customUpId.trim() || !currentWallet) return
-    const formattedId = customUpId.startsWith('@') ? customUpId : `@${customUpId}`
-    
+    if (!currentWallet) {
+      setStatusMsg('Please connect your wallet first.')
+      return
+    }
+
+    if (hasExistingId) {
+      setStatusMsg('Wallet already has a registered UP ID. Duplicates not allowed.')
+      return
+    }
+
+    let cleanId = customUpId.trim().toLowerCase()
+    if (!cleanId) {
+      setStatusMsg('Please enter a valid UP ID.')
+      return
+    }
+
+    if (!cleanId.startsWith('@')) {
+      cleanId = `@${cleanId}`
+    }
+
+    if (cleanId.length < 3) {
+      setStatusMsg('UP ID must be at least 2 characters long.')
+      return
+    }
+
+    // Check across all registered IDs to prevent duplicates
+    const allExistingValues = Object.values(registeredIds).map(id => id.toLowerCase())
+    if (allExistingValues.includes(cleanId)) {
+      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet. Choose a unique ID.`)
+      return
+    }
+
+    // Register & store permanently for this wallet
     const updated = {
       ...registeredIds,
-      [currentWallet]: formattedId
+      [currentWallet]: cleanId
     }
 
     setRegisteredIds(updated)
     localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
     setCustomUpId('')
-    setStatusMsg(`UP ID ${formattedId} successfully registered on GIWA Network!`)
+    setStatusMsg(`Success: ${cleanId} bound permanently to ${currentWallet.slice(0, 6)}...${currentWallet.slice(-4)}`)
   }
 
   const handlePayment = async () => {
@@ -360,7 +388,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Multi-Chain Identity & Live Balances */}
+        {/* Identity Section */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
             <span className="text-xs font-semibold tracking-wider text-purple-400 uppercase">{t.identityHeader}</span>
@@ -376,8 +404,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">{t.boundId}</span>
-              <span className="text-sm font-mono font-semibold text-purple-300">
-                {hasExistingId ? userUpId : (isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--')}
+              <span className={`text-sm font-mono font-semibold ${hasExistingId ? 'text-purple-300' : 'text-slate-500 italic'}`}>
+                {isConnected ? (hasExistingId ? userUpId : 'Not Registered') : '--'}
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
@@ -390,8 +418,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Conditional UP ID Registration Section: ONLY shown on GIWA network when wallet is connected */}
-          {isGiwa && isConnected && (
+          {/* Registration Input: Only visible when connected & no ID bound yet */}
+          {isConnected && (
             <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
               {hasExistingId ? (
                 <div className="w-full text-xs text-slate-400 py-1 flex justify-between items-center px-1">
@@ -402,7 +430,7 @@ export default function Home() {
                 <>
                   <input 
                     type="text" 
-                    placeholder="Enter custom GIWA UP ID (e.g. @upendra)" 
+                    placeholder="Enter unique UP ID (e.g. @upendra)" 
                     value={customUpId}
                     onChange={(e) => setCustomUpId(e.target.value)}
                     className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
@@ -418,7 +446,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* Multi-Chain Cards Grid */}
+          {/* Ecosystem Cards */}
           <div className="pt-2">
             <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-medium">{t.multichainHeader}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
@@ -442,7 +470,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Workflow */}
+        {/* Onboarding Workflow */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">{t.workflowHeader}</h2>
           
@@ -579,7 +607,7 @@ export default function Home() {
           )}
         </section>
 
-        {/* Official Faucets & Ecosystem Resources */}
+        {/* Faucets & Links */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
           
@@ -641,7 +669,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Activity & Verification Log */}
+        {/* Activity Log */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.activityHeader}</span>

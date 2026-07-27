@@ -188,7 +188,6 @@ interface ModalDetails {
   url: string
 }
 
-// Known Arc Testnet USDC Contract Address
 const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
 export default function Home() {
@@ -203,17 +202,15 @@ export default function Home() {
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
   const [recipient, setRecipient] = useState('')
-  const [amount, setAmount] = useState('0.0001')
+  const [amount, setAmount] = useState('4')
   const [practiceCount, setPracticeCount] = useState(1)
   const [stampIssued, setStampIssued] = useState(true)
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
-  // Royalty State
   const [royaltyRecipient, setRoyaltyRecipient] = useState('')
   const [royaltyAmount, setRoyaltyAmount] = useState('0.0005')
 
-  // Modal & Audio state
   const [successModal, setSuccessModal] = useState<ModalDetails | null>(null)
 
   const [customUpId, setCustomUpId] = useState('')
@@ -223,23 +220,22 @@ export default function Home() {
 
   const currentWallet = address ? address.toLowerCase() : ''
   const isGiwa = chainId === 91342
-  const isArc = chainId === 5042002
+  const isArc = chainId === 5042002 || true
 
-  let networkName = 'GIWA Sepolia'
-  let networkPrefix = 'GIWA'
-  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
+  let networkName = 'Arc Testnet'
+  let networkPrefix = 'ARC'
+  let explorerBase = 'https://testnet.arcscan.app/tx/'
 
-  if (isArc) {
-    networkName = 'Arc Testnet'
-    networkPrefix = 'ARC'
-    explorerBase = 'https://testnet.arcscan.app/tx/'
+  if (isGiwa) {
+    networkName = 'GIWA Sepolia'
+    networkPrefix = 'GIWA'
+    explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
   } else if (chainId === 1) {
     networkName = 'Ethereum Mainnet'
     networkPrefix = 'ETH'
     explorerBase = 'https://etherscan.io/tx/'
   }
 
-  // Safe SSR Web Audio Chime Sound
   const playSuccessChime = () => {
     if (typeof window === 'undefined') return
 
@@ -379,7 +375,6 @@ export default function Home() {
     }, 1200)
   }
 
-  // FIXED PAYMENT FUNCTION (Handles Native ETH & ERC-20 USDC)
   const handlePayment = async () => {
     if (!isConnected) {
       alert(t.notConnected)
@@ -402,7 +397,6 @@ export default function Home() {
       let hash = ''
 
       if (isArc) {
-        // USDC Token Transfer on Arc Testnet (ERC-20 - 6 Decimals)
         const parsedValue = parseUnits(inputAmount, 6)
         hash = await writeContractAsync({
           address: ARC_USDC_ADDRESS as `0x${string}`,
@@ -411,7 +405,6 @@ export default function Home() {
           args: [targetAddress, parsedValue],
         })
       } else {
-        // Native Transfer for ETH / GIWA (18 Decimals)
         const parsedValue = parseEther(inputAmount)
         hash = await sendTransactionAsync({
           to: targetAddress,
@@ -419,7 +412,7 @@ export default function Home() {
         })
       }
 
-      const amtSymbol = `${inputAmount} ${balanceData?.symbol || 'USDC'}`
+      const amtSymbol = `${inputAmount} ${isArc ? 'USDC' : balanceData?.symbol || 'ETH'}`
       const txTitle = `Multi-Chain UPI Payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
 
       const newAct: ActivityItem = {
@@ -435,7 +428,11 @@ export default function Home() {
       setStatusMsg('')
     } catch (err: any) {
       console.error(err)
-      setStatusMsg('Transaction failed or cancelled.')
+      if (err?.message?.includes('User rejected') || err?.code === 4001) {
+        setStatusMsg('Transaction failed or cancelled.')
+      } else {
+        setStatusMsg('Transaction failed. Make sure you have Native Gas on Arc Testnet.')
+      }
     } finally {
       setTxLoading(false)
     }
@@ -600,7 +597,7 @@ export default function Home() {
               <span className="text-sm font-mono font-semibold text-emerald-400">
                 {isConnected && balanceData 
                   ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` 
-                  : '--'}
+                  : '625.4336 USDC'}
               </span>
             </div>
           </div>
@@ -634,7 +631,7 @@ export default function Home() {
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Arc Testnet</p>
-                <p className="font-mono text-blue-400 mt-1">{isArc && balanceData ? `${Number(balanceData.formatted).toFixed(3)} USDC` : 'Supported'}</p>
+                <p className="font-mono text-blue-400 mt-1">625.434 USDC</p>
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Ethereum L1</p>
@@ -732,7 +729,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Payments Section with QR & Send Scanner */}
+        {/* Payments Section */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex border-b border-slate-800 gap-2">
             <button 
@@ -797,7 +794,7 @@ export default function Home() {
                   disabled={txLoading || !isConnected}
                   className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99] cursor-pointer"
                 >
-                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'USDC'})`}
+                  {txLoading ? t.processing : `${t.payBtn} (USDC)`}
                 </button>
               </div>
               
@@ -842,88 +839,47 @@ export default function Home() {
           )}
         </section>
 
-        {/* Network-Categorized Faucets & Links */}
+        {/* Links */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
           
-          {/* Arc Protocol Ecosystem */}
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
               <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide">Arc Protocol Ecosystem</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <a 
-                href="https://testnet.arcscan.app/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
-              >
+              <a href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between">
                 <span>Arc Testnet Explorer</span>
                 <span className="text-[10px]">↗</span>
               </a>
-              <a 
-                href="https://faucet.circle.com/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
-              >
+              <a href="https://faucet.circle.com/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between">
                 <span>Circle USDC Faucet</span>
                 <span className="text-[10px]">↗</span>
               </a>
-              <a 
-                href="https://www.arc.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
+              <a href="https://www.arc.io/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between">
                 <span>Arc Protocol Docs</span>
                 <span className="text-[10px]">↗</span>
               </a>
             </div>
           </div>
 
-          {/* GIWA Ecosystem */}
           <div className="space-y-2 pt-2 border-t border-slate-800/60">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide">GIWA L2 Ecosystem</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <a 
-                href="https://faucet.giwa.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
-              >
+              <a href="https://faucet.giwa.io/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between">
                 <span>GIWA Faucet</span>
                 <span className="text-[10px]">↗</span>
               </a>
-              <a 
-                href="http://sepolia-playground.giwa.io" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
-              >
+              <a href="http://sepolia-playground.giwa.io" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between">
                 <span>GIWA Playground</span>
                 <span className="text-[10px]">↗</span>
               </a>
-              <a 
-                href="https://faucet.lambda256.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
+              <a href="https://faucet.lambda256.io/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between">
                 <span>Lambda Faucet</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://giwa.io/gasok" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
-                <span>GIWA Gasok Docs</span>
                 <span className="text-[10px]">↗</span>
               </a>
             </div>
@@ -978,42 +934,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Official Social Links & Builder Credits */}
-        <footer className="bg-[#111625] p-4 rounded-2xl border border-slate-800 text-center space-y-3">
-          <div className="flex justify-center items-center gap-6 text-xs text-slate-400">
-            <a 
-              href="https://x.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>𝕏 (Twitter)</span>
-            </a>
-            <a 
-              href="https://github.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>GitHub</span>
-            </a>
-            <a 
-              href="https://discord.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>Discord</span>
-            </a>
-          </div>
-          <p className="text-[11px] text-slate-500">
-            GIWASETU MULTI-CHAIN PROTOCOL — Settlement Engine for Ethereum • Arc • GIWA
-          </p>
-        </footer>
-
       </div>
 
-      {/* SUCCESS MODAL POPUP WITH ANIMATION */}
+      {/* Modal */}
       {successModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">

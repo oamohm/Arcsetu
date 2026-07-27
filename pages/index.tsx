@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { WalletConnect } from '../components/WalletConnect'
-import { useAccount } from 'wagmi'
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from 'wagmi'
 
 export default function Home() {
-  const { isConnected, chain } = useAccount()
+  const { address, isConnected, chain } = useAccount()
+  const { connect, connectors } = useConnect()
+  const { disconnect } = useDisconnect()
+  const { chains, switchChain } = useSwitchChain()
+
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.0001')
@@ -24,8 +27,45 @@ export default function Home() {
             </div>
           </div>
           
-          {/* Custom Multi-Chain & Wallet Connection */}
-          <WalletConnect />
+          {/* Wallet Connection & Switcher */}
+          <div className="flex items-center gap-2">
+            {isConnected ? (
+              <div className="flex items-center gap-2 bg-[#0b0e17] px-3 py-1.5 rounded-xl border border-slate-800 text-xs">
+                <span className="text-emerald-400 font-mono">
+                  {address?.slice(0, 6)}...{address?.slice(-4)}
+                </span>
+                {chains.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => switchChain({ chainId: c.id })}
+                    className={`px-2 py-0.5 rounded text-[10px] ${
+                      chain?.id === c.id ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    {c.name}
+                  </button>
+                ))}
+                <button 
+                  onClick={() => disconnect()}
+                  className="text-red-400 text-[10px] ml-1 hover:underline"
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                {connectors.map((connector) => (
+                  <button
+                    key={connector.uid}
+                    onClick={() => connect({ connector })}
+                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs px-3 py-1.5 rounded-xl font-medium"
+                  >
+                    Connect {connector.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </header>
 
         {/* Web3 Identity & Royalties */}

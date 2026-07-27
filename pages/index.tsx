@@ -3,6 +3,9 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useBalance, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { formatEther } from 'viem';
 
+import FaucetModule from '../components/FaucetModule';
+import TransferModule from '../components/TransferModule';
+
 const CONTRACT_ADDRESS = '0xbABcB2540639b071b4fDF570a8E7c54b5899384c';
 
 export default function Home() {
@@ -18,6 +21,14 @@ export default function Home() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (address && typeof window !== 'undefined') {
+      const storedName = localStorage.getItem(`giwa_user_${address}`);
+      if (storedName) setSavedUsername(storedName);
+      else setSavedUsername('');
+    }
+  }, [address]);
 
   const { data: balanceData } = useBalance({ address });
 
@@ -41,10 +52,7 @@ export default function Home() {
   });
 
   const { data: hash, isPending, writeContract, error: writeError } = useWriteContract();
-
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash,
-  });
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   useEffect(() => {
     if (isSuccess && hash) {
@@ -57,8 +65,10 @@ export default function Home() {
   }, [isSuccess, hash, refetch, activeAction]);
 
   const handleSaveUser = () => {
-    if (usernameInput.trim()) {
-      setSavedUsername(usernameInput.trim());
+    if (usernameInput.trim() && address && typeof window !== 'undefined') {
+      const cleanName = usernameInput.trim();
+      localStorage.setItem(`giwa_user_${address}`, cleanName);
+      setSavedUsername(cleanName);
       setUsernameInput('');
     }
   };
@@ -93,7 +103,7 @@ export default function Home() {
         
         <header style={{ backgroundColor: '#1F2937', color: '#FFFFFF', padding: '24px 22px 18px' }}>
           <div style={{ fontSize: '22px', fontWeight: 800 }}>GIWASETU</div>
-          <div style={{ fontSize: '12px', color: '#F3D9B1', marginTop: '4px' }}>Live on GIWA Sepolia · Real transactions</div>
+          <div style={{ fontSize: '12px', color: '#F3D9B1', marginTop: '4px' }}>GASOK Builder Onboarding Hub</div>
         </header>
 
         <div style={{ backgroundColor: '#1F2937', padding: '0 22px 18px', display: 'flex', justifyContent: 'center' }}>
@@ -101,10 +111,12 @@ export default function Home() {
         </div>
 
         <main style={{ padding: '22px' }}>
-          
+          <FaucetModule />
+
+          {/* User Identity Section */}
           <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', borderRadius: '12px', padding: '14px', marginBottom: '20px' }}>
             <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '6px' }}>
-              User Identity
+              User Identity (UP.ID)
             </div>
             {savedUsername ? (
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#1F2937' }}>
@@ -114,7 +126,7 @@ export default function Home() {
               <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
                 <input 
                   type="text" 
-                  placeholder="Enter username" 
+                  placeholder="Enter UP.ID / Username" 
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: '1px solid #E5E7EB', fontSize: '13px' }}
@@ -136,7 +148,7 @@ export default function Home() {
           <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
             <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: 800 }}>{hasWallet ? '✓' : '–'}</div>
-              <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>Wallet Step</div>
+              <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>UP.ID Step</div>
             </div>
             <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: 800 }}>{practiceTxCount}</div>
@@ -144,66 +156,44 @@ export default function Home() {
             </div>
             <div style={{ flex: 1, backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '10px', padding: '10px', textAlign: 'center' }}>
               <div style={{ fontSize: '18px', fontWeight: 800 }}>{completedOnboarding ? '✓' : '–'}</div>
-              <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>Completed</div>
+              <div style={{ fontSize: '10px', color: '#6B7280', marginTop: '2px' }}>Dojang Issued</div>
             </div>
           </div>
 
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
-            Complete the Steps
+          <div style={{ fontSize: '12px', fontWeight 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
+            Interactive Workflow
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: hasWallet ? '#F0FDFA' : '#FFFFFF', border: hasWallet ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: hasWallet ? '#0F766E' : '#E5E7EB', color: hasWallet ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
-                1
-              </div>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: hasWallet ? '#0F766E' : '#E5E7EB', color: hasWallet ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>1</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600 }}>Mark Wallet Created</div>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>Create UP.ID & Wallet</div>
                 <div style={{ fontSize: '11px', color: '#6B7280' }}>Registers wallet on-chain</div>
               </div>
-              <button 
-                onClick={() => runStep('markWalletCreated', 'Wallet marked created')} 
-                disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}
-              >
-                Run
-              </button>
+              <button onClick={() => runStep('markWalletCreated', 'UP.ID Wallet Created')} disabled={!isConnected || isPending || isConfirming} style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}>Run</button>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: Number(practiceTxCount) > 0 ? '#F0FDFA' : '#FFFFFF', border: Number(practiceTxCount) > 0 ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
-                2
-              </div>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: Number(practiceTxCount) > 0 ? '#0F766E' : '#E5E7EB', color: Number(practiceTxCount) > 0 ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>2</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600 }}>Record Practice Transaction</div>
-                <div style={{ fontSize: '11px', color: '#6B7280' }}>Logs practice tx</div>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>Execute Practice Tx</div>
+                <div style={{ fontSize: '11px', color: '#6B7280' }}>Logs practice transaction</div>
               </div>
-              <button 
-                onClick={() => runStep('recordPracticeTransaction', 'Practice transaction recorded')} 
-                disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}
-              >
-                Run
-              </button>
+              <button onClick={() => runStep('recordPracticeTransaction', 'Practice Transaction Executed')} disabled={!isConnected || isPending || isConfirming} style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}>Run</button>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', backgroundColor: completedOnboarding ? '#F0FDFA' : '#FFFFFF', border: completedOnboarding ? '1px solid #0F766E' : '1px solid #E5E7EB', borderRadius: '12px', padding: '12px 14px' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: completedOnboarding ? '#0F766E' : '#E5E7EB', color: completedOnboarding ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>
-                3
-              </div>
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: completedOnboarding ? '#0F766E' : '#E5E7EB', color: completedOnboarding ? '#FFFFFF' : '#6B7280', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px' }}>3</div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '13px', fontWeight: 600 }}>Complete Onboarding</div>
-                <div style={{ fontSize: '11px', color: '#6B7280' }}>Marks onboarding finished</div>
+                <div style={{ fontSize: '13px', fontWeight: 600 }}>Issue Dojang Stamp</div>
+                <div style={{ fontSize: '11px', color: '#6B7280' }}>Marks onboarding completed</div>
               </div>
-              <button 
-                onClick={() => runStep('completeOnboarding', 'Onboarding completed')} 
-                disabled={!isConnected || isPending || isConfirming}
-                style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}
-              >
-                Run
-              </button>
+              <button onClick={() => runStep('completeOnboarding', 'Dojang Issued')} disabled={!isConnected || isPending || isConfirming} style={{ padding: '8px 14px', borderRadius: '8px', border: 'none', backgroundColor: '#1F2937', color: '#FFFFFF', fontSize: '12px', fontWeight: 700, opacity: isConnected ? 1 : 0.4 }}>Run</button>
             </div>
           </div>
+
+          <TransferModule />
 
           {(isPending || isConfirming) && (
             <div style={{ backgroundColor: '#FFF7ED', border: '1px solid #F3D9B1', color: '#C2410C', padding: '12px', borderRadius: '10px', fontSize: '12px', marginBottom: '14px', textAlign: 'center' }}>
@@ -228,7 +218,7 @@ export default function Home() {
           </div>
 
           <div style={{ fontSize: '12px', fontWeight: 700, color: '#C2410C', textTransform: 'uppercase', marginBottom: '10px' }}>
-            Recent Transactions
+            Recent Activity
           </div>
           <div>
             {txLogs.length === 0 ? (
@@ -238,7 +228,7 @@ export default function Home() {
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '2px', padding: '10px 12px', border: '1px solid #E5E7EB', borderRadius: '10px', marginBottom: '8px', fontSize: '12px' }}>
                   <span>{log.label}</span>
                   <a href={`https://sepolia-explorer.giwa.io/tx/${log.hash}`} target="_blank" rel="noreferrer" style={{ color: '#0F766E', textDecoration: 'none', fontWeight: 600 }}>
-                    View transaction
+                    View on Explorer
                   </a>
                 </div>
               ))
@@ -247,8 +237,8 @@ export default function Home() {
         </main>
 
         <footer style={{ padding: '16px 22px 30px', fontSize: '11px', color: '#6B7280', textAlign: 'center', lineHeight: 1.6 }}>
-          GiwaSetu — real smart contract interactions on GIWA Sepolia Testnet.<br />
-          Native Balance: {balanceData ? `${formatEther(balanceData.value)} ${balanceData.symbol}` : '0 ETH'}
+          GIWASETU — Built for GIWA GASOK Builder Program.<br />
+          Native Balance: {balanceData ? `${formatEther(balanceData.value)} ${balanceData.symbol}` : '0 TEST'}
         </footer>
       </div>
     </div>

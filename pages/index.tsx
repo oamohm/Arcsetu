@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAccount, useBalance, useSendTransaction, useWaitForTransactionReceipt } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { parseEther } from 'viem';
@@ -14,12 +14,14 @@ export default function Home() {
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
 
-  // States
+  // Identity States
   const [upId, setUpId] = useState('');
   const [isRegistered, setIsRegistered] = useState(false);
+  const [inputUpId, setInputUpId] = useState('');
+
+  // Workflow & Payment States
   const [workflowStep, setWorkflowStep] = useState(0);
   const [practiceTxCount, setPracticeTxCount] = useState(0);
-
   const [activeTab, setActiveTab] = useState<'pay' | 'request' | 'fx'>('pay');
   const [payRecipient, setPayRecipient] = useState('');
   const [payAmount, setPayAmount] = useState('0.0001');
@@ -36,7 +38,84 @@ export default function Home() {
   const { data: hash, sendTransaction, isPending } = useSendTransaction();
   const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
-  // FX Conversion Logic
+  // 1. Automatic Identity Detection on Wallet Connect
+  const fetchWalletIdentity = useCallback((walletAddress: string) => {
+    const cleanAddr = walletAddress.toLowerCase();
+    
+    // Global Registry Check
+    const globalRegistry = JSON.parse(localStorage.getItem('giwa_global_identity_registry') || '{}');
+    const existingId = globalRegistry[cleanAddr];
+
+    if (existingId) {
+      setUpId(existingId);
+      setIsRegistered(true);
+      
+      // Load associated states for this unique bound wallet
+      const savedStep = localStorage.getItem(`step_${cleanAddr}`) || '1';
+      const savedTxCount = localStorage.getItem(`txs_${cleanAddr}`) || '0';
+      const savedRoyalty = localStorage.getItem(`royalty_${cleanAddr}`) || '0';
+      const savedHistory = localStorage.getItem(`tx_history_${cleanAddr}`) || '[]';
+
+      setWorkflowStep(parseInt(savedStep));
+      setPracticeTxCount(parseInt(savedTxCount));
+      setRoyaltyEarned(parseFloat(savedRoyalty));
+      setTxHistory(JSON.parse(savedHistory));
+    } else {
+      // Unregistered Wallet
+      setUpId('');
+      setIsRegistered(false);
+      setWorkflowStep(0);
+      setPracticeTxCount(0);
+      setRoyaltyEarned(0);
+      setTxHistory([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchWalletIdentity(address);
+    } else {
+      setUpId('');
+      setIsRegistered(false);
+      setWorkflowStep(0);
+      setPracticeTxCount(0);
+      setTxHistory([]);
+      setRoyaltyEarned(0);
+    }
+  }, [address, isConnected, fetchWalletIdentity]);
+
+  // 2. Strict 1:1 Identity Registration & Binding
+  const handleRegisterIdentity = () => {
+    if (!inputUpId.trim() || !address) return;
+    const cleanAddr = address.toLowerCase();
+    const cleanId = inputUpId.trim().replace(/^@/, '');
+
+    const globalRegistry = JSON.parse(localStorage.getItem('giwa_global_identity_registry') || '{}');
+
+    // Check if ID is taken by another wallet
+    const existingOwner = Object.keys(globalRegistry).find(
+      (key) => globalRegistry[key].toLowerCase() === cleanId.toLowerCase()
+    );
+
+    if (existingOwner && existingOwner !== cleanAddr) {
+      alert(`@${cleanId} is already bound to another wallet! Choose a unique ID.`);
+      return;
+    }
+
+    // Permanent 1:1 Binding
+    globalRegistry[cleanAddr] = cleanId;
+    localStorage.setItem('giwa_global_identity_registry', JSON.stringify(globalRegistry));
+    
+    // Reverse Lookup Mapping
+    localStorage.setItem(`upid_lookup_${cleanId.toLowerCase()}`, cleanAddr);
+
+    setUpId(cleanId);
+    setIsRegistered(true);
+    setWorkflowStep(1);
+    localStorage.setItem(`step_${cleanAddr}`, '1');
+  };
+
+  // FX Converters
   const handleTestChange = (val: string) => {
     setFxTestAmount(val);
     const num = parseFloat(val) || 0;
@@ -60,63 +139,14 @@ export default function Home() {
     setFxInrAmount((testVal * 120).toFixed(2));
   };
 
-  // 1. Persistent Storage Load
-  useEffect(() => {
-    if (isConnected && address) {
-      const cleanAddress = address.toLowerCase();
-
-      const savedUpId = localStorage.getItem(`upid_${cleanAddress}`);
-      if (savedUpId) {
-        setUpId(savedUpId);
-        setIsRegistered(true);
-      } else {
-        setUpId('');
-        setIsRegistered(false);
-      }
-
-      const savedStep = localStorage.getItem(`step_${cleanAddress}`);
-      const savedTxCount = localStorage.getItem(`txs_${cleanAddress}`);
-      if (savedStep) setWorkflowStep(parseInt(savedStep));
-      if (savedTxCount) setPracticeTxCount(parseInt(savedTxCount));
-
-      const savedRoyalty = localStorage.getItem(`royalty_${cleanAddress}`);
-      if (savedRoyalty) setRoyaltyEarned(parseFloat(savedRoyalty));
-
-      const savedHistory = localStorage.getItem(`tx_history_${cleanAddress}`);
-      if (savedHistory) setTxHistory(JSON.parse(savedHistory));
-    } else {
-      setUpId('');
-      setIsRegistered(false);
-      setWorkflowStep(0);
-      setPracticeTxCount(0);
-      setTxHistory([]);
-      setRoyaltyEarned(0);
-    }
-  }, [address, isConnected]);
-
-  // 2. Register UP.ID
-  const handleSaveUpId = () => {
-    if (!upId.trim() || !address) return;
-    const cleanAddress = address.toLowerCase();
-    const cleanId = upId.trim().replace(/^@/, '');
-
-    localStorage.setItem(`upid_${cleanAddress}`, cleanId);
-    localStorage.setItem(`upid_lookup_${cleanId.toLowerCase()}`, cleanAddress);
-
-    setUpId(cleanId);
-    setIsRegistered(true);
-    setWorkflowStep(1);
-    localStorage.setItem(`step_${cleanAddress}`, '1');
-  };
-
-  // 3. Workflow Steps Logic
+  // Workflow Step Actions
   const handleWorkflowRun = (stepNumber: number) => {
     if (!address) return;
-    const cleanAddress = address.toLowerCase();
+    const cleanAddr = address.toLowerCase();
 
     if (stepNumber === 1 && isRegistered) {
       setWorkflowStep(1);
-      localStorage.setItem(`step_${cleanAddress}`, '1');
+      localStorage.setItem(`step_${cleanAddr}`, '1');
     } else if (stepNumber === 2 && workflowStep >= 1) {
       sendTransaction({
         to: address,
@@ -124,14 +154,13 @@ export default function Home() {
       });
     } else if (stepNumber === 3 && practiceTxCount > 0) {
       setWorkflowStep(2);
-      localStorage.setItem(`step_${cleanAddress}`, '2');
+      localStorage.setItem(`step_${cleanAddr}`, '2');
     }
   };
 
-  // 4. Web3 UPI Pay Logic
+  // Web3 UPI Pay Logic
   const handleWeb3Pay = () => {
     if (!payRecipient || !payAmount) return;
-
     let targetAddress = payRecipient.trim();
 
     if (targetAddress.startsWith('@') || !targetAddress.startsWith('0x')) {
@@ -140,7 +169,7 @@ export default function Home() {
       if (resolvedAddress) {
         targetAddress = resolvedAddress;
       } else {
-        alert(`UP.ID @${cleanLookupId} not found in local registry.`);
+        alert(`UP.ID @${cleanLookupId} not found.`);
         return;
       }
     }
@@ -151,19 +180,19 @@ export default function Home() {
     });
   };
 
-  // 5. On-Chain Confirmation Handler
+  // On-chain confirmation handler
   useEffect(() => {
     if (isConfirmed && hash && address) {
-      const cleanAddress = address.toLowerCase();
+      const cleanAddr = address.toLowerCase();
 
       const newTxCount = practiceTxCount + 1;
       setPracticeTxCount(newTxCount);
-      localStorage.setItem(`txs_${cleanAddress}`, newTxCount.toString());
+      localStorage.setItem(`txs_${cleanAddr}`, newTxCount.toString());
 
       const addedRoyalty = (parseFloat(payAmount) || 0.0001) * 0.005;
       const newRoyaltyTotal = royaltyEarned + addedRoyalty;
       setRoyaltyEarned(newRoyaltyTotal);
-      localStorage.setItem(`royalty_${cleanAddress}`, newRoyaltyTotal.toString());
+      localStorage.setItem(`royalty_${cleanAddr}`, newRoyaltyTotal.toString());
 
       const newTx: TxHistory = {
         hash,
@@ -174,7 +203,7 @@ export default function Home() {
 
       const updatedHistory = [newTx, ...txHistory];
       setTxHistory(updatedHistory);
-      localStorage.setItem(`tx_history_${cleanAddress}`, JSON.stringify(updatedHistory));
+      localStorage.setItem(`tx_history_${cleanAddr}`, JSON.stringify(updatedHistory));
     }
   }, [isConfirmed, hash, address]);
 
@@ -205,7 +234,7 @@ export default function Home() {
       backgroundImage: 'radial-gradient(circle at top, #1e1b4b 0%, #070d19 60%)'
     }}>
 
-      {/* HEADER WITH BRANDING & SOCIAL LINKS */}
+      {/* HEADER */}
       <header style={{
         borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
         paddingBottom: '16px',
@@ -248,7 +277,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SOCIAL MEDIA ICONS BAR */}
+        {/* SOCIAL LINKS */}
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center', margin: '4px 0' }}>
           <a href="https://x.com/Bhupendrxsingh" target="_blank" rel="noreferrer" title="X (Twitter)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="#94a3b8"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -272,7 +301,7 @@ export default function Home() {
 
       <main style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-        {/* IDENTITY & ROYALTIES */}
+        {/* IDENTITY SECTION */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ fontSize: '11px', fontWeight: '800', color: '#38bdf8', letterSpacing: '1px' }}>WEB3 IDENTITY & ROYALTIES</span>
@@ -286,7 +315,7 @@ export default function Home() {
           {isRegistered ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#070d19', padding: '10px 14px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
-                <span style={{ fontSize: '13px', color: '#94a3b8' }}>Your UP.ID</span>
+                <span style={{ fontSize: '13px', color: '#94a3b8' }}>Bound UP.ID</span>
                 <span style={{ fontFamily: 'monospace', fontSize: '15px', color: '#38bdf8', fontWeight: 'bold' }}>@{upId}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#070d19', padding: '10px 14px', borderRadius: '10px', border: '1px solid #1e2d4a' }}>
@@ -300,18 +329,18 @@ export default function Home() {
             <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
-                placeholder="Register @UP.ID (e.g. @bhupendra)"
-                value={upId}
-                onChange={(e) => setUpId(e.target.value)}
+                placeholder="Register Unique @UP.ID"
+                value={inputUpId}
+                onChange={(e) => setInputUpId(e.target.value)}
                 disabled={!isConnected}
                 style={{ flex: 1, backgroundColor: '#070d19', border: '1px solid #1e2d4a', borderRadius: '10px', padding: '10px 12px', color: '#fff', fontSize: '13px', outline: 'none' }}
               />
               <button
-                onClick={handleSaveUpId}
-                disabled={!isConnected || !upId.trim()}
+                onClick={handleRegisterIdentity}
+                disabled={!isConnected || !inputUpId.trim()}
                 style={{ backgroundColor: '#059669', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 16px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
               >
-                Save ID
+                Bind ID
               </button>
             </div>
           )}
@@ -367,7 +396,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* WEB3 UPI PAYMENTS & INTERACTIVE FX CALCULATOR */}
+        {/* WEB3 UPI PAYMENTS & FX CALCULATOR */}
         <section style={{ backgroundColor: 'rgba(19, 31, 55, 0.7)', backdropFilter: 'blur(10px)', padding: '16px', borderRadius: '16px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
           <div style={{ display: 'flex', borderBottom: '1px solid #1e2d4a', paddingBottom: '10px', marginBottom: '14px', gap: '8px' }}>
             <button onClick={() => setActiveTab('pay')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: activeTab === 'pay' ? '#0284c7' : 'transparent', color: activeTab === 'pay' ? '#fff' : '#94a3b8', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>Web3 UPI Pay</button>
@@ -398,7 +427,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* DYNAMIC FX CALCULATOR */}
           {activeTab === 'fx' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
@@ -412,7 +440,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* LIVE CONVERTER INPUTS */}
               <div style={{ backgroundColor: '#070d19', padding: '12px', borderRadius: '12px', border: '1px solid #1e2d4a', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#38bdf8' }}>LIVE CROSS-BORDER CALCULATOR</span>
                 

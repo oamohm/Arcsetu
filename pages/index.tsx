@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAccount, useSendTransaction, useBalance, useChainId } from 'wagmi'
+import { useAccount, useSendTransaction, useBalance } from 'wagmi'
 import { parseEther } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
@@ -13,42 +13,25 @@ interface ActivityItem {
 
 export default function Home() {
   const { address, isConnected } = useAccount()
-  const chainId = useChainId()
   const { data: balanceData } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.0001')
-  const [practiceCount, setPracticeCount] = useState(3)
-  const [stampIssued, setStampIssued] = useState(true)
+  const [practiceCount, setPracticeCount] = useState(0)
+  const [stampIssued, setStampIssued] = useState(false)
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
-
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      id: '1',
-      title: 'Web3 UPI (@Bhupendrxsingh)',
-      timestamp: new Date().toLocaleTimeString(),
-      amount: '0.0001 USDC',
-      txHash: '0x7a8...e41'
-    },
-    {
-      id: '2',
-      title: 'Practice Tx Execution',
-      timestamp: new Date(Date.now() - 3600000).toLocaleTimeString(),
-      amount: '0.0001 USDC',
-      txHash: '0x3b2...a89'
-    }
-  ])
+  const [activities, setActivities] = useState<ActivityItem[]>([])
 
   const handlePayment = async () => {
     if (!isConnected) {
-      alert('कृपया पहले कनेक्ट वॉलेट बटन से अपना वॉलेट जोड़ें!')
+      alert('कृपया पहले Connect Wallet बटन से अपना वॉलेट जोड़ें!')
       return
     }
     if (!recipient) {
-      alert('कृपया प्राप्तकर्ता दर्ज करें!')
+      alert('कृपया प्राप्तकर्ता (UP.ID या Wallet Address) दर्ज करें!')
       return
     }
 
@@ -71,7 +54,7 @@ export default function Home() {
         id: Date.now().toString(),
         title: `Web3 UPI (${recipient})`,
         timestamp: new Date().toLocaleTimeString(),
-        amount: `${amount} ${balanceData?.symbol || 'TOKEN'}`,
+        amount: `${amount} ${balanceData?.symbol || 'USDC'}`,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`
       }
       setActivities([newAct, ...activities])
@@ -85,7 +68,7 @@ export default function Home() {
 
   const handlePracticeTx = async () => {
     if (!isConnected) {
-      alert('कृपया पहले कनेक्ट वॉलेट बटन से अपना वॉलेट जोड़ें!')
+      alert('कृपया पहले Connect Wallet बटन से अपना वॉलेट जोड़ें!')
       return
     }
     try {
@@ -104,7 +87,7 @@ export default function Home() {
         id: Date.now().toString(),
         title: 'Practice Tx Execution',
         timestamp: new Date().toLocaleTimeString(),
-        amount: `0.00001 ${balanceData?.symbol || 'TOKEN'}`,
+        amount: `0.00001 ${balanceData?.symbol || 'USDC'}`,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`
       }
       setActivities([newAct, ...activities])
@@ -117,6 +100,10 @@ export default function Home() {
   }
 
   const handleDownloadCSV = () => {
+    if (activities.length === 0) {
+      alert('डाउनलोड करने के लिए कोई एक्टिविटी हिस्ट्री नहीं है।')
+      return
+    }
     const headers = "ID,Title,Timestamp,Amount,TxHash\n"
     const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
@@ -131,7 +118,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
         
-        {/* RainbowKit Header with Balance Display */}
+        {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-center bg-[#111625] p-5 rounded-2xl border border-slate-800 gap-4 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
@@ -153,28 +140,38 @@ export default function Home() {
           </div>
         )}
 
+        {/* Identity Layer */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
             <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">Web3 Identity & Royalties</span>
-            <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 font-medium">
-              Verified Dojang Builder
+            <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
+              isConnected 
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                : 'bg-slate-800 text-slate-500 border-slate-700'
+            }`}>
+              {isConnected ? 'Verified Dojang Builder' : 'Wallet Not Connected'}
             </span>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">Bound UP.ID</span>
-              <span className="text-sm font-mono font-semibold text-blue-300">@Bhupendrxsingh</span>
+              <span className="text-sm font-mono font-semibold text-blue-300">
+                {isConnected ? `@${address?.slice(2, 10)}` : '--'}
+              </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">Live Balance</span>
               <span className="text-sm font-mono font-semibold text-emerald-400">
-                {balanceData ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : '0.0000 USDC'}
+                {isConnected && balanceData 
+                  ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` 
+                  : '--'}
               </span>
             </div>
           </div>
         </section>
 
+        {/* Workflow */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">Builder Onboarding Workflow</h2>
           
@@ -183,8 +180,12 @@ export default function Home() {
               <p className="text-xs font-medium text-slate-200">1. Create UP.ID & Wallet</p>
               <p className="text-[10px] text-slate-500">Binds identity to wallet</p>
             </div>
-            <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded border border-emerald-500/30 font-medium">
-              Done ✓
+            <span className={`text-xs px-2.5 py-1 rounded border font-medium ${
+              isConnected 
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                : 'bg-slate-800 text-slate-500 border-slate-700'
+            }`}>
+              {isConnected ? 'Done ✓' : 'Pending'}
             </span>
           </div>
 
@@ -195,8 +196,8 @@ export default function Home() {
             </div>
             <button 
               onClick={handlePracticeTx}
-              disabled={txLoading}
-              className="text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95"
+              disabled={txLoading || !isConnected}
+              className="text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95"
             >
               {txLoading ? 'Running...' : 'Run'}
             </button>
@@ -208,11 +209,12 @@ export default function Home() {
               <p className="text-[10px] text-slate-500">Marks onboarding completed</p>
             </div>
             <button 
-              onClick={() => setStampIssued(!stampIssued)}
+              onClick={() => isConnected && setStampIssued(!stampIssued)}
+              disabled={!isConnected}
               className={`text-xs px-2.5 py-1 rounded border font-medium transition-all ${
                 stampIssued 
                   ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
-                  : 'bg-slate-800 text-slate-400 border-slate-700'
+                  : 'bg-slate-800 text-slate-500 border-slate-700'
               }`}
             >
               {stampIssued ? 'Issued ✓' : 'Claim Stamp'}
@@ -220,6 +222,7 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Payments */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex border-b border-slate-800 gap-2">
             <button 
@@ -252,7 +255,7 @@ export default function Home() {
             <div className="space-y-3 pt-2">
               <input 
                 type="text" 
-                placeholder="Send to @UP.ID or 0x Wallet (e.g. @Bhupendrxsingh or 0x...)" 
+                placeholder="Send to @UP.ID or 0x Wallet" 
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
                 className="w-full bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
@@ -297,7 +300,7 @@ export default function Home() {
                 <span className="font-mono text-emerald-400 font-semibold">16.12 KRW (₩)</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">1 ETH / USDC =</span>
+                <span className="text-slate-400">1 USDC / ETH =</span>
                 <span className="font-mono text-blue-400 font-semibold">₹298,450 INR | ₩4,810,000 KRW</span>
               </div>
               <p className="text-[10px] text-slate-500 text-center pt-1">Cross-Border FX Lock Rate via GIWA Settlement Engine</p>
@@ -305,6 +308,7 @@ export default function Home() {
           )}
         </section>
 
+        {/* Faucets */}
         <section className="flex gap-3">
           <a 
             href="https://sepolia-faucet.pk910.de/" 
@@ -324,6 +328,7 @@ export default function Home() {
           </a>
         </section>
 
+        {/* Dynamic Activity Log */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Cross-Border Activity Log</span>
@@ -336,19 +341,25 @@ export default function Home() {
           </div>
 
           <div className="space-y-2 text-xs">
-            {activities.map((act) => (
-              <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
-                <div>
-                  <p className="text-emerald-400 font-medium">{act.title}</p>
-                  <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
+            {activities.length > 0 ? (
+              activities.map((act) => (
+                <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
+                  <div>
+                    <p className="text-emerald-400 font-medium">{act.title}</p>
+                    <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-blue-400 hover:underline cursor-pointer text-[10px] font-mono block">
+                      {act.txHash}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-blue-400 hover:underline cursor-pointer text-[10px] font-mono block">
-                    {act.txHash}
-                  </span>
-                </div>
+              ))
+            ) : (
+              <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
+                {isConnected ? 'कोई ट्रांजैक्शन नहीं हुआ है।' : 'वॉलेट कनेक्ट करें - कोई एक्टिविटी नहीं है।'}
               </div>
-            ))}
+            )}
           </div>
         </section>
 

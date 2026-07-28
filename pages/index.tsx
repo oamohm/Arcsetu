@@ -243,7 +243,6 @@ export default function Home() {
     explorerBase = 'https://etherscan.io/tx/'
   }
 
-  // SSR Safe Audio Chime Handler
   const playSuccessChime = () => {
     if (typeof window === 'undefined') return
     try {
@@ -313,7 +312,6 @@ export default function Home() {
   }, [isConnected, currentWallet])
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
     if (isScannerOpen) {
       const scanner = new Html5QrcodeScanner(
         "reader",
@@ -641,6 +639,7 @@ export default function Home() {
             </div>
           </div>
 
+          {/* Custom Handle Input */}
           {isConnected && (
             <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
               <input 
@@ -659,6 +658,7 @@ export default function Home() {
             </div>
           )}
 
+          {/* Ecosystem Cards */}
           <div className="pt-2">
             <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-medium">{t.multichainHeader}</p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useSwitchChain, useBalance, useSendTransaction } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 
@@ -16,21 +17,21 @@ export default function Home() {
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [customId, setCustomId] = useState('');
-  const [logs, setLogs] = useState<any[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
 
   const { data: balance } = useBalance({ address, chainId: selectedNetwork });
   const { sendTransaction } = useSendTransaction();
 
-  const addActivityLog = (title: string, amt: string, hash: string, explorerUrl: string) => {
-    const newLog = {
+  const addActivity = (title: string, amt: string, hash: string, explorerUrl: string) => {
+    const newAct = {
       id: Date.now(),
       title,
       amount: amt,
       timestamp: new Date().toLocaleTimeString(),
-      txHash: hash,
+      txhash: hash,
       explorerUrl,
     };
-    setLogs(prev => [newLog, ...prev]);
+    setActivities(prev => [newAct, ...prev]);
   };
 
   const handleNetworkChange = (id: number) => {
@@ -39,12 +40,12 @@ export default function Home() {
     if (targetChain) {
       switchChain({ chainId: id });
     }
-    addActivityLog('Network Switch', `ID: ${id}`, '0xSync...', SUPPORTED_NETWORKS.find(n => n.id === id)?.explorer || '#');
+    addActivity('Network Switched', `ID: ${id}`, '0xSync...', SUPPORTED_NETWORKS.find(n => n.id === id)?.explorer || '#');
   };
 
   const handleUPIPayment = async () => {
     if (!isConnected) {
-      alert('Please connect your wallet first.');
+      alert('Please connect your wallet via RainbowKit.');
       return;
     }
     try {
@@ -56,12 +57,12 @@ export default function Home() {
         {
           onSuccess: (hash) => {
             const activeExp = SUPPORTED_NETWORKS.find(n => n.id === selectedNetwork)?.explorer || 'https://etherscan.io';
-            addActivityLog('Multi-Chain UPI Pay', `${amount} USDC`, hash, `${activeExp}/tx/${hash}`);
+            addActivity('Multi-Chain UPI Pay', `${amount} USDC`, hash, `${activeExp}/tx/${hash}`);
           },
         }
       );
     } catch (error: any) {
-      console.error('Payment execution error:', error);
+      console.error('Payment error:', error);
     }
   };
 
@@ -69,7 +70,7 @@ export default function Home() {
     <main className="min-h-screen bg-[#07090e] text-[#f8fafc] p-4 md:p-8 font-sans">
       <div className="max-w-5xl mx-auto space-y-6">
 
-        {/* Top Header */}
+        {/* Top Header with RainbowKit Connect Button */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0e131f] p-5 rounded-2xl border border-slate-800 gap-4 shadow-xl">
           <div>
             <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
@@ -78,9 +79,7 @@ export default function Home() {
             <p className="text-xs text-slate-400 mt-1">KR / JP / IN Multi-Chain Web3 Settlement & Payment Infrastructure</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs bg-slate-900 text-slate-300 px-3 py-1.5 rounded-xl border border-slate-800 font-mono">
-              {isConnected ? `${address?.substring(0, 6)}...${address?.substring(38)}` : 'Wallet Not Connected'}
-            </span>
+            <ConnectButton />
           </div>
         </header>
 
@@ -96,7 +95,7 @@ export default function Home() {
               className="w-full p-3 bg-[#07090e] border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-purple-500 font-mono"
             />
             <button
-              onClick={() => addActivityLog('Identity Bound', customId || '@anonymous', '0xID...', '#')}
+              onClick={() => addActivity('Identity Bound', customId || '@anonymous', '0xID...', '#')}
               className="w-full py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-medium rounded-xl border border-purple-500/30 transition-all"
             >
               Claim Universal Handle
@@ -166,13 +165,29 @@ export default function Home() {
           </button>
         </section>
 
+        {/* Ecosystem Protocols & Official Links (Socials & Docs) */}
+        <section className="bg-[#0e131f] p-5 rounded-2xl border border-slate-800 space-y-3">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ecosystem Protocols & Official Links</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <a href="https://testnet.arc.network" target="_blank" rel="noreferrer" className="p-3 bg-[#07090e] border border-slate-800 rounded-xl text-xs text-purple-400 hover:border-slate-700 block text-center">
+              Arc Protocol Explorer ↗
+            </a>
+            <a href="https://giwa.io" target="_blank" rel="noreferrer" className="p-3 bg-[#07090e] border border-slate-800 rounded-xl text-xs text-purple-400 hover:border-slate-700 block text-center">
+              GIWA L2 Faucet ↗
+            </a>
+            <a href="https://github.com/oamohm/giwasetu-contract" target="_blank" rel="noreferrer" className="p-3 bg-[#07090e] border border-slate-800 rounded-xl text-xs text-purple-400 hover:border-slate-700 block text-center">
+              GitHub Repository ↗
+            </a>
+          </div>
+        </section>
+
         {/* Cross-Chain Activity & Verification Log */}
         <section className="bg-[#0e131f] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cross-Chain Activity & Verification Log</h2>
-            {logs.length > 0 && (
+            {activities.length > 0 && (
               <button 
-                onClick={() => setLogs([])}
+                onClick={() => setActivities([])}
                 className="text-[10px] text-slate-400 hover:text-white bg-slate-800/50 px-2.5 py-1 rounded-lg border border-slate-700/50 transition-colors"
               >
                 Clear Logs
@@ -180,23 +195,23 @@ export default function Home() {
             )}
           </div>
           <div className="bg-[#07090e] p-4 rounded-xl border border-slate-900 h-40 overflow-y-auto font-mono text-xs space-y-2">
-            {logs.length === 0 ? (
-              <div className="text-slate-500 text-center py-10">Connect wallet and execute transactions to view multi-chain history and verification logs...</div>
+            {activities.length === 0 ? (
+              <div className="text-slate-500 text-center py-10">Connect wallet via RainbowKit and execute transactions to view multi-chain history...</div>
             ) : (
-              logs.map((log) => (
-                <div key={log.id} className="bg-[#0e131f] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
+              activities.map((act) => (
+                <div key={act.id} className="bg-[#0e131f] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
                   <div>
-                    <p className="text-emerald-400 font-medium">{log.title}: {log.amount}</p>
-                    <p className="text-[10px] text-slate-500">{log.timestamp}</p>
+                    <p className="text-emerald-400 font-medium">{act.title}: {act.amount}</p>
+                    <p className="text-[10px] text-slate-500">{act.timestamp}</p>
                   </div>
                   <div className="text-right">
                     <a
-                      href={log.explorerUrl}
+                      href={act.explorerUrl}
                       target="_blank"
                       rel="noreferrer"
                       className="text-purple-400 hover:underline text-[10px] block"
                     >
-                      Verify Tx ({log.txHash.substring(0, 8)}...)
+                      Verify Tx ({act.txhash.substring(0, 8)}...)
                     </a>
                   </div>
                 </div>

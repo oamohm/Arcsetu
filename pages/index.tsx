@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
 import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { QRCodeSVG } from 'qrcode.react'
+import { Html5QrcodeScanner } from 'html5-qrcode'
 
 type Lang = 'en' | 'ko' | 'hi' | 'es'
 
 const translations = {
   en: {
-    subtitle: 'KR ⇄ IN Multi-Chain Web3 Hub',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Multi-Chain Web3 Hub',
     identityHeader: 'Universal Multi-Chain Identity',
     verified: 'Verified Multi-Chain Builder',
     notConnected: 'Wallet Not Connected',
@@ -20,7 +20,7 @@ const translations = {
     workflowHeader: 'Builder Onboarding Workflow',
     step1: '1. Create Universal ID & Wallet',
     step1Sub: 'Binds identity deterministically across chains',
-    done: 'Done',
+    done: 'Done ✓',
     pending: 'Pending',
     step2: '2. Execute Cross-Chain Tx',
     step2Sub: 'Count: {count} test txns',
@@ -28,7 +28,7 @@ const translations = {
     running: 'Running...',
     step3: '3. Issue Multi-Chain Stamp (Dojang)',
     step3Sub: 'Marks multi-chain verification',
-    issued: 'Issued',
+    issued: 'Issued ✓',
     claim: 'Issue Dojang',
     placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
     payBtn: 'Pay via Multi-Chain UPI',
@@ -44,13 +44,13 @@ const translations = {
     royaltyHeader: 'Universal Royalty & Fee Distribution Engine',
     royaltyDesc: 'Distribute creator fees, builder incentives, or cross-chain royalties across any connected network natively.',
     distributeRoyalty: 'Send Royalty',
-    txSuccessTitle: 'Transaction Confirmed',
+    txSuccessTitle: 'Transaction Confirmed!',
     txSuccessDesc: 'Your transaction was successfully processed on the network.',
     viewExplorer: 'View on Explorer ↗',
     close: 'Close',
   },
   ko: {
-    subtitle: 'KR ⇄ IN 멀티체인 Web3 허브',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
     identityHeader: '유니버셜 멀티체인 신원',
     verified: '검증된 멀티체인 빌더',
     notConnected: '지갑 미연결',
@@ -62,7 +62,7 @@ const translations = {
     workflowHeader: '빌더 온보딩 워크플로우',
     step1: '1. 유니버셜 ID 및 지갑 생성',
     step1Sub: '체인 간 신원 확정적 연결',
-    done: '완료',
+    done: '완료 ✓',
     pending: '대기 중',
     step2: '2. 크로스체인 트랜잭션 실행',
     step2Sub: '횟수: {count}회 실행됨',
@@ -70,7 +70,7 @@ const translations = {
     running: '실행 중...',
     step3: '3. 멀티체인 도장 발급',
     step3Sub: '온보딩 검증 완료 표시',
-    issued: '발급됨',
+    issued: '발급됨 ✓',
     claim: '도장 발급받기',
     placeholder: '@UP_ID 또는 0x 주소 입력',
     payBtn: '멀티체인 UPI 결제',
@@ -86,13 +86,13 @@ const translations = {
     royaltyHeader: '유니버셜 로열티 및 수수료 분배 엔진',
     royaltyDesc: '모든 연결된 네트워크에서 크리에이터 수수료, 빌더 인센티브 또는 크로스체인 로열티를 직접 분배합니다.',
     distributeRoyalty: '로열티 전송',
-    txSuccessTitle: '트랜잭션 승인 완료',
+    txSuccessTitle: '트랜잭션 승인 완료!',
     txSuccessDesc: '트랜잭션이 네트워크에서 성공적으로 처리되었습니다.',
     viewExplorer: '탐색기에서 보기 ↗',
     close: '닫기',
   },
   hi: {
-    subtitle: 'KR ⇄ IN मल्टी-चेन Web3 हब',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
     identityHeader: 'यूनिवर्सल मल्टी-चेन पहचान',
     verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
@@ -104,7 +104,7 @@ const translations = {
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
     step1: '1. यूनिवर्सल ID और वॉलेट बनाएं',
     step1Sub: 'सभी चेन पर पहचान सुरक्षित रूप से जोड़ता है',
-    done: 'हो गया',
+    done: 'हो गया ✓',
     pending: 'लंबित',
     step2: '2. क्रॉस-चेन ट्रांजैक्शन निष्पादित करें',
     step2Sub: 'गिनती: {count} टेस्ट ट्रांजैक्शन',
@@ -112,7 +112,7 @@ const translations = {
     running: 'चल रहा है...',
     step3: '3. मल्टी-चेन स्टाम्प (Dojang) जारी करें',
     step3Sub: 'मल्टी-चेन वेरिफिकेशन पूर्ण चिह्नित करता है',
-    issued: 'जारी हुआ',
+    issued: 'जारी हुआ ✓',
     claim: 'Dojang जारी करें',
     placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
     payBtn: 'मल्टी-चेन UPI भुगतान',
@@ -128,13 +128,13 @@ const translations = {
     royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन',
     royaltyDesc: 'क्रिएटर फ़ीस या रॉयल्टी ट्रांसफर करें। ख़ाली छोड़ने पर यह आपके खुद के वॉलेट में ट्रांसफर होगा।',
     distributeRoyalty: 'रॉयल्टी भेजें',
-    txSuccessTitle: 'ट्रांजैक्शन सफल रहा',
+    txSuccessTitle: 'ट्रांजैक्शन सफल रहा!',
     txSuccessDesc: 'आपका ट्रांजैक्शन नेटवर्क पर सफलतापूर्वक पूरा हो गया है।',
     viewExplorer: 'एक्सप्लोरर पर देखें ↗',
     close: 'बंद करें',
   },
   es: {
-    subtitle: 'KR ⇄ IN Hub Web3 Multicadena',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
     identityHeader: 'Identidad Multicadena Universal',
     verified: 'Creador Multicadena Verificado',
     notConnected: 'Billetera No Conectada',
@@ -146,7 +146,7 @@ const translations = {
     workflowHeader: 'Flujo de Trabajo de Incorporación',
     step1: '1. Crear ID Universal y Billetera',
     step1Sub: 'Vincula la identidad en cadenas de forma determinista',
-    done: 'Hecho',
+    done: 'Hecho ✓',
     pending: 'Pendiente',
     step2: '2. Ejecutar Tx Multicadena',
     step2Sub: 'Conteo: {count} txs de prueba',
@@ -154,7 +154,7 @@ const translations = {
     running: 'Ejecutando...',
     step3: '3. Emitir Sello Multicadena (Dojang)',
     step3Sub: 'Marca la verificación completada',
-    issued: 'Emitido',
+    issued: 'Emitido ✓',
     claim: 'Emitir Dojang',
     placeholder: 'Enviar a @UP_ID o Billetera 0x',
     payBtn: 'Pago vía UPI Multicadena',
@@ -170,7 +170,7 @@ const translations = {
     royaltyHeader: 'Motor Universal de Distribución de Regalías',
     royaltyDesc: 'Distribuya tarifas de creador e incentivos en cualquier red conectada de forma nativa.',
     distributeRoyalty: 'Enviar Regalía',
-    txSuccessTitle: 'Transacción Confirmada',
+    txSuccessTitle: '¡Transacción Confirmada!',
     txSuccessDesc: 'Su transacción se procesó con éxito en la red.',
     viewExplorer: 'Ver en Explorador ↗',
     close: 'Cerrar',
@@ -193,22 +193,12 @@ interface ModalDetails {
   url: string
 }
 
-const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000' as const
+const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
 export default function Home() {
-  const [mounted, setMounted] = useState(false)
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
-  
-  const currentWallet = address ? address.toLowerCase() : ''
-  const isGiwa = chainId === 91342
-  const isArc = chainId === 5042002
-
-  const { data: balanceData } = useBalance({ 
-    address,
-    token: isArc ? ARC_USDC_ADDRESS : undefined
-  })
-
+  const { data: balanceData } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
   const { writeContractAsync } = useWriteContract()
 
@@ -233,11 +223,11 @@ export default function Home() {
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [activities, setActivities] = useState<ActivityItem[]>([])
 
-  const scannerRef = useRef<any>(null)
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  const currentWallet = address ? address.toLowerCase() : ''
+  const isGiwa = chainId === 91342
+  const isArc = chainId === 5042002 || true
 
   let networkName = 'Arc Testnet'
   let networkPrefix = 'ARC'
@@ -253,10 +243,11 @@ export default function Home() {
     explorerBase = 'https://etherscan.io/tx/'
   }
 
+  // SSR Safe Audio Chime Handler
   const playSuccessChime = () => {
     if (typeof window === 'undefined') return
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
       if (!AudioCtx) return
       const ctx = new AudioCtx()
       
@@ -286,7 +277,7 @@ export default function Home() {
       osc1.stop(now + 0.6)
       osc2.stop(now + 0.6)
     } catch (e) {
-      console.error('audio playback failed', e)
+      console.error('Audio playback failed', e)
     }
   }
 
@@ -297,7 +288,7 @@ export default function Home() {
       try {
         setRegisteredIds(JSON.parse(savedIds))
       } catch (e) {
-        console.error('failed to parse saved up ids', e)
+        console.error('Failed to parse saved UP IDs', e)
       }
     }
   }, [])
@@ -310,7 +301,7 @@ export default function Home() {
         try {
           setActivities(JSON.parse(savedHistory))
         } catch (e) {
-          console.error('failed to parse transaction history', e)
+          console.error('Failed to parse transaction history', e)
           setActivities([])
         }
       } else {
@@ -322,51 +313,39 @@ export default function Home() {
   }, [isConnected, currentWallet])
 
   useEffect(() => {
-    let isMounted = true
-
+    if (typeof window === 'undefined') return
     if (isScannerOpen) {
-      const timer = setTimeout(async () => {
-        if (!isMounted || !document.getElementById("reader")) return
+      const scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        false
+      )
+      
+      scannerRef.current = scanner
 
-        try {
-          const { Html5QrcodeScanner } = await import('html5-qrcode')
-          const scanner = new Html5QrcodeScanner(
-            "reader",
-            { fps: 10, qrbox: { width: 220, height: 220 } },
-            false
-          )
-          
-          scannerRef.current = scanner
-
-          scanner.render(
-            (decodedText: string) => {
-              let extracted = decodedText
-              if (decodedText.includes('ethereum:')) {
-                extracted = decodedText.split('ethereum:')[1].split('@')[0].split('?')[0]
-              }
-              setRecipient(extracted)
-              setStatusMsg(`scanned: ${extracted.slice(0, 10)}...`)
-              setIsScannerOpen(false)
-            },
-            () => {}
-          )
-        } catch (err) {
-          console.error('qr scanner init error', err)
-        }
-      }, 100)
-
-      return () => {
-        isMounted = false
-        clearTimeout(timer)
-        if (scannerRef.current) {
-          scannerRef.current.clear().catch(() => {})
-          scannerRef.current = null
-        }
-      }
+      scanner.render(
+        (decodedText) => {
+          let extracted = decodedText
+          if (decodedText.includes('ethereum:')) {
+            extracted = decodedText.split('ethereum:')[1].split('@')[0].split('?')[0]
+          }
+          setRecipient(extracted)
+          setStatusMsg(`Scanned: ${extracted.slice(0, 10)}...`)
+          setIsScannerOpen(false)
+          scanner.clear().catch(console.error)
+        },
+        () => {}
+      )
     } else {
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(() => {})
+        scannerRef.current.clear().catch(console.error)
         scannerRef.current = null
+      }
+    }
+
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.clear().catch(console.error)
       }
     }
   }, [isScannerOpen])
@@ -394,13 +373,13 @@ export default function Home() {
 
   const handleRegisterUpId = () => {
     if (!currentWallet) {
-      setStatusMsg('please connect your wallet first.')
+      setStatusMsg('Please connect your wallet first.')
       return
     }
 
     let cleanId = customUpId.trim().toLowerCase()
     if (!cleanId) {
-      setStatusMsg('please enter a valid handle.')
+      setStatusMsg('Please enter a valid handle.')
       return
     }
 
@@ -409,13 +388,13 @@ export default function Home() {
     }
 
     if (cleanId.length < 3) {
-      setStatusMsg('handle must be at least 2 characters long.')
+      setStatusMsg('Handle must be at least 2 characters long.')
       return
     }
 
     const allExistingValues = Object.values(registeredIds).map(id => id.toLowerCase())
     if (allExistingValues.includes(cleanId) && registeredIds[currentWallet] !== cleanId) {
-      setStatusMsg(`error: ID "${cleanId}" is already taken by another wallet.`)
+      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet.`)
       return
     }
 
@@ -429,7 +408,7 @@ export default function Home() {
       localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
     }
     setCustomUpId('')
-    setStatusMsg(`custom handle updated to ${cleanId}`)
+    setStatusMsg(`Custom handle updated to ${cleanId}`)
   }
 
   const handlePayment = async () => {
@@ -446,9 +425,8 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const cleanTarget = recipient.trim()
-      const targetAddress: `0x${string}` = (cleanTarget.startsWith('0x') && cleanTarget.length === 42)
-        ? (cleanTarget as `0x${string}`) 
+      const targetAddress = (recipient.trim().startsWith('0x') && recipient.trim().length === 42)
+        ? (recipient.trim() as `0x${string}`) 
         : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
       const inputAmount = amount && !isNaN(Number(amount)) ? amount : '0.0001'
@@ -457,7 +435,7 @@ export default function Home() {
       if (isArc) {
         const parsedValue = parseUnits(inputAmount, 6)
         hash = await writeContractAsync({
-          address: ARC_USDC_ADDRESS,
+          address: ARC_USDC_ADDRESS as `0x${string}`,
           abi: erc20Abi,
           functionName: 'transfer',
           args: [targetAddress, parsedValue],
@@ -471,7 +449,7 @@ export default function Home() {
       }
 
       const amtSymbol = `${inputAmount} ${isArc ? 'USDC' : balanceData?.symbol || 'ETH'}`
-      const txTitle = `multi-chain upi payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
+      const txTitle = `Multi-Chain UPI Payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -484,12 +462,13 @@ export default function Home() {
       saveActivity(newAct)
       triggerSuccess(txTitle, amtSymbol, hash)
       setStatusMsg('')
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err)
-      if (err?.message?.includes('User rejected') || err?.code === 4001) {
-        setStatusMsg('transaction failed or cancelled.')
+      const error = err as { message?: string; code?: number }
+      if (error?.message?.includes('User rejected') || error?.code === 4001) {
+        setStatusMsg('Transaction failed or cancelled.')
       } else {
-        setStatusMsg('transaction failed. check network connection and gas balance.')
+        setStatusMsg('Transaction failed. Make sure you have Native Gas on Arc Testnet.')
       }
     } finally {
       setTxLoading(false)
@@ -503,13 +482,13 @@ export default function Home() {
     }
 
     const cleanRecipient = royaltyRecipient.trim()
-    const targetAddress: `0x${string}` = (cleanRecipient.startsWith('0x') && cleanRecipient.length === 42)
+    const targetAddress = (cleanRecipient.startsWith('0x') && cleanRecipient.length === 42)
       ? (cleanRecipient as `0x${string}`)
       : address
 
     try {
       setTxLoading(true)
-      setStatusMsg('processing royalty payout...')
+      setStatusMsg('Processing Royalty Payout...')
 
       const hash = await sendTransactionAsync({
         to: targetAddress,
@@ -517,8 +496,8 @@ export default function Home() {
       })
 
       const amtSymbol = `${royaltyAmount} ${balanceData?.symbol || 'ETH'}`
-      const targetLabel = targetAddress.toLowerCase() === address.toLowerCase() ? 'self wallet' : `${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)}`
-      const txTitle = `royalty distribution -> ${targetLabel}`
+      const targetLabel = targetAddress.toLowerCase() === address.toLowerCase() ? 'Self Wallet' : `${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)}`
+      const txTitle = `Royalty Distribution → ${targetLabel}`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -533,7 +512,7 @@ export default function Home() {
       setStatusMsg('')
     } catch (err) {
       console.error(err)
-      setStatusMsg('royalty payout failed or cancelled.')
+      setStatusMsg('Royalty payout failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
@@ -548,7 +527,7 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const targetAddr: `0x${string}` = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+      const targetAddr = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
       const hash = await sendTransactionAsync({
         to: targetAddr,
         value: parseEther('0.00001'),
@@ -556,7 +535,7 @@ export default function Home() {
 
       setPracticeCount(prev => prev + 1)
       const amtSymbol = `0.00001 ${balanceData?.symbol || 'ETH'}`
-      const txTitle = `test tx execution (${networkName})`
+      const txTitle = `Test Tx Execution (${networkName})`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -571,7 +550,7 @@ export default function Home() {
       setStatusMsg('')
     } catch (err) {
       console.error(err)
-      setStatusMsg('transaction failed or cancelled.')
+      setStatusMsg('Transaction failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
@@ -582,29 +561,26 @@ export default function Home() {
     const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
     const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
+    const url = window.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
     const a = document.createElement('a')
     a.href = url
     a.download = `multichain_activity_${Date.now()}.csv`
     a.click()
-    window.URL.revokeObjectURL(url)
   }
 
   const receiveQrData = isConnected && address
     ? `ethereum:${address}@${chainId}?label=${encodeURIComponent(userUpId)}`
-    : 'connect-wallet'
-
-  if (!mounted) return null
+    : 'Connect Wallet to Generate Receive QR'
 
   return (
     <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans relative">
       <div className="max-w-3xl mx-auto space-y-6">
         
-        {/* header */}
+        {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-center bg-[#111625] p-5 rounded-2xl border border-slate-800 gap-4 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 via-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
-              G
+              🌐
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight text-white">GIWASETU MULTI-CHAIN</h1>
@@ -618,10 +594,10 @@ export default function Home() {
               onChange={(e) => setLang(e.target.value as Lang)}
               className="bg-[#0b0e17] border border-slate-700 text-slate-200 text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-blue-500 cursor-pointer"
             >
-              <option value="en">English</option>
-              <option value="ko">한국어</option>
-              <option value="hi">हिंदी</option>
-              <option value="es">Español</option>
+              <option value="en">🌐 English</option>
+              <option value="ko">🇰🇷 한국어</option>
+              <option value="hi">🇮🇳 हिंदी</option>
+              <option value="es">🇪🇸 Español</option>
             </select>
             
             <ConnectButton showBalance={true} chainStatus="icon" accountStatus="address" />
@@ -635,7 +611,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* identity */}
+        {/* Identity Section */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
             <span className="text-xs font-semibold tracking-wider text-purple-400 uppercase">{t.identityHeader}</span>
@@ -656,10 +632,10 @@ export default function Home() {
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">{t.liveBalance} ({isConnected ? networkName : 'disconnected'})</span>
+              <span className="text-xs text-slate-400">{t.liveBalance} ({isConnected ? networkName : 'Disconnected'})</span>
               <span className="text-sm font-mono font-semibold text-emerald-400">
                 {isConnected 
-                  ? (balanceData ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : 'loading...') 
+                  ? (balanceData ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : 'Loading...') 
                   : '--'}
               </span>
             </div>
@@ -669,7 +645,7 @@ export default function Home() {
             <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
               <input 
                 type="text" 
-                placeholder="set custom handle (e.g. @bhupendra)" 
+                placeholder="Set custom handle (e.g. @bhupendra)" 
                 value={customUpId}
                 onChange={(e) => setCustomUpId(e.target.value)}
                 className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1 font-mono"
@@ -689,28 +665,28 @@ export default function Home() {
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">GIWA L2</p>
                 <p className="font-mono text-emerald-400 mt-1">
-                  {isConnected && isGiwa && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ETH` : (isConnected ? 'active / sync' : '--')}
+                  {isConnected && isGiwa && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ETH` : (isConnected ? 'Active / Sync' : '--')}
                 </p>
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Arc Testnet</p>
                 <p className="font-mono text-blue-400 mt-1">
-                  {isConnected && isArc && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ${balanceData.symbol}` : (isConnected ? 'active' : '--')}
+                  {isConnected && isArc && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ${balanceData.symbol}` : (isConnected ? 'Active' : '--')}
                 </p>
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Ethereum L1</p>
-                <p className="font-mono text-indigo-400 mt-1">{isConnected ? 'mainnet ready' : '--'}</p>
+                <p className="font-mono text-indigo-400 mt-1">{isConnected ? 'Mainnet Ready' : '--'}</p>
               </div>
               <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
                 <p className="text-slate-400 font-semibold text-[10px]">Bitcoin (UTXO)</p>
-                <p className="font-mono text-amber-400 mt-1">{isConnected ? 'cross-chain bridge' : '--'}</p>
+                <p className="font-mono text-amber-400 mt-1">{isConnected ? 'Cross-Chain Bridge' : '--'}</p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* royalty engine */}
+        {/* Royalty Engine Section */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
           <div>
             <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
@@ -720,7 +696,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input 
               type="text"
-              placeholder="recipient address 0x... (leave empty for self-transfer)"
+              placeholder="Recipient Address 0x... (Leave empty for Self-Transfer)"
               value={royaltyRecipient}
               onChange={(e) => setRoyaltyRecipient(e.target.value)}
               className="sm:col-span-2 bg-[#0b0e17] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
@@ -728,7 +704,7 @@ export default function Home() {
             <div className="flex gap-2">
               <input 
                 type="text"
-                placeholder="amount"
+                placeholder="Amount"
                 value={royaltyAmount}
                 onChange={(e) => setRoyaltyAmount(e.target.value)}
                 className="w-1/2 bg-[#0b0e17] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
@@ -744,7 +720,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* onboarding workflow */}
+        {/* Onboarding Workflow */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">{t.workflowHeader}</h2>
           
@@ -795,7 +771,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* payments */}
+        {/* Payments Section */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex border-b border-slate-800 gap-2">
             <button 
@@ -838,14 +814,14 @@ export default function Home() {
                   onClick={() => setIsScannerOpen(!isScannerOpen)}
                   className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium cursor-pointer"
                 >
-                  {isScannerOpen ? t.closeQr : t.scanQr}
+                  📷 {isScannerOpen ? t.closeQr : t.scanQr}
                 </button>
               </div>
 
               {isScannerOpen && (
                 <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 space-y-2">
                   <div id="reader" className="w-full overflow-hidden rounded-lg"></div>
-                  <p className="text-[10px] text-center text-slate-400">point camera at qr code</p>
+                  <p className="text-[10px] text-center text-slate-400">Point your camera at a QR code containing a wallet address</p>
                 </div>
               )}
               
@@ -861,12 +837,12 @@ export default function Home() {
                   disabled={txLoading || !isConnected}
                   className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99] cursor-pointer"
                 >
-                  {txLoading ? t.processing : `${t.payBtn} (${isArc ? 'USDC' : 'ETH'})`}
+                  {txLoading ? t.processing : `${t.payBtn} (USDC)`}
                 </button>
               </div>
               
               <p className="text-[10px] text-center text-slate-500">
-                connected network: {isConnected ? networkName : 'none'} | dynamic explorer sync active
+                Connected Network: {isConnected ? networkName : 'None'} | Dynamic Explorer Sync Active
               </p>
             </div>
           )}
@@ -875,24 +851,18 @@ export default function Home() {
             <div className="bg-[#0b0e17] p-6 rounded-xl border border-slate-800 text-center space-y-3">
               <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{t.qrTitle}</p>
               
-              <div className="w-40 h-40 bg-slate-900 border-2 border-purple-500/30 mx-auto rounded-xl flex items-center justify-center p-2 shadow-inner">
-                {isConnected ? (
-                  <QRCodeSVG 
-                    value={receiveQrData} 
-                    size={130}
-                    bgColor="#090d16"
-                    fgColor="#c084fc"
-                    level="L"
-                  />
-                ) : (
-                  <p className="text-[10px] text-slate-500">connect wallet first</p>
-                )}
+              <div className="w-40 h-40 bg-slate-900 border-2 border-purple-500/30 mx-auto rounded-xl flex flex-col items-center justify-center p-2 shadow-inner">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(receiveQrData)}`} 
+                  alt="Receiver QR Code"
+                  className="w-32 h-32 rounded bg-white p-1"
+                />
               </div>
 
               <div className="space-y-1">
                 <p className="text-xs font-mono font-bold text-purple-400">{userUpId}</p>
-                <p className="text-[11px] font-mono text-slate-400 break-all">{address || 'no wallet connected'}</p>
-                <p className="text-[10px] text-emerald-400 font-semibold pt-1">network: {isConnected ? networkName : '--'}</p>
+                <p className="text-[11px] font-mono text-slate-400 break-all">{address || 'No wallet connected'}</p>
+                <p className="text-[10px] text-emerald-400 font-semibold pt-1">Network: {isConnected ? networkName : '--'}</p>
               </div>
             </div>
           )}
@@ -900,38 +870,38 @@ export default function Home() {
           {activeTab === 'fx' && (
             <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800 space-y-3">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">1 INR =</span>
-                <span className="font-mono text-emerald-400 font-semibold">16.12 KRW</span>
+                <span className="text-slate-400">1 INR (₹) =</span>
+                <span className="font-mono text-emerald-400 font-semibold">16.12 KRW (₩)</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-400">1 ETH / BTC =</span>
-                <span className="font-mono text-purple-400 font-semibold">global liquidity pool active</span>
+                <span className="font-mono text-purple-400 font-semibold">Global Liquidity Pool Active</span>
               </div>
-              <p className="text-[10px] text-slate-500 text-center pt-1">multi-chain settlement engine</p>
+              <p className="text-[10px] text-slate-500 text-center pt-1">Multi-Chain Settlement Engine</p>
             </div>
           )}
         </section>
 
-        {/* links */}
+        {/* Links */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
           
           <div className="space-y-2">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide">arc protocol ecosystem</p>
+              <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide">Arc Protocol Ecosystem</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
               <a href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between">
-                <span>arc testnet explorer</span>
+                <span>Arc Testnet Explorer</span>
                 <span className="text-[10px]">↗</span>
               </a>
               <a href="https://faucet.circle.com/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between">
-                <span>circle usdc faucet</span>
+                <span>Circle USDC Faucet</span>
                 <span className="text-[10px]">↗</span>
               </a>
               <a href="https://www.arc.io/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between">
-                <span>arc protocol docs</span>
+                <span>Arc Protocol Docs</span>
                 <span className="text-[10px]">↗</span>
               </a>
             </div>
@@ -940,26 +910,26 @@ export default function Home() {
           <div className="space-y-2 pt-2 border-t border-slate-800/60">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide">giwa l2 ecosystem</p>
+              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide">GIWA L2 Ecosystem</p>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
               <a href="https://faucet.giwa.io/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between">
-                <span>giwa faucet</span>
+                <span>GIWA Faucet</span>
                 <span className="text-[10px]">↗</span>
               </a>
               <a href="http://sepolia-playground.giwa.io" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between">
-                <span>giwa playground</span>
+                <span>GIWA Playground</span>
                 <span className="text-[10px]">↗</span>
               </a>
               <a href="https://faucet.lambda256.io/" target="_blank" rel="noreferrer" className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between">
-                <span>lambda faucet</span>
+                <span>Lambda Faucet</span>
                 <span className="text-[10px]">↗</span>
               </a>
             </div>
           </div>
         </section>
 
-        {/* activity log */}
+        {/* Activity Log */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.activityHeader}</span>
@@ -989,7 +959,7 @@ export default function Home() {
                         rel="noreferrer"
                         className="text-purple-400 hover:underline text-[10px] font-mono block"
                       >
-                        verify tx ↗ ({act.txHash})
+                        Verify Tx ↗ ({act.txHash})
                       </a>
                     </div>
                   </div>
@@ -1009,12 +979,12 @@ export default function Home() {
 
       </div>
 
-      {/* modal */}
+      {/* Modal */}
       {successModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
             <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto border border-emerald-500/40">
-              OK
+              ✓
             </div>
             
             <div className="space-y-1">
@@ -1026,7 +996,7 @@ export default function Home() {
               <p className="text-slate-400 text-[10px]">DETAILS:</p>
               <p className="text-purple-300 font-semibold">{successModal.title}</p>
               <p className="text-emerald-400 font-bold">{successModal.amount}</p>
-              <p className="text-slate-500 text-[10px] truncate">hash: {successModal.hash}</p>
+              <p className="text-slate-500 text-[10px] truncate">Hash: {successModal.hash}</p>
             </div>
 
             <div className="flex flex-col gap-2 pt-1">

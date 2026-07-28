@@ -1,0 +1,37 @@
+// सभी समर्थित नेटवर्क्स की सूची, उनके RPC, और ब्लॉकचेन एक्सप्लोरर के लिंक
+const SUPPORTED_NETWORKS = {
+  bitcoin: {
+    name: "Bitcoin Mainnet",
+    symbol: "BTC",
+    type: "UTXO",
+    explorerTxUrl: "https://mempool.space/tx/",
+    explorerAddressUrl: "https://mempool.space/address/",
+  },
+  ethereum: {
+    name: "Ethereum Mainnet",
+    symbol: "ETH",
+    type: "EVM",
+    chainId: 1,
+    rpcUrl: "https://eth.llamarpc.com",
+    explorerTxUrl: "https://etherscan.io/tx/",
+    explorerAddressUrl: "https://etherscan.io/address/",
+  },
+  jiva: {
+    name: "Jiva Network",
+    symbol: "JIVA",
+    type: "EVM",
+    chainId: 31109, // उदाहरण चेन आईडी
+    rpcUrl: "https://rpc.jiva.network", 
+    explorerTxUrl: "https://explorer.jiva.network/tx/",
+    explorerAddressUrl: "https://explorer.jiva.network/address/",
+  },
+  arc: {
+    name: "Arc Network",
+    symbol: "ARC",
+    type: "EVM",
+    chainId: 4216, // उदाहरण चेन आईडी
+    rpcUrl: "https://rpc.arc.network",
+    explorerTxUrl: "https://arcscan.io/tx/",
+    explorerAddressUrl: "https://arcscan.io/address/",
+  }
+};

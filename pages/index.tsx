@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
 import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
-import { Html5QrcodeScanner } from 'html5-qrcode'
 import { QRCodeSVG } from 'qrcode.react'
 
 type Lang = 'en' | 'ko' | 'hi' | 'es'
@@ -197,6 +196,7 @@ interface ModalDetails {
 const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000' as const
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false)
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
   
@@ -233,7 +233,11 @@ export default function Home() {
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [activities, setActivities] = useState<ActivityItem[]>([])
 
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null)
+  const scannerRef = useRef<any>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   let networkName = 'Arc Testnet'
   let networkPrefix = 'ARC'
@@ -321,10 +325,11 @@ export default function Home() {
     let isMounted = true
 
     if (isScannerOpen) {
-      const timer = setTimeout(() => {
+      const timer = setTimeout(async () => {
         if (!isMounted || !document.getElementById("reader")) return
 
         try {
+          const { Html5QrcodeScanner } = await import('html5-qrcode')
           const scanner = new Html5QrcodeScanner(
             "reader",
             { fps: 10, qrbox: { width: 220, height: 220 } },
@@ -334,7 +339,7 @@ export default function Home() {
           scannerRef.current = scanner
 
           scanner.render(
-            (decodedText) => {
+            (decodedText: string) => {
               let extracted = decodedText
               if (decodedText.includes('ethereum:')) {
                 extracted = decodedText.split('ethereum:')[1].split('@')[0].split('?')[0]
@@ -588,6 +593,8 @@ export default function Home() {
   const receiveQrData = isConnected && address
     ? `ethereum:${address}@${chainId}?label=${encodeURIComponent(userUpId)}`
     : 'connect-wallet'
+
+  if (!mounted) return null
 
   return (
     <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans relative">

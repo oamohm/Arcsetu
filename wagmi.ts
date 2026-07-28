@@ -2,7 +2,7 @@ import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { defineChain } from 'viem'
 
 export const giwaSepolia = defineChain({
-  id: 91342,
+  id: 910001,
   name: 'GIWA Sepolia',
   nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
   rpcUrls: {

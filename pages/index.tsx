@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId } from 'wagmi'
 import { parseEther } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -12,7 +12,8 @@ const translations = {
     verified: 'Verified Multi-Chain Builder',
     notConnected: 'Wallet Not Connected',
     boundId: 'Bound Universal ID',
-    issueUpId: 'Register Custom UP ID',
+    issueUpId: 'Register GIWA UP ID',
+    registeredIdLabel: 'Registered GIWA UP ID',
     liveBalance: 'Live Balance',
     multichainHeader: 'Global Assets & Networks',
     workflowHeader: 'Builder Onboarding Workflow',
@@ -43,7 +44,8 @@ const translations = {
     verified: '검증된 멀티체인 빌더',
     notConnected: '지갑 미연결',
     boundId: '연결된 유니버셜 ID',
-    issueUpId: '커스텀 UP ID 등록',
+    issueUpId: 'GIWA UP ID 등록',
+    registeredIdLabel: '등록된 GIWA UP ID',
     liveBalance: '실시간 잔액',
     multichainHeader: '글로벌 자산 및 네트워크',
     workflowHeader: '빌더 온보딩 워크플로우',
@@ -74,7 +76,8 @@ const translations = {
     verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
     boundId: 'बाउंड यूनिवर्सल ID',
-    issueUpId: 'कस्टम UP ID रजिस्टर करें',
+    issueUpId: 'GIWA UP ID रजिस्टर करें',
+    registeredIdLabel: 'रजिस्टर्ड GIWA UP ID',
     liveBalance: 'लाइव बैलेंस',
     multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
@@ -105,7 +108,8 @@ const translations = {
     verified: 'Creador Multicadena Verificado',
     notConnected: 'Billetera No Conectada',
     boundId: 'ID Universal Vinculado',
-    issueUpId: 'Registrar UP ID',
+    issueUpId: 'Registrar GIWA UP ID',
+    registeredIdLabel: 'GIWA UP ID Registrado',
     liveBalance: 'Saldo en Vivo',
     multichainHeader: 'Activos y Redes Globales',
     workflowHeader: 'Flujo de Trabajo de Incorporación',
@@ -158,8 +162,28 @@ export default function Home() {
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
+  // Unique UP ID state per wallet address
   const [customUpId, setCustomUpId] = useState('')
-  const [savedUpId, setSavedUpId] = useState('')
+  const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
+
+  // Load stored IDs from local storage on load
+  useEffect(() => {
+    const saved = localStorage.getItem('giwa_registered_upids')
+    if (saved) {
+      try {
+        setRegisteredIds(JSON.parse(saved))
+      } catch (e) {
+        console.error('Failed to parse saved UP IDs', e)
+      }
+    }
+  }, [])
+
+  const currentWallet = address ? address.toLowerCase() : ''
+  const userUpId = currentWallet ? registeredIds[currentWallet] : null
+  const hasExistingId = Boolean(userUpId)
+
+  const isGiwa = chainId === 91342
+  const isArc = chainId === 5042002
 
   const [activities, setActivities] = useState<ActivityItem[]>([
     {
@@ -180,9 +204,6 @@ export default function Home() {
     }
   ])
 
-  const isGiwa = chainId === 91342
-  const isArc = chainId === 5042002
-  
   let networkName = 'GIWA Sepolia'
   let upIdPrefix = 'GIWA'
   let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
@@ -198,9 +219,18 @@ export default function Home() {
   }
 
   const handleRegisterUpId = () => {
-    if (!customUpId.trim()) return
-    setSavedUpId(customUpId.startsWith('@') ? customUpId : `@${customUpId}`)
-    setStatusMsg(`UP ID ${customUpId} successfully registered on-chain!`)
+    if (!customUpId.trim() || !currentWallet) return
+    const formattedId = customUpId.startsWith('@') ? customUpId : `@${customUpId}`
+    
+    const updated = {
+      ...registeredIds,
+      [currentWallet]: formattedId
+    }
+
+    setRegisteredIds(updated)
+    localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
+    setCustomUpId('')
+    setStatusMsg(`UP ID ${formattedId} successfully registered on GIWA Network!`)
   }
 
   const handlePayment = async () => {
@@ -284,7 +314,7 @@ export default function Home() {
     const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
     const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
-    const url = window.URL.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
+    const url = window.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
     const a = document.createElement('a')
     a.href = url
     a.download = `multichain_activity_${Date.now()}.csv`
@@ -347,7 +377,7 @@ export default function Home() {
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">{t.boundId}</span>
               <span className="text-sm font-mono font-semibold text-purple-300">
-                {savedUpId ? savedUpId : (isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--')}
+                {hasExistingId ? userUpId : (isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--')}
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
@@ -360,22 +390,33 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Custom UP ID Registration */}
-          <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
-            <input 
-              type="text" 
-              placeholder="Enter custom UP ID (e.g. @upendra)" 
-              value={customUpId}
-              onChange={(e) => setCustomUpId(e.target.value)}
-              className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
-            />
-            <button 
-              onClick={handleRegisterUpId}
-              className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
-            >
-              {t.issueUpId}
-            </button>
-          </div>
+          {/* Conditional UP ID Registration Section: ONLY shown on GIWA network when wallet is connected */}
+          {isGiwa && isConnected && (
+            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
+              {hasExistingId ? (
+                <div className="w-full text-xs text-slate-400 py-1 flex justify-between items-center px-1">
+                  <span>{t.registeredIdLabel}:</span>
+                  <span className="font-mono text-purple-400 font-semibold">{userUpId}</span>
+                </div>
+              ) : (
+                <>
+                  <input 
+                    type="text" 
+                    placeholder="Enter custom GIWA UP ID (e.g. @upendra)" 
+                    value={customUpId}
+                    onChange={(e) => setCustomUpId(e.target.value)}
+                    className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
+                  />
+                  <button 
+                    onClick={handleRegisterUpId}
+                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
+                  >
+                    {t.issueUpId}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Multi-Chain Cards Grid */}
           <div className="pt-2">

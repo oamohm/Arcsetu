@@ -12,8 +12,6 @@ const translations = {
     verified: 'Verified Multi-Chain Builder',
     notConnected: 'Wallet Not Connected',
     boundId: 'Bound Universal ID',
-    customUpId: 'Custom UP ID',
-    issueUpId: 'Register Custom UP ID',
     liveBalance: 'Live Balance',
     multichainHeader: 'Global Assets & Networks',
     workflowHeader: 'Builder Onboarding Workflow',
@@ -25,11 +23,11 @@ const translations = {
     step2Sub: 'Count: {count} test txns',
     run: 'Run Tx',
     running: 'Running...',
-    step3: '3. Issue Multi-Chain Stamp (Dojang)',
-    step3Sub: 'Marks multi-chain verification',
+    step3: '3. Issue Multi-Chain Stamp',
+    step3Sub: 'Marks multi-chain completion',
     issued: 'Issued ✓',
-    claim: 'Issue Dojang',
-    placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
+    claim: 'Claim Stamp',
+    placeholder: 'Send to @ID or 0x Wallet / BTC Address',
     payBtn: 'Pay via Multi-Chain UPI',
     processing: 'Processing Tx...',
     noTxConnected: 'No transactions recorded yet.',
@@ -37,7 +35,7 @@ const translations = {
     activityHeader: 'Cross-Chain Activity & Verification Log',
     downloadCsv: 'Download CSV ↗',
     primaryFaucet: 'Primary Faucet ↗',
-    backupFaucet: 'GIWA Portal ↗',
+    backupFaucet: 'Backup Faucet ↗',
   },
   ko: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
@@ -45,8 +43,6 @@ const translations = {
     verified: '검증된 멀티체인 빌더',
     notConnected: '지갑 미연결',
     boundId: '연결된 유니버셜 ID',
-    customUpId: '커스텀 UP ID',
-    issueUpId: '커스텀 UP ID 등록',
     liveBalance: '실시간 잔액',
     multichainHeader: '글로벌 자산 및 네트워크',
     workflowHeader: '빌더 온보딩 워크플로우',
@@ -58,11 +54,11 @@ const translations = {
     step2Sub: '횟수: {count}회 실행됨',
     run: '실행',
     running: '실행 중...',
-    step3: '3. 멀티체인 도장 발급',
-    step3Sub: '온보딩 검증 완료 표시',
+    step3: '3. 멀티체인 스탬프 발급',
+    step3Sub: '온보딩 완료 표시',
     issued: '발급됨 ✓',
-    claim: '도장 발급받기',
-    placeholder: '@UP_ID 또는 0x 주소 입력',
+    claim: '스탬프 받기',
+    placeholder: '@ID 또는 0x 주소 입력',
     payBtn: '멀티체인 UPI 결제',
     processing: '처리 중...',
     noTxConnected: '기록된 트랜잭션이 없습니다.',
@@ -70,7 +66,7 @@ const translations = {
     activityHeader: '크로스체인 활동 및 검증 로그',
     downloadCsv: 'CSV 다운로드 ↗',
     primaryFaucet: '기본 포셋 ↗',
-    backupFaucet: 'GIWA 포털 ↗',
+    backupFaucet: '백업 포셋 ↗',
   },
   hi: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
@@ -78,8 +74,6 @@ const translations = {
     verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
     boundId: 'बाउंड यूनिवर्सल ID',
-    customUpId: 'कस्टम UP ID',
-    issueUpId: 'कस्टम UP ID रजिस्टर करें',
     liveBalance: 'लाइव बैलेंस',
     multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
@@ -91,11 +85,11 @@ const translations = {
     step2Sub: 'गिनती: {count} टेस्ट ट्रांजैक्शन',
     run: 'चलाएं',
     running: 'चल रहा है...',
-    step3: '3. मल्टी-चेन स्टाम्प (Dojang) जारी करें',
-    step3Sub: 'मल्टी-चेन वेरिफिकेशन पूर्ण चिह्नित करता है',
+    step3: '3. मल्टी-चेन स्टाम्प जारी करें',
+    step3Sub: 'ऑनबोर्डिंग पूर्ण चिह्नित करता है',
     issued: 'जारी हुआ ✓',
-    claim: 'Dojang जारी करें',
-    placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
+    claim: 'स्टाम्प लें',
+    placeholder: '@ID या 0x वॉलेट / BTC पता दर्ज करें',
     payBtn: 'मल्टी-चेन UPI भुगतान',
     processing: 'प्रॉसेस हो रहा है...',
     noTxConnected: 'कोई ट्रांजैक्शन दर्ज नहीं है।',
@@ -103,7 +97,7 @@ const translations = {
     activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
     downloadCsv: 'CSV डाउनलोड ↗',
     primaryFaucet: 'प्राथमिक फॉसेट ↗',
-    backupFaucet: 'GIWA पोर्टल ↗',
+    backupFaucet: 'बैकअप फॉसेट ↗',
   },
   es: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
@@ -111,8 +105,6 @@ const translations = {
     verified: 'Creador Multicadena Verificado',
     notConnected: 'Billetera No Conectada',
     boundId: 'ID Universal Vinculado',
-    customUpId: 'UP ID Personalizado',
-    issueUpId: 'Registrar UP ID',
     liveBalance: 'Saldo en Vivo',
     multichainHeader: 'Activos y Redes Globales',
     workflowHeader: 'Flujo de Trabajo de Incorporación',
@@ -124,11 +116,11 @@ const translations = {
     step2Sub: 'Conteo: {count} txs de prueba',
     run: 'Ejecutar',
     running: 'Ejecutando...',
-    step3: '3. Emitir Sello Multicadena (Dojang)',
-    step3Sub: 'Marca la verificación completada',
+    step3: '3. Emitir Sello Multicadena',
+    step3Sub: 'Marca la incorporación como completada',
     issued: 'Emitido ✓',
-    claim: 'Emitir Dojang',
-    placeholder: 'Enviar a @UP_ID o Billetera 0x',
+    claim: 'Reclamar Sello',
+    placeholder: 'Enviar a @ID o Billetera 0x',
     payBtn: 'Pago vía UPI Multicadena',
     processing: 'Procesando...',
     noTxConnected: 'No hay transacciones registradas.',
@@ -136,7 +128,7 @@ const translations = {
     activityHeader: 'Registro de Actividad Multicadena',
     downloadCsv: 'Descargar CSV ↗',
     primaryFaucet: 'Faucet Principal ↗',
-    backupFaucet: 'Portal GIWA ↗',
+    backupFaucet: 'Faucet de Respaldo ↗',
   }
 }
 
@@ -161,33 +153,13 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.0001')
-  const [practiceCount, setPracticeCount] = useState(1)
-  const [stampIssued, setStampIssued] = useState(true)
+  const [practiceCount, setPracticeCount] = useState(0)
+  const [stampIssued, setStampIssued] = useState(false)
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
+  const [activities, setActivities] = useState<ActivityItem[]>([])
 
-  const [customUpId, setCustomUpId] = useState('')
-  const [savedUpId, setSavedUpId] = useState('')
-
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      id: '1',
-      title: 'Multi-Chain UPI (0x85Bb...A67b)',
-      timestamp: '2:30:02 AM',
-      amount: '4 USDC',
-      txHash: '0x1ef2...e694',
-      explorerUrl: 'https://testnet.arcscan.app/tx/0x1ef259c938932fec8af0443e729165b59e0fa92c7be790a5ec26d6294a55e694'
-    },
-    {
-      id: '2',
-      title: 'Test Tx (GIWA Sepolia)',
-      timestamp: '2:27:51 AM',
-      amount: '0.00001 ETH',
-      txHash: '0x4f8f...28f3',
-      explorerUrl: 'https://sepolia-explorer.giwa.io/tx/0x4f8f28f3'
-    }
-  ])
-
+  // Network checks
   const isGiwa = chainId === 91342
   const isArc = chainId === 5042002
   
@@ -203,12 +175,6 @@ export default function Home() {
     networkName = 'Ethereum Mainnet'
     upIdPrefix = 'ETH'
     explorerBase = 'https://etherscan.io/tx/'
-  }
-
-  const handleRegisterUpId = () => {
-    if (!customUpId.trim()) return
-    setSavedUpId(customUpId.startsWith('@') ? customUpId : `@${customUpId}`)
-    setStatusMsg(`UP ID ${customUpId} successfully registered on-chain!`)
   }
 
   const handlePayment = async () => {
@@ -227,7 +193,7 @@ export default function Home() {
       
       const targetAddress = recipient.startsWith('0x') 
         ? (recipient as `0x${string}`) 
-        : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+        : '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
 
       const hash = await sendTransactionAsync({
         to: targetAddress,
@@ -263,7 +229,7 @@ export default function Home() {
       setStatusMsg(t.processing)
       
       const hash = await sendTransactionAsync({
-        to: address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b',
+        to: address || '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
         value: parseEther('0.00001'),
       })
 
@@ -355,7 +321,7 @@ export default function Home() {
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">{t.boundId}</span>
               <span className="text-sm font-mono font-semibold text-purple-300">
-                {savedUpId ? savedUpId : (isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--')}
+                {isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--'}
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
@@ -366,23 +332,6 @@ export default function Home() {
                   : '--'}
               </span>
             </div>
-          </div>
-
-          {/* Custom UP ID Registration */}
-          <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
-            <input 
-              type="text" 
-              placeholder="Enter custom UP ID (e.g. @upendra)" 
-              value={customUpId}
-              onChange={(e) => setCustomUpId(e.target.value)}
-              className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
-            />
-            <button 
-              onClick={handleRegisterUpId}
-              className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
-            >
-              {t.issueUpId}
-            </button>
           </div>
 
           {/* Multi-Chain Cards Grid */}
@@ -557,12 +506,12 @@ export default function Home() {
             {t.primaryFaucet}
           </a>
           <a 
-            href="https://sepolia-portal.giwa.io/" 
+            href="https://mempool.space/" 
             target="_blank" 
             rel="noreferrer"
             className="flex-1 bg-[#111625] hover:bg-[#161c2e] border border-slate-800 py-2.5 rounded-xl text-xs text-slate-400 hover:text-slate-200 font-medium transition-all text-center block"
           >
-            {t.backupFaucet}
+            Bitcoin Explorer ↗
           </a>
         </section>
 

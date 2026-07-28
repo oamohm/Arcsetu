@@ -1,0 +1,47 @@
+async function getMultiChainBalances(walletAddresses) {
+  let balances = {};
+
+  for [netKey, network] of Object.entries(SUPPORTED_NETWORKS)) {
+    const address = walletAddresses[netKey];
+    if (!address) continue;
+
+    try {
+      if (network.type === "EVM") {
+        // EVM नेटवर्क्स (Ethereum, Jiva, Arc) के लिए बैलेंस फेच करना
+        const response = await fetch(network.rpcUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            method: "eth_getBalance",
+            params: [address, "latest"],
+            id: 1
+          })
+        });
+        const data = await response.json();
+        const balanceWei = parseInt(data.result, 16);
+        balances[netKey] = {
+          balance: balanceWei / 1e18, // Wei से मुख्य टोकन में बदलना
+          symbol: network.symbol,
+          explorerLink: `${network.explorerAddressUrl}${address}`
+        };
+      } 
+      else if (network.type === "UTXO") {
+        // Bitcoin के लिए Mempool API का उपयोग करके बैलेंस फेच करना
+        const response = await fetch(`https://mempool.space/api/address/${address}`);
+        const data = await response.json();
+        const sats = data.chain_stats.funded_txo_sum - data.chain_stats.spent_txo_sum;
+        balances[netKey] = {
+          balance: sats / 1e8, // Satoshis को BTC में बदलना
+          symbol: network.symbol,
+          explorerLink: `${network.explorerAddressUrl}${address}`
+        };
+      }
+    } catch (error) {
+      balances[netKey] = { error: "Balance fetch failed", details: error.message };
+    }
+  }
+
+  return balances;
+}
+

@@ -1,19 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useSwitchChain, useBalance, useSendTransaction } from 'wagmi';
 import { parseUnits, formatUnits } from 'viem';
 
 const SUPPORTED_NETWORKS = [
-  { id: 999, name: 'GIWA L2 (Default)', symbol: 'GIWA', default: true, explorer: 'https://sepolia-explorer.giwa.io' },
-  { id: 5042002, name: 'Arc Testnet', symbol: 'USDC', default: false, explorer: 'https://testnet.arc.network' },
-  { id: 1, name: 'Ethereum L1', symbol: 'ETH', default: false, explorer: 'https://etherscan.io' },
-  { id: 137, name: 'Polygon', symbol: 'POL', default: false, explorer: 'https://polygonscan.com' },
+  { id: 999, name: 'GIWA L2 (Default)', symbol: 'GIWA', isDefault: true, explorer: 'https://sepolia-explorer.giwa.io' },
+  { id: 5042002, name: 'Arc Testnet', symbol: 'USDC', isDefault: false, explorer: 'https://testnet.arc.network' },
+  { id: 1, name: 'Ethereum L1', symbol: 'ETH', isDefault: false, explorer: 'https://etherscan.io' },
+  { id: 137, name: 'Polygon', symbol: 'POL', isDefault: false, explorer: 'https://polygonscan.com' },
 ];
 
-export default function Home() {
-  const { address, chainId, isConnected } = useAccount();
+export default function MasterIndex() {
+  const { address, isConnected } = useAccount();
   const { chains, switchChain } = useSwitchChain();
   const [selectedNetwork, setSelectedNetwork] = useState(SUPPORTED_NETWORKS[0].id);
+  
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [customId, setCustomId] = useState('');
@@ -22,198 +23,191 @@ export default function Home() {
   const { data: balance } = useBalance({ address, chainId: selectedNetwork });
   const { sendTransaction } = useSendTransaction();
 
-  const addActivity = (title: string, amt: string, hash: string, explorerUrl: string) => {
-    const newAct = {
+  useEffect(() => {
+    if (isConnected) {
+      logActivity('system sync', 'wallet connected', '0x...', '#');
+    }
+  }, [isConnected]);
+
+  const logActivity = (title: string, detail: string, hash: string, link: string) => {
+    setActivities(prev => [{
       id: Date.now(),
       title,
-      amount: amt,
-      timestamp: new Date().toLocaleTimeString(),
-      txhash: hash,
-      explorerUrl,
-    };
-    setActivities(prev => [newAct, ...prev]);
+      detail,
+      time: new Date().toLocaleTimeString(),
+      hash,
+      link
+    }, ...prev]);
   };
 
-  const handleNetworkChange = (id: number) => {
+  const handleNetworkSwitch = (id: number) => {
     setSelectedNetwork(id);
-    const targetChain = chains.find(c => c.id === id);
-    if (targetChain) {
+    const target = chains.find(c => c.id === id);
+    if (target && switchChain) {
       switchChain({ chainId: id });
     }
-    addActivity('Network Switched', `ID: ${id}`, '0xSync...', SUPPORTED_NETWORKS.find(n => n.id === id)?.explorer || '#');
+    const net = SUPPORTED_NETWORKS.find(n => n.id === id);
+    logActivity('network routing', `switched to ${net?.name}`, '0xsync...', net?.explorer || '#');
   };
 
-  const handleUPIPayment = async () => {
+  const executeSettlement = async () => {
     if (!isConnected) {
-      alert('Please connect your wallet via RainbowKit.');
+      alert('connect wallet first');
       return;
     }
+    if (!recipient || !amount) return;
+
     try {
       sendTransaction(
         {
           to: recipient as `0x${string}`,
-          value: parseUnits(amount || '0', 6),
+          value: parseUnits(amount, 6),
         },
         {
           onSuccess: (hash) => {
-            const activeExp = SUPPORTED_NETWORKS.find(n => n.id === selectedNetwork)?.explorer || 'https://etherscan.io';
-            addActivity('Multi-Chain UPI Pay', `${amount} USDC`, hash, `${activeExp}/tx/${hash}`);
+            const exp = SUPPORTED_NETWORKS.find(n => n.id === selectedNetwork)?.explorer;
+            logActivity('deterministic execution', `${amount} usdc sent`, hash, `${exp}/tx/${hash}`);
           },
         }
       );
-    } catch (error: any) {
-      console.error('Payment error:', error);
+    } catch (err: any) {
+      console.error('execution failed', err);
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#07090e] text-[#f8fafc] p-4 md:p-8 font-sans">
+    <main className="min-h-screen bg-[#07090e] text-slate-300 p-4 md:p-8 font-sans selection:bg-purple-900 selection:text-white">
       <div className="max-w-5xl mx-auto space-y-6">
-
-        {/* Top Header with RainbowKit Connect Button */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0e131f] p-5 rounded-2xl border border-slate-800 gap-4 shadow-xl">
+        
+        {/* top infrastructure header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center bg-[#0e131f] p-5 rounded-2xl border border-slate-800 shadow-2xl">
           <div>
-            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
-              GIWASETU MULTI-CHAIN <span className="text-xs bg-purple-500/20 text-purple-400 px-2.5 py-0.5 rounded-full border border-purple-500/30">Hub v2.4</span>
+            <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-3">
+              GIWASETU MULTI-CHAIN 
+              <span className="text-[10px] uppercase tracking-widest bg-purple-500/10 text-purple-400 px-2.5 py-1 rounded-sm border border-purple-500/20">
+                production ready
+              </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-1">KR / JP / IN Multi-Chain Web3 Settlement & Payment Infrastructure</p>
+            <p className="text-xs text-slate-500 mt-1.5 font-mono">kr / jp / in distributed settlement network</p>
           </div>
-          <div className="flex items-center gap-3">
-            <ConnectButton />
+          <div className="mt-4 md:mt-0 z-50 relative">
+            <ConnectButton showBalance={false} chainStatus="icon" />
           </div>
         </header>
 
-        {/* Identity & Live Balance Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#0e131f] p-5 rounded-2xl border border-slate-800 space-y-3">
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Universal Multi-Chain Identity</h2>
-            <input
-              type="text"
-              placeholder="Set custom handle (e.g. @bhupendra)"
-              value={customId}
-              onChange={(e) => setCustomId(e.target.value)}
-              className="w-full p-3 bg-[#07090e] border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-purple-500 font-mono"
-            />
-            <button
-              onClick={() => addActivity('Identity Bound', customId || '@anonymous', '0xID...', '#')}
-              className="w-full py-2.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 text-xs font-medium rounded-xl border border-purple-500/30 transition-all"
-            >
-              Claim Universal Handle
-            </button>
+          {/* identity registry */}
+          <div className="bg-[#0e131f] p-6 rounded-2xl border border-slate-800 space-y-4">
+            <h2 className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">universal identity</h2>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="bind custom handle (@username)"
+                value={customId}
+                onChange={(e) => setCustomId(e.target.value)}
+                className="w-full p-3.5 bg-[#07090e] border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 transition-colors font-mono"
+              />
+              <button
+                onClick={() => logActivity('identity bound', customId, '0xid...', '#')}
+                className="w-full py-3 bg-purple-900/20 hover:bg-purple-900/40 text-purple-300 text-xs font-medium rounded-lg border border-purple-800/30 transition-all"
+              >
+                issue on-chain handle
+              </button>
+            </div>
           </div>
 
-          <div className="bg-[#0e131f] p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+          {/* treasury state */}
+          <div className="bg-[#0e131f] p-6 rounded-2xl border border-slate-800 flex flex-col justify-between">
             <div>
-              <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Active Network Balance</h2>
-              <div className="text-2xl font-bold text-purple-400 font-mono">
-                {balance ? `${formatUnits(balance.value, balance.decimals).slice(0, 8)} ${balance.symbol}` : '0.0000 USDC'}
+              <h2 className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-3">active treasury state</h2>
+              <div className="text-3xl font-light text-white font-mono tracking-tight">
+                {balance ? formatUnits(balance.value, balance.decimals).slice(0, 8) : '0.0000'} 
+                <span className="text-purple-400 text-lg ml-2 font-semibold">{balance?.symbol || 'USDC'}</span>
               </div>
             </div>
-            <p className="text-xs text-slate-500">Live asset synchronization active across selected chain.</p>
+            <div className="flex items-center gap-2 mt-4">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <p className="text-[10px] text-slate-500 font-mono uppercase">real-time node sync active</p>
+            </div>
           </div>
         </div>
 
-        {/* Global Assets & Networks Switcher */}
-        <section className="bg-[#0e131f] p-5 rounded-2xl border border-slate-800 space-y-3">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Global Assets & Networks</h2>
+        {/* multi-chain routing engine */}
+        <section className="bg-[#0e131f] p-6 rounded-2xl border border-slate-800 space-y-4">
+          <h2 className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">network routing layer</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {SUPPORTED_NETWORKS.map((net) => (
               <button
                 key={net.id}
-                onClick={() => handleNetworkChange(net.id)}
-                className={`p-3.5 rounded-xl border text-left transition-all ${
+                onClick={() => handleNetworkSwitch(net.id)}
+                className={`p-4 rounded-xl border text-left transition-all duration-200 ${
                   selectedNetwork === net.id 
-                    ? 'bg-purple-900/30 border-purple-500 text-white shadow-lg shadow-purple-950/50' 
-                    : 'bg-[#07090e] border-slate-800 text-slate-400 hover:border-slate-700'
+                    ? 'bg-[#151b2b] border-purple-500/50 shadow-inner' 
+                    : 'bg-[#07090e] border-slate-800/80 hover:border-slate-700'
                 }`}
               >
-                <div className="text-xs font-semibold">{net.name}</div>
-                <div className="text-xs font-bold text-purple-400 mt-1 font-mono">
-                  {selectedNetwork === net.id && balance 
-                    ? `${formatUnits(balance.value, balance.decimals).slice(0, 6)} ${balance.symbol}` 
-                    : 'Active / Sync'}
+                <div className={`text-xs font-semibold ${selectedNetwork === net.id ? 'text-white' : 'text-slate-400'}`}>
+                  {net.name}
+                </div>
+                <div className="text-[11px] text-purple-400 mt-1.5 font-mono opacity-80">
+                  {selectedNetwork === net.id ? 'connected' : 'standby'}
                 </div>
               </button>
             ))}
           </div>
         </section>
 
-        {/* Multi-Chain UPI Pay Interface */}
-        <section className="bg-[#0e131f] p-6 rounded-2xl border border-slate-800 space-y-4">
-          <h2 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Multi-Chain UPI Pay & Settlement</h2>
+        {/* execution layer */}
+        <section className="bg-[#0e131f] p-6 rounded-2xl border border-slate-800 space-y-5">
+          <h2 className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">settlement execution</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="Send to @UP_ID or 0x Wallet / Address"
+              placeholder="target address (0x... or @handle)"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              className="w-full p-3.5 bg-[#07090e] border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-purple-500 font-mono"
+              className="w-full p-4 bg-[#07090e] border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 font-mono"
             />
             <input
               type="number"
-              placeholder="Amount (USDC / Native)"
+              placeholder="amount (usdc)"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full p-3.5 bg-[#07090e] border border-slate-800 rounded-xl text-white text-sm focus:outline-none focus:border-purple-500 font-mono"
+              className="w-full p-4 bg-[#07090e] border border-slate-800 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500/50 font-mono"
             />
           </div>
           <button
-            onClick={handleUPIPayment}
-            className="w-full py-3.5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-all text-sm shadow-lg shadow-purple-600/20"
+            onClick={executeSettlement}
+            className="w-full py-4 bg-white text-black hover:bg-slate-200 font-semibold rounded-lg transition-all text-sm tracking-wide"
           >
-            Pay via Multi-Chain UPI (USDC)
+            execute transaction
           </button>
         </section>
 
-        {/* Ecosystem Protocols & Official Links (Socials & Docs) */}
-        <section className="bg-[#0e131f] p-5 rounded-2xl border border-slate-800 space-y-3">
-          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Ecosystem Protocols & Official Links</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <a href="https://testnet.arc.network" target="_blank" rel="noreferrer" className="p-3 bg-[#07090e] border border-slate-800 rounded-xl text-xs text-purple-400 hover:border-slate-700 block text-center">
-              Arc Protocol Explorer ↗
-            </a>
-            <a href="https://giwa.io" target="_blank" rel="noreferrer" className="p-3 bg-[#07090e] border border-slate-800 rounded-xl text-xs text-purple-400 hover:border-slate-700 block text-center">
-              GIWA L2 Faucet ↗
-            </a>
-            <a href="https://github.com/oamohm/giwasetu-contract" target="_blank" rel="noreferrer" className="p-3 bg-[#07090e] border border-slate-800 rounded-xl text-xs text-purple-400 hover:border-slate-700 block text-center">
-              GitHub Repository ↗
-            </a>
-          </div>
-        </section>
-
-        {/* Cross-Chain Activity & Verification Log */}
-        <section className="bg-[#0e131f] p-5 rounded-2xl border border-slate-800 space-y-3">
+        {/* verification logs */}
+        <section className="bg-[#0e131f] p-6 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex justify-between items-center">
-            <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cross-Chain Activity & Verification Log</h2>
+            <h2 className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">system logs & verification</h2>
             {activities.length > 0 && (
-              <button 
-                onClick={() => setActivities([])}
-                className="text-[10px] text-slate-400 hover:text-white bg-slate-800/50 px-2.5 py-1 rounded-lg border border-slate-700/50 transition-colors"
-              >
-                Clear Logs
+              <button onClick={() => setActivities([])} className="text-[10px] text-slate-500 hover:text-white transition-colors">
+                clear state
               </button>
             )}
           </div>
-          <div className="bg-[#07090e] p-4 rounded-xl border border-slate-900 h-40 overflow-y-auto font-mono text-xs space-y-2">
+          <div className="bg-[#07090e] p-4 rounded-xl border border-slate-800/80 h-48 overflow-y-auto font-mono text-xs space-y-2">
             {activities.length === 0 ? (
-              <div className="text-slate-500 text-center py-10">Connect wallet via RainbowKit and execute transactions to view multi-chain history...</div>
+              <div className="text-slate-600 text-center py-12">waiting for node execution...</div>
             ) : (
               activities.map((act) => (
-                <div key={act.id} className="bg-[#0e131f] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
+                <div key={act.id} className="p-3 bg-[#0e131f] rounded-lg border border-slate-800/50 flex justify-between items-center group">
                   <div>
-                    <p className="text-emerald-400 font-medium">{act.title}: {act.amount}</p>
-                    <p className="text-[10px] text-slate-500">{act.timestamp}</p>
+                    <span className="text-emerald-400 font-medium">[{act.title}]</span>
+                    <span className="text-slate-400 ml-2">{act.detail}</span>
+                    <div className="text-[9px] text-slate-600 mt-1">{act.time}</div>
                   </div>
-                  <div className="text-right">
-                    <a
-                      href={act.explorerUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-purple-400 hover:underline text-[10px] block"
-                    >
-                      Verify Tx ({act.txhash.substring(0, 8)}...)
-                    </a>
-                  </div>
+                  <a href={act.link} target="_blank" rel="noreferrer" className="text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline">
+                    verify →
+                  </a>
                 </div>
               ))
             )}

@@ -43,7 +43,7 @@ const translations = {
     qrTitle: 'Dynamic Receiver QR Invoice',
     royaltyHeader: 'Universal Royalty & Fee Distribution Engine',
     royaltyDesc: 'Distribute creator fees, builder incentives, or cross-chain royalties across any connected network natively.',
-    distributeRoyalty: 'Send Royalty',
+    distributeRoyalty: 'Distribute Royalty',
     txSuccessTitle: 'Transaction Confirmed!',
     txSuccessDesc: 'Your transaction was successfully processed on the network.',
     viewExplorer: 'View on Explorer ↗',
@@ -85,7 +85,7 @@ const translations = {
     qrTitle: '동적 수신 QR 인보이스',
     royaltyHeader: '유니버셜 로열티 및 수수료 분배 엔진',
     royaltyDesc: '모든 연결된 네트워크에서 크리에이터 수수료, 빌더 인센티브 또는 크로스체인 로열티를 직접 분배합니다.',
-    distributeRoyalty: '로열티 전송',
+    distributeRoyalty: '로열티 분배하기',
     txSuccessTitle: '트랜잭션 승인 완료!',
     txSuccessDesc: '트랜잭션이 네트워크에서 성공적으로 처리되었습니다.',
     viewExplorer: '탐색기에서 보기 ↗',
@@ -125,9 +125,9 @@ const translations = {
     scanQr: 'QR स्कैन करें',
     closeQr: 'कैमरा बंद करें',
     qrTitle: 'डायनामिक रिसीविंग QR इनवॉइस',
-    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन',
-    royaltyDesc: 'क्रिएटर फ़ीस या रॉयल्टी ट्रांसफर करें। ख़ाली छोड़ने पर यह आपके खुद के वॉलेट में ट्रांसफर होगा।',
-    distributeRoyalty: 'रॉयल्टी भेजें',
+    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन इंजन',
+    royaltyDesc: 'किसी भी कनेक्टेड नेटवर्क पर क्रिएटर फ़ीस, बिल्डर इंसेंटिव या क्रॉस-चेन रॉयल्टी सीधे बाटें।',
+    distributeRoyalty: 'रॉयल्टी डिस्ट्रीब्यूट करें',
     txSuccessTitle: 'ट्रांजैक्शन सफल रहा!',
     txSuccessDesc: 'आपका ट्रांजैक्शन नेटवर्क पर सफलतापूर्वक पूरा हो गया है।',
     viewExplorer: 'एक्सप्लोरर पर देखें ↗',
@@ -169,7 +169,7 @@ const translations = {
     qrTitle: 'Factura QR de Recepción Dinámica',
     royaltyHeader: 'Motor Universal de Distribución de Regalías',
     royaltyDesc: 'Distribuya tarifas de creador e incentivos en cualquier red conectada de forma nativa.',
-    distributeRoyalty: 'Enviar Regalía',
+    distributeRoyalty: 'Distribuir Regalías',
     txSuccessTitle: '¡Transacción Confirmada!',
     txSuccessDesc: 'Su transacción se procesó con éxito en la red.',
     viewExplorer: 'Ver en Explorador ↗',
@@ -214,7 +214,7 @@ export default function Home() {
   const [statusMsg, setStatusMsg] = useState('')
 
   const [royaltyRecipient, setRoyaltyRecipient] = useState('')
-  const [royaltyAmount, setRoyaltyAmount] = useState('0.0001')
+  const [royaltyAmount, setRoyaltyAmount] = useState('0.0005')
 
   const [successModal, setSuccessModal] = useState<ModalDetails | null>(null)
 
@@ -476,16 +476,14 @@ export default function Home() {
   }
 
   const handleRoyaltyPayout = async () => {
-    if (!isConnected || !address) {
+    if (!isConnected) {
       alert(t.notConnected)
       return
     }
 
-    // Check destination address: User input or Self
-    const cleanRecipient = royaltyRecipient.trim()
-    const targetAddress = (cleanRecipient.startsWith('0x') && cleanRecipient.length === 42)
-      ? (cleanRecipient as `0x${string}`)
-      : address
+    const targetAddress = (royaltyRecipient.trim().startsWith('0x') && royaltyRecipient.trim().length === 42)
+      ? (royaltyRecipient.trim() as `0x${string}`)
+      : address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
     try {
       setTxLoading(true)
@@ -493,12 +491,11 @@ export default function Home() {
 
       const hash = await sendTransactionAsync({
         to: targetAddress,
-        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0001'),
+        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0005'),
       })
 
       const amtSymbol = `${royaltyAmount} ${balanceData?.symbol || 'ETH'}`
-      const targetLabel = targetAddress.toLowerCase() === address.toLowerCase() ? 'Self Wallet' : `${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)}`
-      const txTitle = `Royalty Distribution → ${targetLabel}`
+      const txTitle = `Royalty Distribution (${networkName})`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -689,7 +686,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Royalty Engine Section - Updated */}
+        {/* Royalty Engine Section */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
           <div>
             <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
@@ -699,7 +696,7 @@ export default function Home() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input 
               type="text"
-              placeholder="Recipient Address 0x... (Leave empty for Self-Transfer)"
+              placeholder="Creator/Builder Address (or leave empty for self)"
               value={royaltyRecipient}
               onChange={(e) => setRoyaltyRecipient(e.target.value)}
               className="sm:col-span-2 bg-[#0b0e17] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
@@ -707,7 +704,6 @@ export default function Home() {
             <div className="flex gap-2">
               <input 
                 type="text"
-                placeholder="Amount"
                 value={royaltyAmount}
                 onChange={(e) => setRoyaltyAmount(e.target.value)}
                 className="w-1/2 bg-[#0b0e17] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"

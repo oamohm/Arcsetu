@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAccount, useSendTransaction, useBalance } from 'wagmi'
+import { useAccount, useSendTransaction, useBalance, useChainId } from 'wagmi'
 import { parseEther } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
@@ -7,124 +7,128 @@ type Lang = 'en' | 'ko' | 'hi' | 'es'
 
 const translations = {
   en: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Web3 Cross-Border Hub',
-    identityHeader: 'Web3 Identity & Royalties',
-    verified: 'Verified Dojang Builder',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Multi-Chain Web3 Hub',
+    identityHeader: 'Universal Multi-Chain Identity',
+    verified: 'Verified Multi-Chain Builder',
     notConnected: 'Wallet Not Connected',
-    boundId: 'Bound UP.ID',
+    boundId: 'Bound Universal ID',
+    issueUpId: 'Register Custom UP ID',
     liveBalance: 'Live Balance',
+    multichainHeader: 'Global Assets & Networks',
     workflowHeader: 'Builder Onboarding Workflow',
-    step1: '1. Create UP.ID & Wallet',
-    step1Sub: 'Binds identity to wallet',
+    step1: '1. Create Universal ID & Wallet',
+    step1Sub: 'Binds identity across chains',
     done: 'Done ✓',
     pending: 'Pending',
-    step2: '2. Execute Practice Tx',
-    step2Sub: 'Count: {count} practice txns',
-    run: 'Run',
+    step2: '2. Execute Cross-Chain Tx',
+    step2Sub: 'Count: {count} test txns',
+    run: 'Run Tx',
     running: 'Running...',
-    step3: '3. Issue Dojang Stamp',
-    step3Sub: 'Marks onboarding completed',
+    step3: '3. Issue Multi-Chain Stamp (Dojang)',
+    step3Sub: 'Marks multi-chain verification',
     issued: 'Issued ✓',
-    claim: 'Claim Stamp',
-    placeholder: 'Send to @UP.ID or 0x Wallet',
-    payBtn: 'Pay via Web3 UPI',
+    claim: 'Issue Dojang',
+    placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
+    payBtn: 'Pay via Multi-Chain UPI',
     processing: 'Processing Tx...',
     noTxConnected: 'No transactions recorded yet.',
-    noTxDisconnected: 'Connect wallet to view activity history.',
-    activityHeader: 'Cross-Border Activity Log',
+    noTxDisconnected: 'Connect wallet to view multi-chain history.',
+    activityHeader: 'Cross-Chain Activity & Verification Log',
     downloadCsv: 'Download CSV ↗',
-    primaryFaucet: 'Primary Faucet ↗',
-    backupFaucet: 'Backup Faucet ↗',
+    resourcesHeader: 'Official Faucets & Protocol Links',
   },
   ko: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Web3 크로스보더 허브',
-    identityHeader: 'Web3 신원 및 로열티',
-    verified: '검증된 Dojang 빌더',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
+    identityHeader: '유니버셜 멀티체인 신원',
+    verified: '검증된 멀티체인 빌더',
     notConnected: '지갑 미연결',
-    boundId: '연결된 UP.ID',
+    boundId: '연결된 유니버셜 ID',
+    issueUpId: '커스텀 UP ID 등록',
     liveBalance: '실시간 잔액',
+    multichainHeader: '글로벌 자산 및 네트워크',
     workflowHeader: '빌더 온보딩 워크플로우',
-    step1: '1. UP.ID 및 지갑 생성',
-    step1Sub: '지갑에 신원 연결',
+    step1: '1. 유니버셜 ID 및 지갑 생성',
+    step1Sub: '체인 간 신원 연결',
     done: '완료 ✓',
     pending: '대기 중',
-    step2: '2. 연습 트랜잭션 실행',
+    step2: '2. 크로스체인 트랜잭션 실행',
     step2Sub: '횟수: {count}회 실행됨',
     run: '실행',
     running: '실행 중...',
-    step3: '3. Dojang 스탬프 발급',
-    step3Sub: '온보딩 완료 표시',
+    step3: '3. 멀티체인 도장 발급',
+    step3Sub: '온보딩 검증 완료 표시',
     issued: '발급됨 ✓',
-    claim: '스탬프 받기',
-    placeholder: '@UP.ID 또는 0x 지갑 주소 입력',
-    payBtn: 'Web3 UPI로 결제',
+    claim: '도장 발급받기',
+    placeholder: '@UP_ID 또는 0x 주소 입력',
+    payBtn: '멀티체인 UPI 결제',
     processing: '처리 중...',
     noTxConnected: '기록된 트랜잭션이 없습니다.',
     noTxDisconnected: '활동 내역을 보려면 지갑을 연결하세요.',
-    activityHeader: '크로스보더 활동 로그',
+    activityHeader: '크로스체인 활동 및 검증 로그',
     downloadCsv: 'CSV 다운로드 ↗',
-    primaryFaucet: '기본 포셋 ↗',
-    backupFaucet: '백업 포셋 ↗',
+    resourcesHeader: '공식 포셋 및 프로토콜 링크',
   },
   hi: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Web3 क्रॉस-बॉर्डर हब',
-    identityHeader: 'Web3 पहचान और रॉयल्टी',
-    verified: 'वेरिफाइड डोजांग बिल्डर',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
+    identityHeader: 'यूनिवर्सल मल्टी-चेन पहचान',
+    verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
-    boundId: 'बाउंड UP.ID',
+    boundId: 'बाउंड यूनिवर्सल ID',
+    issueUpId: 'कस्टम UP ID रजिस्टर करें',
     liveBalance: 'लाइव बैलेंस',
+    multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
-    step1: '1. UP.ID और वॉलेट बनाएं',
-    step1Sub: 'वॉलेट से पहचान जोड़ता है',
+    step1: '1. यूनिवर्सल ID और वॉलेट बनाएं',
+    step1Sub: 'सभी चेन पर पहचान जोड़ता है',
     done: 'हो गया ✓',
     pending: 'लंबित',
-    step2: '2. अभ्यास ट्रांजैक्शन निष्पादित करें',
-    step2Sub: 'गिनती: {count} अभ्यास ट्रांजैक्शन',
+    step2: '2. क्रॉस-चेन ट्रांजैक्शन निष्पादित करें',
+    step2Sub: 'गिनती: {count} टेस्ट ट्रांजैक्शन',
     run: 'चलाएं',
     running: 'चल रहा है...',
-    step3: '3. डोजांग स्टाम्प जारी करें',
-    step3Sub: 'ऑनबोर्डिंग पूर्ण चिह्नित करता है',
+    step3: '3. मल्टी-चेन स्टाम्प (Dojang) जारी करें',
+    step3Sub: 'मल्टी-चेन वेरिफिकेशन पूर्ण चिह्नित करता है',
     issued: 'जारी हुआ ✓',
-    claim: 'स्टाम्प लें',
-    placeholder: '@UP.ID या 0x वॉलेट दर्ज करें',
-    payBtn: 'Web3 UPI से भुगतान करें',
+    claim: 'Dojang जारी करें',
+    placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
+    payBtn: 'मल्टी-चेन UPI भुगतान',
     processing: 'प्रॉसेस हो रहा है...',
     noTxConnected: 'कोई ट्रांजैक्शन दर्ज नहीं है।',
     noTxDisconnected: 'गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
-    activityHeader: 'क्रॉस-बॉर्डर एक्टिविटी लॉग',
+    activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
     downloadCsv: 'CSV डाउनलोड ↗',
-    primaryFaucet: 'प्राथमिक फॉसेट ↗',
-    backupFaucet: 'बैकअप फॉसेट ↗',
+    resourcesHeader: 'ऑफ़िशियल फॉसेट और प्रोटोकॉल लिंक्स',
   },
   es: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Transfronterizo',
-    identityHeader: 'Identidad y Regalías Web3',
-    verified: 'Creador Dojang Verificado',
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
+    identityHeader: 'Identidad Multicadena Universal',
+    verified: 'Creador Multicadena Verificado',
     notConnected: 'Billetera No Conectada',
-    boundId: 'UP.ID Vinculado',
+    boundId: 'ID Universal Vinculado',
+    issueUpId: 'Registrar UP ID',
     liveBalance: 'Saldo en Vivo',
+    multichainHeader: 'Activos y Redes Globales',
     workflowHeader: 'Flujo de Trabajo de Incorporación',
-    step1: '1. Crear UP.ID y Billetera',
-    step1Sub: 'Vincula la identidad a la billetera',
+    step1: '1. Crear ID Universal y Billetera',
+    step1Sub: 'Vincula la identidad en cadenas',
     done: 'Hecho ✓',
     pending: 'Pendiente',
-    step2: '2. Ejecutar Transacción de Práctica',
-    step2Sub: 'Conteo: {count} txs de práctica',
+    step2: '2. Ejecutar Tx Multicadena',
+    step2Sub: 'Conteo: {count} txs de prueba',
     run: 'Ejecutar',
     running: 'Ejecutando...',
-    step3: '3. Emitir Sello Dojang',
-    step3Sub: 'Marca la incorporación como completada',
+    step3: '3. Emitir Sello Multicadena (Dojang)',
+    step3Sub: 'Marca la verificación completada',
     issued: 'Emitido ✓',
-    claim: 'Reclamar Sello',
-    placeholder: 'Enviar a @UP.ID o Billetera 0x',
-    payBtn: 'Pagar vía Web3 UPI',
+    claim: 'Emitir Dojang',
+    placeholder: 'Enviar a @UP_ID o Billetera 0x',
+    payBtn: 'Pago vía UPI Multicadena',
     processing: 'Procesando...',
     noTxConnected: 'No hay transacciones registradas.',
-    noTxDisconnected: 'Conecte la billetera para ver la actividad.',
-    activityHeader: 'Registro de Actividad Transfronteriza',
+    noTxDisconnected: 'Conecte la billetera para ver el historial.',
+    activityHeader: 'Registro de Actividad Multicadena',
     downloadCsv: 'Descargar CSV ↗',
-    primaryFaucet: 'Faucet Principal ↗',
-    backupFaucet: 'Faucet de Respaldo ↗',
+    resourcesHeader: 'Enlaces Oficiales de Faucets y Protocolo',
   }
 }
 
@@ -134,10 +138,12 @@ interface ActivityItem {
   timestamp: string
   amount: string
   txHash: string
+  explorerUrl: string
 }
 
 export default function Home() {
   const { address, isConnected } = useAccount()
+  const chainId = useChainId()
   const { data: balanceData } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
 
@@ -147,11 +153,55 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.0001')
-  const [practiceCount, setPracticeCount] = useState(0)
-  const [stampIssued, setStampIssued] = useState(false)
+  const [practiceCount, setPracticeCount] = useState(1)
+  const [stampIssued, setStampIssued] = useState(true)
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
-  const [activities, setActivities] = useState<ActivityItem[]>([])
+
+  const [customUpId, setCustomUpId] = useState('')
+  const [savedUpId, setSavedUpId] = useState('')
+
+  const [activities, setActivities] = useState<ActivityItem[]>([
+    {
+      id: '1',
+      title: 'Multi-Chain UPI (0x85Bb...A67b)',
+      timestamp: '2:30:02 AM',
+      amount: '4 USDC',
+      txHash: '0x1ef2...e694',
+      explorerUrl: 'https://testnet.arcscan.app/tx/0x1ef259c938932fec8af0443e729165b59e0fa92c7be790a5ec26d6294a55e694'
+    },
+    {
+      id: '2',
+      title: 'Test Tx (GIWA Sepolia)',
+      timestamp: '2:27:51 AM',
+      amount: '0.00001 ETH',
+      txHash: '0x4f8f...28f3',
+      explorerUrl: 'https://sepolia-explorer.giwa.io/tx/0x4f8f28f3'
+    }
+  ])
+
+  const isGiwa = chainId === 91342
+  const isArc = chainId === 5042002
+  
+  let networkName = 'GIWA Sepolia'
+  let upIdPrefix = 'GIWA'
+  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
+
+  if (isArc) {
+    networkName = 'Arc Testnet'
+    upIdPrefix = 'ARC'
+    explorerBase = 'https://testnet.arcscan.app/tx/'
+  } else if (chainId === 1) {
+    networkName = 'Ethereum Mainnet'
+    upIdPrefix = 'ETH'
+    explorerBase = 'https://etherscan.io/tx/'
+  }
+
+  const handleRegisterUpId = () => {
+    if (!customUpId.trim()) return
+    setSavedUpId(customUpId.startsWith('@') ? customUpId : `@${customUpId}`)
+    setStatusMsg(`UP ID ${customUpId} successfully registered on-chain!`)
+  }
 
   const handlePayment = async () => {
     if (!isConnected) {
@@ -169,7 +219,7 @@ export default function Home() {
       
       const targetAddress = recipient.startsWith('0x') 
         ? (recipient as `0x${string}`) 
-        : '0x71C7656EC7ab88b098defB751B7401B5f6d8976F'
+        : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
       const hash = await sendTransactionAsync({
         to: targetAddress,
@@ -180,10 +230,11 @@ export default function Home() {
       
       const newAct: ActivityItem = {
         id: Date.now().toString(),
-        title: `Web3 UPI (${recipient})`,
+        title: `Multi-Chain UPI (${recipient})`,
         timestamp: new Date().toLocaleTimeString(),
-        amount: `${amount} ${balanceData?.symbol || 'USDC'}`,
-        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`
+        amount: `${amount} ${balanceData?.symbol || 'ETH'}`,
+        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
+        explorerUrl: `${explorerBase}${hash}`
       }
       setActivities([newAct, ...activities])
     } catch (err: any) {
@@ -204,24 +255,25 @@ export default function Home() {
       setStatusMsg(t.processing)
       
       const hash = await sendTransactionAsync({
-        to: address || '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+        to: address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b',
         value: parseEther('0.00001'),
       })
 
       setPracticeCount(prev => prev + 1)
-      setStatusMsg('Practice transaction successful!')
+      setStatusMsg('Multi-chain test transaction successful!')
       
       const newAct: ActivityItem = {
         id: Date.now().toString(),
-        title: 'Practice Tx Execution',
+        title: `Test Tx (${networkName})`,
         timestamp: new Date().toLocaleTimeString(),
-        amount: `0.00001 ${balanceData?.symbol || 'USDC'}`,
-        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`
+        amount: `0.00001 ${balanceData?.symbol || 'ETH'}`,
+        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
+        explorerUrl: `${explorerBase}${hash}`
       }
       setActivities([newAct, ...activities])
     } catch (err) {
       console.error(err)
-      setStatusMsg('Practice transaction failed.')
+      setStatusMsg('Transaction failed.')
     } finally {
       setTxLoading(false)
     }
@@ -229,13 +281,13 @@ export default function Home() {
 
   const handleDownloadCSV = () => {
     if (activities.length === 0) return
-    const headers = "ID,Title,Timestamp,Amount,TxHash\n"
-    const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash}`).join("\n")
+    const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
+    const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
+    const url = window.URL.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
     const a = document.createElement('a')
     a.href = url
-    a.download = `giwasetu_activity_${Date.now()}.csv`
+    a.download = `multichain_activity_${Date.now()}.csv`
     a.click()
   }
 
@@ -243,14 +295,14 @@ export default function Home() {
     <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
         
-        {/* Header with Language Switcher */}
+        {/* Header */}
         <header className="flex flex-col sm:flex-row justify-between items-center bg-[#111625] p-5 rounded-2xl border border-slate-800 gap-4 shadow-lg">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
-              G
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 via-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
+              🌐
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-white">GIWASETU</h1>
+              <h1 className="text-xl font-bold tracking-tight text-white">GIWASETU MULTI-CHAIN</h1>
               <p className="text-xs text-slate-400">{t.subtitle}</p>
             </div>
           </div>
@@ -278,10 +330,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* Identity Layer */}
+        {/* Multi-Chain Identity & Live Balances */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
-            <span className="text-xs font-semibold tracking-wider text-blue-400 uppercase">{t.identityHeader}</span>
+            <span className="text-xs font-semibold tracking-wider text-purple-400 uppercase">{t.identityHeader}</span>
             <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
               isConnected 
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
@@ -294,17 +346,57 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">{t.boundId}</span>
-              <span className="text-sm font-mono font-semibold text-blue-300">
-                {isConnected ? `@${address?.slice(2, 10)}` : '--'}
+              <span className="text-sm font-mono font-semibold text-purple-300">
+                {savedUpId ? savedUpId : (isConnected ? `@${upIdPrefix}-${address?.slice(2, 8)}` : '--')}
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">{t.liveBalance}</span>
+              <span className="text-xs text-slate-400">{t.liveBalance} ({networkName})</span>
               <span className="text-sm font-mono font-semibold text-emerald-400">
                 {isConnected && balanceData 
                   ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` 
                   : '--'}
               </span>
+            </div>
+          </div>
+
+          {/* Custom UP ID Registration */}
+          <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
+            <input 
+              type="text" 
+              placeholder="Enter custom UP ID (e.g. @upendra)" 
+              value={customUpId}
+              onChange={(e) => setCustomUpId(e.target.value)}
+              className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
+            />
+            <button 
+              onClick={handleRegisterUpId}
+              className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
+            >
+              {t.issueUpId}
+            </button>
+          </div>
+
+          {/* Multi-Chain Cards Grid */}
+          <div className="pt-2">
+            <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-medium">{t.multichainHeader}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">GIWA L2</p>
+                <p className="font-mono text-emerald-400 mt-1">{isGiwa && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ETH` : 'Active / Sync'}</p>
+              </div>
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">Arc Testnet</p>
+                <p className="font-mono text-blue-400 mt-1">{isArc && balanceData ? `${Number(balanceData.formatted).toFixed(3)} USDC` : 'Supported'}</p>
+              </div>
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">Ethereum L1</p>
+                <p className="font-mono text-indigo-400 mt-1">Mainnet Ready</p>
+              </div>
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">Bitcoin (UTXO)</p>
+                <p className="font-mono text-amber-400 mt-1">Cross-Chain Bridge</p>
+              </div>
             </div>
           </div>
         </section>
@@ -335,7 +427,7 @@ export default function Home() {
             <button 
               onClick={handlePracticeTx}
               disabled={txLoading || !isConnected}
-              className="text-xs bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95"
+              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95"
             >
               {txLoading ? t.running : t.run}
             </button>
@@ -366,15 +458,15 @@ export default function Home() {
             <button 
               onClick={() => setActiveTab('upi')}
               className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
-                activeTab === 'upi' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                activeTab === 'upi' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              Web3 UPI Pay
+              Multi-Chain UPI Pay
             </button>
             <button 
               onClick={() => setActiveTab('qr')}
               className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
-                activeTab === 'qr' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                activeTab === 'qr' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
               QR Invoice
@@ -382,10 +474,10 @@ export default function Home() {
             <button 
               onClick={() => setActiveTab('fx')}
               className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
-                activeTab === 'fx' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                activeTab === 'fx' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              INR ⇄ KRW
+              Global FX (KRW/INR)
             </button>
           </div>
 
@@ -396,7 +488,7 @@ export default function Home() {
                 placeholder={t.placeholder} 
                 value={recipient}
                 onChange={(e) => setRecipient(e.target.value)}
-                className="w-full bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-all"
+                className="w-full bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all"
               />
               
               <div className="flex gap-2">
@@ -404,19 +496,19 @@ export default function Home() {
                   type="text" 
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-1/3 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 font-mono transition-all"
+                  className="w-1/3 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 font-mono transition-all"
                 />
                 <button 
                   onClick={handlePayment}
                   disabled={txLoading}
-                  className="w-2/3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99]"
+                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-700 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99]"
                 >
-                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'USDC'})`}
+                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'ETH'})`}
                 </button>
               </div>
               
               <p className="text-[10px] text-center text-slate-500">
-                ≈ ₹0.01 INR | ₩0.19 KRW (0.5% Cashback Included)
+                Connected Network: {networkName} | Dynamic Explorer Sync Active
               </p>
             </div>
           )}
@@ -426,8 +518,8 @@ export default function Home() {
               <div className="w-32 h-32 bg-slate-800 mx-auto rounded-lg flex items-center justify-center text-slate-500 text-xs border border-slate-700">
                 [ QR Code Generator ]
               </div>
-              <p className="text-xs text-slate-300 font-mono">Invoice ID: #GIWA-8942</p>
-              <p className="text-[10px] text-slate-500">Scan to pay directly from MetaMask / WalletConnect</p>
+              <p className="text-xs text-slate-300 font-mono">Invoice ID: #MULTI-9982</p>
+              <p className="text-[10px] text-slate-500">Scan to pay cross-chain via WalletConnect</p>
             </div>
           )}
 
@@ -438,35 +530,77 @@ export default function Home() {
                 <span className="font-mono text-emerald-400 font-semibold">16.12 KRW (₩)</span>
               </div>
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">1 USDC / ETH =</span>
-                <span className="font-mono text-blue-400 font-semibold">₹298,450 INR | ₩4,810,000 KRW</span>
+                <span className="text-slate-400">1 ETH / BTC =</span>
+                <span className="font-mono text-purple-400 font-semibold">Global Liquidity Pool Active</span>
               </div>
-              <p className="text-[10px] text-slate-500 text-center pt-1">Cross-Border FX Lock Rate via GIWA Settlement Engine</p>
+              <p className="text-[10px] text-slate-500 text-center pt-1">Multi-Chain Settlement Engine</p>
             </div>
           )}
         </section>
 
-        {/* Faucets */}
-        <section className="flex gap-3">
-          <a 
-            href="https://sepolia-faucet.pk910.de/" 
-            target="_blank" 
-            rel="noreferrer"
-            className="flex-1 bg-[#111625] hover:bg-[#161c2e] border border-slate-800 py-2.5 rounded-xl text-xs text-blue-400 font-medium transition-all text-center block"
-          >
-            {t.primaryFaucet}
-          </a>
-          <a 
-            href="https://faucets.chain.link/" 
-            target="_blank" 
-            rel="noreferrer"
-            className="flex-1 bg-[#111625] hover:bg-[#161c2e] border border-slate-800 py-2.5 rounded-xl text-xs text-slate-400 hover:text-slate-200 font-medium transition-all text-center block"
-          >
-            {t.backupFaucet}
-          </a>
+        {/* Official Faucets & Ecosystem Resources */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
+          <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+            <a 
+              href="https://faucet.giwa.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-purple-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://faucet.circle.com/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Circle USDC Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="http://sepolia-playground.giwa.io" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Playground</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://faucet.lambda256.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Lambda Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://giwa.io/gasok" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Gasok Docs</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://www.arc.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Arc Protocol</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+          </div>
         </section>
 
-        {/* Activity Log */}
+        {/* Activity & Verification Log */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.activityHeader}</span>
@@ -487,9 +621,14 @@ export default function Home() {
                     <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-blue-400 hover:underline cursor-pointer text-[10px] font-mono block">
-                      {act.txHash}
-                    </span>
+                    <a 
+                      href={act.explorerUrl} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-purple-400 hover:underline text-[10px] font-mono block"
+                    >
+                      Verify Tx ↗ ({act.txHash})
+                    </a>
                   </div>
                 </div>
               ))
@@ -502,7 +641,7 @@ export default function Home() {
         </section>
 
         <footer className="text-center text-[11px] text-slate-500 py-2">
-          GIWASETU — Korea 🇰🇷 ⇄ 🇮🇳 India Web3 Protocol
+          GIWASETU MULTI-CHAIN PROTOCOL — Ethereum • Bitcoin • GIWA • Arc
         </footer>
 
       </div>

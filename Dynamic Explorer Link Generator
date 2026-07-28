@@ -1,0 +1,18 @@
+function generateTransactionExplorerLink(networkKey, txHash) {
+  const network = SUPPORTED_NETWORKS[networkKey];
+  if (!network) throw new Error("Unsupported network");
+
+  const fullUrl = `${network.explorerTxUrl}${txHash}`;
+  
+  return {
+    network: network.name,
+    txHash: txHash,
+    verificationUrl: fullUrl,
+    htmlLink: `<a href="${fullUrl}" target="_blank">View on ${network.name} Explorer</a>`
+  };
+}
+
+// उदाहरण उपयोग:
+// const btcLink = generateTransactionExplorerLink('bitcoin', '0abc123...xyz');
+// const jivaLink = generateTransactionExplorerLink('jiva', '0xdef456...uvw');
+

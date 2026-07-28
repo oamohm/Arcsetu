@@ -12,8 +12,8 @@ const translations = {
     verified: 'Verified Multi-Chain Builder',
     notConnected: 'Wallet Not Connected',
     boundId: 'Bound Universal ID',
-    issueUpId: 'Set Custom UP ID',
-    registeredIdLabel: 'Registered UP ID',
+    issueUpId: 'Register GIWA UP ID',
+    registeredIdLabel: 'Registered GIWA UP ID (Permanent)',
     liveBalance: 'Live Balance',
     multichainHeader: 'Global Assets & Networks',
     workflowHeader: 'Builder Onboarding Workflow',
@@ -32,20 +32,11 @@ const translations = {
     placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
     payBtn: 'Pay via Multi-Chain UPI',
     processing: 'Processing Tx...',
-    noTxConnected: 'No transactions recorded yet for this wallet.',
+    noTxConnected: 'No transactions recorded yet.',
     noTxDisconnected: 'Connect wallet to view multi-chain history.',
     activityHeader: 'Cross-Chain Activity & Verification Log',
     downloadCsv: 'Download CSV ↗',
-    resourcesHeader: 'Ecosystem Protocols & Official Links',
-    scanQr: 'Scan QR',
-    qrTitle: 'Dynamic Receiver QR Invoice',
-    royaltyHeader: 'Universal Royalty & Fee Distribution Engine',
-    royaltyDesc: 'Distribute creator fees, builder incentives, or cross-chain royalties across any connected network natively.',
-    distributeRoyalty: 'Distribute Royalty',
-    txSuccessTitle: 'Transaction Confirmed!',
-    txSuccessDesc: 'Your transaction was successfully processed on the network.',
-    viewExplorer: 'View on Explorer ↗',
-    close: 'Close',
+    resourcesHeader: 'Official Faucets & Protocol Links',
   },
   ko: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
@@ -53,8 +44,8 @@ const translations = {
     verified: '검증된 멀티체인 빌더',
     notConnected: '지갑 미연결',
     boundId: '연결된 유니버셜 ID',
-    issueUpId: '커스텀 UP ID 설정',
-    registeredIdLabel: '등록된 UP ID',
+    issueUpId: 'GIWA UP ID 등록',
+    registeredIdLabel: '등록된 GIWA UP ID (영구)',
     liveBalance: '실시간 잔액',
     multichainHeader: '글로벌 자산 및 네트워크',
     workflowHeader: '빌더 온보딩 워크플로우',
@@ -73,20 +64,11 @@ const translations = {
     placeholder: '@UP_ID 또는 0x 주소 입력',
     payBtn: '멀티체인 UPI 결제',
     processing: '처리 중...',
-    noTxConnected: '이 지갑에 대한 기록된 트랜잭션이 없습니다.',
+    noTxConnected: '기록된 트랜잭션이 없습니다.',
     noTxDisconnected: '활동 내역을 보려면 지갑을 연결하세요.',
     activityHeader: '크로스체인 활동 및 검증 로그',
     downloadCsv: 'CSV 다운로드 ↗',
-    resourcesHeader: '생태계 프로토콜 및 공식 링크',
-    scanQr: 'QR 스캔',
-    qrTitle: '동적 수신 QR 인보이스',
-    royaltyHeader: '유니버셜 로열티 및 수수료 분배 엔진',
-    royaltyDesc: '모든 연결된 네트워크에서 크리에이터 수수료, 빌더 인센티브 또는 크로스체인 로열티를 직접 분배합니다.',
-    distributeRoyalty: '로열티 분배하기',
-    txSuccessTitle: '트랜잭션 승인 완료!',
-    txSuccessDesc: '트랜잭션이 네트워크에서 성공적으로 처리되었습니다.',
-    viewExplorer: '탐색기에서 보기 ↗',
-    close: '닫기',
+    resourcesHeader: '공식 포셋 및 프로토콜 링크',
   },
   hi: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
@@ -94,8 +76,8 @@ const translations = {
     verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
     boundId: 'बाउंड यूनिवर्सल ID',
-    issueUpId: 'कस्टम UP ID सेट करें',
-    registeredIdLabel: 'रजिस्टर्ड UP ID',
+    issueUpId: 'GIWA UP ID रजिस्टर करें',
+    registeredIdLabel: 'रजिस्टर्ड GIWA UP ID (स्थायी)',
     liveBalance: 'लाइव बैलेंस',
     multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
     workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
@@ -114,20 +96,11 @@ const translations = {
     placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
     payBtn: 'मल्टी-चेन UPI भुगतान',
     processing: 'प्रॉसेस हो रहा है...',
-    noTxConnected: 'इस वॉलेट के लिए कोई ट्रांजैक्शन दर्ज नहीं है।',
+    noTxConnected: 'कोई ट्रांजैक्शन दर्ज नहीं है।',
     noTxDisconnected: 'गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
     activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
     downloadCsv: 'CSV डाउनलोड ↗',
-    resourcesHeader: 'इकोसिस्टम प्रोटोकॉल और ऑफिशियल लिंक्स',
-    scanQr: 'QR स्कैन करें',
-    qrTitle: 'डायनामिक रिसीविंग QR इनवॉइस',
-    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन इंजन',
-    royaltyDesc: 'किसी भी कनेक्टेड नेटवर्क पर क्रिएटर फ़ीस, बिल्डर इंसेंटिव या क्रॉस-चेन रॉयल्टी सीधे बाटें।',
-    distributeRoyalty: 'रॉयल्टी डिस्ट्रीब्यूट करें',
-    txSuccessTitle: 'ट्रांजैक्शन सफल रहा!',
-    txSuccessDesc: 'आपका ट्रांजैक्शन नेटवर्क पर सफलतापूर्वक पूरा हो गया है।',
-    viewExplorer: 'एक्सप्लोरर पर देखें ↗',
-    close: 'बंद करें',
+    resourcesHeader: 'ऑफ़िशियल फॉसेट और प्रोटोकॉल लिंक्स',
   },
   es: {
     subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
@@ -135,8 +108,8 @@ const translations = {
     verified: 'Creador Multicadena Verificado',
     notConnected: 'Billetera No Conectada',
     boundId: 'ID Universal Vinculado',
-    issueUpId: 'Configurar UP ID Personalizado',
-    registeredIdLabel: 'UP ID Registrado',
+    issueUpId: 'Registrar GIWA UP ID',
+    registeredIdLabel: 'GIWA UP ID Registrado (Permanente)',
     liveBalance: 'Saldo en Vivo',
     multichainHeader: 'Activos y Redes Globales',
     workflowHeader: 'Flujo de Trabajo de Incorporación',
@@ -155,20 +128,11 @@ const translations = {
     placeholder: 'Enviar a @UP_ID o Billetera 0x',
     payBtn: 'Pago vía UPI Multicadena',
     processing: 'Procesando...',
-    noTxConnected: 'No hay transacciones registradas para esta billetera.',
+    noTxConnected: 'No hay transacciones registradas.',
     noTxDisconnected: 'Conecte la billetera para ver el historial.',
     activityHeader: 'Registro de Actividad Multicadena',
     downloadCsv: 'Descargar CSV ↗',
-    resourcesHeader: 'Protocolos del Ecosistema y Enlaces Oficiales',
-    scanQr: 'Escanear QR',
-    qrTitle: 'Factura QR de Recepción Dinámica',
-    royaltyHeader: 'Motor Universal de Distribución de Regalías',
-    royaltyDesc: 'Distribuya tarifas de creador e incentivos en cualquier red conectada de forma nativa.',
-    distributeRoyalty: 'Distribuir Regalías',
-    txSuccessTitle: '¡Transacción Confirmada!',
-    txSuccessDesc: 'Su transacción se procesó con éxito en la red.',
-    viewExplorer: 'Ver en Explorador ↗',
-    close: 'Cerrar',
+    resourcesHeader: 'Enlaces Oficiales de Faucets y Protocolo',
   }
 }
 
@@ -179,13 +143,6 @@ interface ActivityItem {
   amount: string
   txHash: string
   explorerUrl: string
-}
-
-interface ModalDetails {
-  title: string
-  amount: string
-  hash: string
-  url: string
 }
 
 export default function Home() {
@@ -205,132 +162,74 @@ export default function Home() {
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
-  // Royalty State
-  const [royaltyRecipient, setRoyaltyRecipient] = useState('')
-  const [royaltyAmount, setRoyaltyAmount] = useState('0.0005')
-
-  // Modal & Audio state
-  const [successModal, setSuccessModal] = useState<ModalDetails | null>(null)
-
+  // Unique UP ID state mapping: { [walletAddress]: "@unique_id" }
   const [customUpId, setCustomUpId] = useState('')
   const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
-  const [isScannerOpen, setIsScannerOpen] = useState(false)
-  const [activities, setActivities] = useState<ActivityItem[]>([])
 
-  const currentWallet = address ? address.toLowerCase() : ''
-  const isGiwa = chainId === 91342
-  const isArc = chainId === 5042002
-
-  let networkName = 'GIWA Sepolia'
-  let networkPrefix = 'GIWA'
-  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
-
-  if (isArc) {
-    networkName = 'Arc Testnet'
-    networkPrefix = 'ARC'
-    explorerBase = 'https://testnet.arcscan.app/tx/'
-  } else if (chainId === 1) {
-    networkName = 'Ethereum Mainnet'
-    networkPrefix = 'ETH'
-    explorerBase = 'https://etherscan.io/tx/'
-  }
-
-  // Web Audio Chime Sound
-  const playSuccessChime = () => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-      if (!AudioCtx) return
-      const ctx = new AudioCtx()
-      
-      const now = ctx.currentTime
-      const osc1 = ctx.createOscillator()
-      const osc2 = ctx.createOscillator()
-      const gain = ctx.createGain()
-
-      osc1.type = 'sine'
-      osc2.type = 'sine'
-
-      osc1.frequency.setValueAtTime(523.25, now) // C5
-      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.15) // E5
-      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.3) // G5
-
-      osc2.frequency.setValueAtTime(1046.50, now) // C6
-
-      gain.gain.setValueAtTime(0.15, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6)
-
-      osc1.connect(gain)
-      osc2.connect(gain)
-      gain.connect(ctx.destination)
-
-      osc1.start(now)
-      osc2.start(now + 0.1)
-      osc1.stop(now + 0.6)
-      osc2.stop(now + 0.6)
-    } catch (e) {
-      console.error('Audio playback failed', e)
-    }
-  }
-
+  // Load stored IDs on initial render
   useEffect(() => {
-    const savedIds = localStorage.getItem('giwa_registered_upids')
-    if (savedIds) {
+    const saved = localStorage.getItem('giwa_registered_upids')
+    if (saved) {
       try {
-        setRegisteredIds(JSON.parse(savedIds))
+        setRegisteredIds(JSON.parse(saved))
       } catch (e) {
         console.error('Failed to parse saved UP IDs', e)
       }
     }
   }, [])
 
-  useEffect(() => {
-    if (isConnected && currentWallet) {
-      const savedHistory = localStorage.getItem(`giwa_tx_history_${currentWallet}`)
-      if (savedHistory) {
-        try {
-          setActivities(JSON.parse(savedHistory))
-        } catch (e) {
-          console.error('Failed to parse transaction history', e)
-          setActivities([])
-        }
-      } else {
-        setActivities([])
-      }
-    } else {
-      setActivities([])
+  const currentWallet = address ? address.toLowerCase() : ''
+  const userUpId = currentWallet ? registeredIds[currentWallet] : null
+  const hasExistingId = Boolean(userUpId)
+
+  const isGiwa = chainId === 91342
+  const isArc = chainId === 5042002
+
+  const [activities, setActivities] = useState<ActivityItem[]>([
+    {
+      id: '1',
+      title: 'Multi-Chain UPI (0x85Bb...A67b)',
+      timestamp: '2:30:02 AM',
+      amount: '4 USDC',
+      txHash: '0x1ef2...e694',
+      explorerUrl: 'https://testnet.arcscan.app/tx/0x1ef259c938932fec8af0443e729165b59e0fa92c7be790a5ec26d6294a55e694'
+    },
+    {
+      id: '2',
+      title: 'Test Tx (GIWA Sepolia)',
+      timestamp: '2:27:51 AM',
+      amount: '0.00001 ETH',
+      txHash: '0x4f8f...28f3',
+      explorerUrl: 'https://sepolia-explorer.giwa.io/tx/0x4f8f28f3'
     }
-  }, [isConnected, currentWallet])
+  ])
 
-  const saveActivity = (newAct: ActivityItem) => {
-    if (!currentWallet) return
-    const updated = [newAct, ...activities]
-    setActivities(updated)
-    localStorage.setItem(`giwa_tx_history_${currentWallet}`, JSON.stringify(updated))
+  let networkName = 'GIWA Sepolia'
+  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
+
+  if (isArc) {
+    networkName = 'Arc Testnet'
+    explorerBase = 'https://testnet.arcscan.app/tx/'
+  } else if (chainId === 1) {
+    networkName = 'Ethereum Mainnet'
+    explorerBase = 'https://etherscan.io/tx/'
   }
 
-  const triggerSuccess = (title: string, amountStr: string, hash: string) => {
-    const fullExplorerUrl = `${explorerBase}${hash}`
-    playSuccessChime()
-    setSuccessModal({
-      title,
-      amount: amountStr,
-      hash,
-      url: fullExplorerUrl,
-    })
-  }
-
-  const autoDerivedId = address ? `@${networkPrefix}-${address.slice(-5)}` : '--'
-  const userUpId = currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId
-
+  // Check uniqueness and handle strict registration rules
   const handleRegisterUpId = () => {
     if (!currentWallet) {
       setStatusMsg('Please connect your wallet first.')
       return
     }
 
+    if (hasExistingId) {
+      setStatusMsg('Wallet already has a registered UP ID. Duplicates not allowed.')
+      return
+    }
+
     let cleanId = customUpId.trim().toLowerCase()
     if (!cleanId) {
-      setStatusMsg('Please enter a valid handle.')
+      setStatusMsg('Please enter a valid UP ID.')
       return
     }
 
@@ -339,16 +238,18 @@ export default function Home() {
     }
 
     if (cleanId.length < 3) {
-      setStatusMsg('Handle must be at least 2 characters long.')
+      setStatusMsg('UP ID must be at least 2 characters long.')
       return
     }
 
+    // Check across all registered IDs to prevent duplicates
     const allExistingValues = Object.values(registeredIds).map(id => id.toLowerCase())
-    if (allExistingValues.includes(cleanId) && registeredIds[currentWallet] !== cleanId) {
-      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet.`)
+    if (allExistingValues.includes(cleanId)) {
+      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet. Choose a unique ID.`)
       return
     }
 
+    // Register & store permanently for this wallet
     const updated = {
       ...registeredIds,
       [currentWallet]: cleanId
@@ -357,16 +258,7 @@ export default function Home() {
     setRegisteredIds(updated)
     localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
     setCustomUpId('')
-    setStatusMsg(`Custom handle updated to ${cleanId}`)
-  }
-
-  const handleSimulateScan = () => {
-    setIsScannerOpen(true)
-    setTimeout(() => {
-      setRecipient('0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b')
-      setIsScannerOpen(false)
-      setStatusMsg('QR Code scanned successfully!')
-    }, 1200)
+    setStatusMsg(`Success: ${cleanId} bound permanently to ${currentWallet.slice(0, 6)}...${currentWallet.slice(-4)}`)
   }
 
   const handlePayment = async () => {
@@ -387,71 +279,25 @@ export default function Home() {
         ? (recipient as `0x${string}`) 
         : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
-      const parsedValue = parseEther(amount && !isNaN(Number(amount)) ? amount : '0.0001')
-
       const hash = await sendTransactionAsync({
         to: targetAddress,
-        value: parsedValue,
+        value: parseEther(amount || '0.0001'),
       })
 
-      const amtSymbol = `${amount} ${balanceData?.symbol || 'USDC'}`
-      const txTitle = `Multi-Chain UPI Payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
-
+      setStatusMsg(`Tx Confirmed: ${hash.slice(0, 10)}...`)
+      
       const newAct: ActivityItem = {
         id: Date.now().toString(),
-        title: txTitle,
+        title: `Multi-Chain UPI (${recipient})`,
         timestamp: new Date().toLocaleTimeString(),
-        amount: amtSymbol,
+        amount: `${amount} ${balanceData?.symbol || 'ETH'}`,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
         explorerUrl: `${explorerBase}${hash}`
       }
-      saveActivity(newAct)
-      triggerSuccess(txTitle, amtSymbol, hash)
-      setStatusMsg('')
+      setActivities([newAct, ...activities])
     } catch (err: any) {
       console.error(err)
       setStatusMsg('Transaction failed or cancelled.')
-    } finally {
-      setTxLoading(false)
-    }
-  }
-
-  const handleRoyaltyPayout = async () => {
-    if (!isConnected) {
-      alert(t.notConnected)
-      return
-    }
-
-    const targetAddress = royaltyRecipient.startsWith('0x')
-      ? (royaltyRecipient as `0x${string}`)
-      : address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
-
-    try {
-      setTxLoading(true)
-      setStatusMsg('Processing Royalty Payout...')
-
-      const hash = await sendTransactionAsync({
-        to: targetAddress,
-        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0005'),
-      })
-
-      const amtSymbol = `${royaltyAmount} ${balanceData?.symbol || 'ETH'}`
-      const txTitle = `Royalty Distribution (${networkName})`
-
-      const newAct: ActivityItem = {
-        id: Date.now().toString(),
-        title: txTitle,
-        timestamp: new Date().toLocaleTimeString(),
-        amount: amtSymbol,
-        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
-        explorerUrl: `${explorerBase}${hash}`
-      }
-      saveActivity(newAct)
-      triggerSuccess(txTitle, amtSymbol, hash)
-      setStatusMsg('')
-    } catch (err) {
-      console.error(err)
-      setStatusMsg('Royalty payout failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
@@ -466,30 +312,26 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const targetAddr = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
       const hash = await sendTransactionAsync({
-        to: targetAddr,
+        to: address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b',
         value: parseEther('0.00001'),
       })
 
       setPracticeCount(prev => prev + 1)
-      const amtSymbol = `0.00001 ${balanceData?.symbol || 'ETH'}`
-      const txTitle = `Test Tx Execution (${networkName})`
-
+      setStatusMsg('Multi-chain test transaction successful!')
+      
       const newAct: ActivityItem = {
         id: Date.now().toString(),
-        title: txTitle,
+        title: `Test Tx (${networkName})`,
         timestamp: new Date().toLocaleTimeString(),
-        amount: amtSymbol,
+        amount: `0.00001 ${balanceData?.symbol || 'ETH'}`,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
         explorerUrl: `${explorerBase}${hash}`
       }
-      saveActivity(newAct)
-      triggerSuccess(txTitle, amtSymbol, hash)
-      setStatusMsg('')
+      setActivities([newAct, ...activities])
     } catch (err) {
       console.error(err)
-      setStatusMsg('Transaction failed or cancelled.')
+      setStatusMsg('Transaction failed.')
     } finally {
       setTxLoading(false)
     }
@@ -507,12 +349,8 @@ export default function Home() {
     a.click()
   }
 
-  const receiveQrData = isConnected && address
-    ? `ethereum:${address}@${chainId}?label=${encodeURIComponent(userUpId)}`
-    : 'Connect Wallet to Generate Receive QR'
-
   return (
-    <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans relative">
+    <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
         
         {/* Header */}
@@ -566,8 +404,8 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
               <span className="text-xs text-slate-400">{t.boundId}</span>
-              <span className="text-sm font-mono font-semibold text-purple-300">
-                {isConnected ? userUpId : '--'}
+              <span className={`text-sm font-mono font-semibold ${hasExistingId ? 'text-purple-300' : 'text-slate-500 italic'}`}>
+                {isConnected ? (hasExistingId ? userUpId : 'Not Registered') : '--'}
               </span>
             </div>
             <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
@@ -580,22 +418,31 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Custom Handle Input */}
+          {/* Registration Input: Only visible when connected & no ID bound yet */}
           {isConnected && (
             <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
-              <input 
-                type="text" 
-                placeholder="Set custom handle (e.g. @bhupendra)" 
-                value={customUpId}
-                onChange={(e) => setCustomUpId(e.target.value)}
-                className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1 font-mono"
-              />
-              <button 
-                onClick={handleRegisterUpId}
-                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
-              >
-                {t.issueUpId}
-              </button>
+              {hasExistingId ? (
+                <div className="w-full text-xs text-slate-400 py-1 flex justify-between items-center px-1">
+                  <span>{t.registeredIdLabel}:</span>
+                  <span className="font-mono text-purple-400 font-semibold">{userUpId}</span>
+                </div>
+              ) : (
+                <>
+                  <input 
+                    type="text" 
+                    placeholder="Enter unique UP ID (e.g. @upendra)" 
+                    value={customUpId}
+                    onChange={(e) => setCustomUpId(e.target.value)}
+                    className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1"
+                  />
+                  <button 
+                    onClick={handleRegisterUpId}
+                    className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium"
+                  >
+                    {t.issueUpId}
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -619,39 +466,6 @@ export default function Home() {
                 <p className="text-slate-400 font-semibold text-[10px]">Bitcoin (UTXO)</p>
                 <p className="font-mono text-amber-400 mt-1">Cross-Chain Bridge</p>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Royalty Engine Section */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
-          <div>
-            <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">{t.royaltyDesc}</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <input 
-              type="text"
-              placeholder="Creator/Builder Address (or leave empty for self)"
-              value={royaltyRecipient}
-              onChange={(e) => setRoyaltyRecipient(e.target.value)}
-              className="sm:col-span-2 bg-[#0b0e17] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
-            />
-            <div className="flex gap-2">
-              <input 
-                type="text"
-                value={royaltyAmount}
-                onChange={(e) => setRoyaltyAmount(e.target.value)}
-                className="w-1/2 bg-[#0b0e17] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
-              />
-              <button
-                onClick={handleRoyaltyPayout}
-                disabled={txLoading || !isConnected}
-                className="w-1/2 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2 transition-all cursor-pointer"
-              >
-                {t.distributeRoyalty}
-              </button>
             </div>
           </div>
         </section>
@@ -682,7 +496,7 @@ export default function Home() {
             <button 
               onClick={handlePracticeTx}
               disabled={txLoading || !isConnected}
-              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95 cursor-pointer"
+              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95"
             >
               {txLoading ? t.running : t.run}
             </button>
@@ -707,7 +521,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Payments Section with QR & Send Scanner */}
+        {/* Payments */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
           <div className="flex border-b border-slate-800 gap-2">
             <button 
@@ -724,7 +538,7 @@ export default function Home() {
                 activeTab === 'qr' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              Receive QR Invoice
+              QR Invoice
             </button>
             <button 
               onClick={() => setActiveTab('fx')}
@@ -738,27 +552,13 @@ export default function Home() {
 
           {activeTab === 'upi' && (
             <div className="space-y-3 pt-2">
-              <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  placeholder={t.placeholder} 
-                  value={recipient}
-                  onChange={(e) => setRecipient(e.target.value)}
-                  className="flex-1 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all font-mono"
-                />
-                <button
-                  onClick={handleSimulateScan}
-                  className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium cursor-pointer"
-                >
-                  📷 {t.scanQr}
-                </button>
-              </div>
-
-              {isScannerOpen && (
-                <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 text-center text-xs text-purple-300 animate-pulse">
-                  Scanning Camera Feed / Processing Image...
-                </div>
-              )}
+              <input 
+                type="text" 
+                placeholder={t.placeholder} 
+                value={recipient}
+                onChange={(e) => setRecipient(e.target.value)}
+                className="w-full bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all"
+              />
               
               <div className="flex gap-2">
                 <input 
@@ -769,10 +569,10 @@ export default function Home() {
                 />
                 <button 
                   onClick={handlePayment}
-                  disabled={txLoading || !isConnected}
-                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                  disabled={txLoading}
+                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-700 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99]"
                 >
-                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'USDC'})`}
+                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'ETH'})`}
                 </button>
               </div>
               
@@ -784,21 +584,11 @@ export default function Home() {
 
           {activeTab === 'qr' && (
             <div className="bg-[#0b0e17] p-6 rounded-xl border border-slate-800 text-center space-y-3">
-              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{t.qrTitle}</p>
-              
-              <div className="w-40 h-40 bg-slate-900 border-2 border-purple-500/30 mx-auto rounded-xl flex flex-col items-center justify-center p-2 shadow-inner">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(receiveQrData)}`} 
-                  alt="Receiver QR Code"
-                  className="w-32 h-32 rounded bg-white p-1"
-                />
+              <div className="w-32 h-32 bg-slate-800 mx-auto rounded-lg flex items-center justify-center text-slate-500 text-xs border border-slate-700">
+                [ QR Code Generator ]
               </div>
-
-              <div className="space-y-1">
-                <p className="text-xs font-mono font-bold text-purple-400">{userUpId}</p>
-                <p className="text-[11px] font-mono text-slate-400 break-all">{address || 'No wallet connected'}</p>
-                <p className="text-[10px] text-emerald-400 font-semibold pt-1">Network: {networkName}</p>
-              </div>
+              <p className="text-xs text-slate-300 font-mono">Invoice ID: #MULTI-9982</p>
+              <p className="text-[10px] text-slate-500">Scan to pay cross-chain via WalletConnect</p>
             </div>
           )}
 
@@ -817,91 +607,65 @@ export default function Home() {
           )}
         </section>
 
-        {/* Network-Categorized Faucets & Links */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
+        {/* Faucets & Links */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
           
-          {/* Arc Protocol Ecosystem */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide">Arc Protocol Ecosystem</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <a 
-                href="https://testnet.arcscan.app/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Arc Testnet Explorer</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://faucet.circle.com/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Circle USDC Faucet</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://www.arc.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Arc Protocol Docs</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-            </div>
-          </div>
-
-          {/* GIWA Ecosystem */}
-          <div className="space-y-2 pt-2 border-t border-slate-800/60">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide">GIWA L2 Ecosystem</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <a 
-                href="https://faucet.giwa.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>GIWA Faucet</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="http://sepolia-playground.giwa.io" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>GIWA Playground</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://faucet.lambda256.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Lambda Faucet</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://giwa.io/gasok" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
-                <span>GIWA Gasok Docs</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+            <a 
+              href="https://faucet.giwa.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-purple-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://faucet.circle.com/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Circle USDC Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="http://sepolia-playground.giwa.io" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Playground</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://faucet.lambda256.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Lambda Faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://giwa.io/gasok" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>GIWA Gasok Docs</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://www.arc.io/" 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>Arc Protocol</span>
+              <span className="text-[10px]">↗</span>
+            </a>
           </div>
         </section>
 
@@ -909,124 +673,47 @@ export default function Home() {
         <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.activityHeader}</span>
-            {isConnected && activities.length > 0 && (
-              <button 
-                onClick={handleDownloadCSV}
-                className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-all cursor-pointer"
-              >
-                {t.downloadCsv}
-              </button>
-            )}
+            <button 
+              onClick={handleDownloadCSV}
+              className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-all"
+            >
+              {t.downloadCsv}
+            </button>
           </div>
 
           <div className="space-y-2 text-xs">
-            {isConnected ? (
-              activities.length > 0 ? (
-                activities.map((act) => (
-                  <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
-                    <div>
-                      <p className="text-emerald-400 font-medium">{act.title}</p>
-                      <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
-                    </div>
-                    <div className="text-right">
-                      <a 
-                        href={act.explorerUrl} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="text-purple-400 hover:underline text-[10px] font-mono block"
-                      >
-                        Verify Tx ↗ ({act.txHash})
-                      </a>
-                    </div>
+            {activities.length > 0 ? (
+              activities.map((act) => (
+                <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
+                  <div>
+                    <p className="text-emerald-400 font-medium">{act.title}</p>
+                    <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
                   </div>
-                ))
-              ) : (
-                <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
-                  {t.noTxConnected}
+                  <div className="text-right">
+                    <a 
+                      href={act.explorerUrl} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-purple-400 hover:underline text-[10px] font-mono block"
+                    >
+                      Verify Tx ↗ ({act.txHash})
+                    </a>
+                  </div>
                 </div>
-              )
+              ))
             ) : (
               <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
-                {t.noTxDisconnected}
+                {isConnected ? t.noTxConnected : t.noTxDisconnected}
               </div>
             )}
           </div>
         </section>
 
-        {/* Official Social Links & Builder Credits */}
-        <footer className="bg-[#111625] p-4 rounded-2xl border border-slate-800 text-center space-y-3">
-          <div className="flex justify-center items-center gap-6 text-xs text-slate-400">
-            <a 
-              href="https://x.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>𝕏 (Twitter)</span>
-            </a>
-            <a 
-              href="https://github.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>GitHub</span>
-            </a>
-            <a 
-              href="https://discord.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>Discord</span>
-            </a>
-          </div>
-          <p className="text-[11px] text-slate-500">
-            GIWASETU MULTI-CHAIN PROTOCOL — Settlement Engine for Ethereum • Arc • GIWA
-          </p>
+        <footer className="text-center text-[11px] text-slate-500 py-2">
+          GIWASETU MULTI-CHAIN PROTOCOL — Ethereum • Bitcoin • GIWA • Arc
         </footer>
 
       </div>
-
-      {/* SUCCESS MODAL POPUP WITH ANIMATION */}
-      {successModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4 transform transition-all scale-100">
-            <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto border border-emerald-500/40">
-              ✓
-            </div>
-            
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-white">{t.txSuccessTitle}</h3>
-              <p className="text-xs text-slate-400">{t.txSuccessDesc}</p>
-            </div>
-
-            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 text-left space-y-1.5 font-mono text-xs">
-              <p className="text-slate-400 text-[10px]">DETAILS:</p>
-              <p className="text-purple-300 font-semibold">{successModal.title}</p>
-              <p className="text-emerald-400 font-bold">{successModal.amount}</p>
-              <p className="text-slate-500 text-[10px] truncate">Hash: {successModal.hash}</p>
-            </div>
-
-            <div className="flex flex-col gap-2 pt-1">
-              <a 
-                href={successModal.url}
-                target="_blank"
-                rel="noreferrer"
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs py-2.5 rounded-xl transition-all shadow-md block"
-              >
-                {t.viewExplorer}
-              </a>
-              <button 
-                onClick={() => setSuccessModal(null)}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2.5 rounded-xl transition-all font-medium cursor-pointer"
-              >
-                {t.close}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   )
 }

@@ -194,7 +194,7 @@ interface ModalDetails {
   url: string
 }
 
-const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
+const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000' as const
 
 export default function Home() {
   const { address, isConnected } = useAccount()
@@ -206,7 +206,7 @@ export default function Home() {
 
   const { data: balanceData } = useBalance({ 
     address,
-    token: isArc ? (ARC_USDC_ADDRESS as `0x${string}`) : undefined
+    token: isArc ? ARC_USDC_ADDRESS : undefined
   })
 
   const { sendTransactionAsync } = useSendTransaction()
@@ -318,38 +318,47 @@ export default function Home() {
   }, [isConnected, currentWallet])
 
   useEffect(() => {
+    let isMounted = true
+
     if (isScannerOpen) {
-      const scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 220, height: 220 } },
-        false
-      )
-      
-      scannerRef.current = scanner
+      const timer = setTimeout(() => {
+        if (!isMounted || !document.getElementById("reader")) return
 
-      scanner.render(
-        (decodedText) => {
-          let extracted = decodedText
-          if (decodedText.includes('ethereum:')) {
-            extracted = decodedText.split('ethereum:')[1].split('@')[0].split('?')[0]
-          }
-          setRecipient(extracted)
-          setStatusMsg(`scanned: ${extracted.slice(0, 10)}...`)
-          setIsScannerOpen(false)
-          if (scannerRef.current) {
-            scannerRef.current.clear().catch(() => {})
-          }
-        },
-        () => {}
-      )
-    } else {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(() => {})
-        scannerRef.current = null
+        try {
+          const scanner = new Html5QrcodeScanner(
+            "reader",
+            { fps: 10, qrbox: { width: 220, height: 220 } },
+            false
+          )
+          
+          scannerRef.current = scanner
+
+          scanner.render(
+            (decodedText) => {
+              let extracted = decodedText
+              if (decodedText.includes('ethereum:')) {
+                extracted = decodedText.split('ethereum:')[1].split('@')[0].split('?')[0]
+              }
+              setRecipient(extracted)
+              setStatusMsg(`scanned: ${extracted.slice(0, 10)}...`)
+              setIsScannerOpen(false)
+            },
+            () => {}
+          )
+        } catch (err) {
+          console.error('qr scanner init error', err)
+        }
+      }, 100)
+
+      return () => {
+        isMounted = false
+        clearTimeout(timer)
+        if (scannerRef.current) {
+          scannerRef.current.clear().catch(() => {})
+          scannerRef.current = null
+        }
       }
-    }
-
-    return () => {
+    } else {
       if (scannerRef.current) {
         scannerRef.current.clear().catch(() => {})
         scannerRef.current = null
@@ -432,8 +441,9 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const targetAddress = (recipient.trim().startsWith('0x') && recipient.trim().length === 42)
-        ? (recipient.trim() as `0x${string}`) 
+      const cleanTarget = recipient.trim()
+      const targetAddress: `0x${string}` = (cleanTarget.startsWith('0x') && cleanTarget.length === 42)
+        ? (cleanTarget as `0x${string}`) 
         : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
       const inputAmount = amount && !isNaN(Number(amount)) ? amount : '0.0001'
@@ -442,7 +452,7 @@ export default function Home() {
       if (isArc) {
         const parsedValue = parseUnits(inputAmount, 6)
         hash = await writeContractAsync({
-          address: ARC_USDC_ADDRESS as `0x${string}`,
+          address: ARC_USDC_ADDRESS,
           abi: erc20Abi,
           functionName: 'transfer',
           args: [targetAddress, parsedValue],
@@ -488,7 +498,7 @@ export default function Home() {
     }
 
     const cleanRecipient = royaltyRecipient.trim()
-    const targetAddress = (cleanRecipient.startsWith('0x') && cleanRecipient.length === 42)
+    const targetAddress: `0x${string}` = (cleanRecipient.startsWith('0x') && cleanRecipient.length === 42)
       ? (cleanRecipient as `0x${string}`)
       : address
 
@@ -533,7 +543,7 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const targetAddr = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+      const targetAddr: `0x${string}` = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
       const hash = await sendTransactionAsync({
         to: targetAddr,
         value: parseEther('0.00001'),
@@ -567,11 +577,12 @@ export default function Home() {
     const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
     const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
-    const url = window.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
+    const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
     a.download = `multichain_activity_${Date.now()}.csv`
     a.click()
+    window.URL.revokeObjectURL(url)
   }
 
   const receiveQrData = isConnected && address

@@ -246,7 +246,7 @@ export default function Home() {
   const playSuccessChime = () => {
     if (typeof window === 'undefined') return
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
       if (!AudioCtx) return
       const ctx = new AudioCtx()
       
@@ -311,12 +311,13 @@ export default function Home() {
     }
   }, [isConnected, currentWallet])
 
+  // Camera QR Scanner Mounting Logic
   useEffect(() => {
     if (isScannerOpen) {
       const scanner = new Html5QrcodeScanner(
         "reader",
         { fps: 10, qrbox: { width: 220, height: 220 } },
-        false
+        /* verbose= */ false
       )
       
       scannerRef.current = scanner
@@ -332,7 +333,9 @@ export default function Home() {
           setIsScannerOpen(false)
           scanner.clear().catch(console.error)
         },
-        () => {}
+        (error) => {
+          // scanning...
+        }
       )
     } else {
       if (scannerRef.current) {
@@ -460,10 +463,9 @@ export default function Home() {
       saveActivity(newAct)
       triggerSuccess(txTitle, amtSymbol, hash)
       setStatusMsg('')
-    } catch (err: unknown) {
+    } catch (err: any) {
       console.error(err)
-      const error = err as { message?: string; code?: number }
-      if (error?.message?.includes('User rejected') || error?.code === 4001) {
+      if (err?.message?.includes('User rejected') || err?.code === 4001) {
         setStatusMsg('Transaction failed or cancelled.')
       } else {
         setStatusMsg('Transaction failed. Make sure you have Native Gas on Arc Testnet.')
@@ -479,6 +481,7 @@ export default function Home() {
       return
     }
 
+    // Check destination address: User input or Self
     const cleanRecipient = royaltyRecipient.trim()
     const targetAddress = (cleanRecipient.startsWith('0x') && cleanRecipient.length === 42)
       ? (cleanRecipient as `0x${string}`)
@@ -686,7 +689,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Royalty Engine Section */}
+        {/* Royalty Engine Section - Updated */}
         <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
           <div>
             <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
@@ -818,6 +821,7 @@ export default function Home() {
                 </button>
               </div>
 
+              {/* Real Camera Scanner Container */}
               {isScannerOpen && (
                 <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 space-y-2">
                   <div id="reader" className="w-full overflow-hidden rounded-lg"></div>

@@ -5,12 +5,12 @@ import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContrac
 import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
-type Lang = 'en' | 'hi' | 'ko' | 'es'
+type Lang = 'en' | 'ko' | 'hi' | 'es'
 
 const translations = {
   en: {
-    title: 'Arc Settlement Hub',
-    subtitle: 'programmable usdc settlement engine on the arc network',
+    title: 'ARC SETTLEMENT HUB',
+    subtitle: 'programmable usdc settlement engine on arc network',
     identityHeader: 'arc multi-chain identity',
     verified: 'verified arc builder',
     notConnected: 'wallet disconnected',
@@ -29,7 +29,7 @@ const translations = {
     clickConfigure: 'click to configure',
 
     workflowHeader: 'arc builder onboarding workflow',
-    step1: '1. bind arc identity and wallet',
+    step1: '1. bind arc identity & wallet',
     step1Sub: 'deterministically registers identity on arc network',
     done: 'done ✓',
     pending: 'pending',
@@ -51,14 +51,14 @@ const translations = {
     processing: 'processing arc settlement...',
     noTxConnected: 'no arc settlement logs recorded for this wallet.',
     noTxDisconnected: 'connect wallet to view arc settlement activity.',
-    activityHeader: 'arc network activity and verification logs',
+    activityHeader: 'arc network activity & verification logs',
     downloadCsv: 'export csv ↗',
     resourcesHeader: 'arc ecosystem infrastructure links',
     scanQr: 'scan qr',
     closeQr: 'close camera',
     qrTitle: 'arc dynamic pos qr invoice',
     royaltyHeader: 'arc programmable fee engine',
-    royaltyDesc: 'distribute creator fees or split payments directly on arc network.',
+    royaltyDesc: 'distribute creator fees, split payments, or send cross-chain royalties natively on arc.',
     distributeRoyalty: 'distribute fee',
     txSuccessTitle: 'arc settlement confirmed',
     txSuccessDesc: 'your transaction was settled with sub-second finality on arc testnet.',
@@ -161,7 +161,7 @@ const translations = {
     scanned: 'स्कैन हुआ: '
   },
   ko: {
-    title: 'Arc Settlement Hub',
+    title: 'ARC SETTLEMENT HUB',
     subtitle: 'arc 네트워크 기반 프로그래머블 usdc 정산 엔진',
     identityHeader: 'arc 멀티체인 신원',
     verified: '검증된 arc 빌더',
@@ -237,7 +237,7 @@ const translations = {
     scanned: '스캔됨: '
   },
   es: {
-    title: 'Arc Settlement Hub',
+    title: 'ARC SETTLEMENT HUB',
     subtitle: 'motor de liquidación usdc programable en red arc',
     identityHeader: 'identidad arc multi-cadena',
     verified: 'creador arc verificado',
@@ -343,9 +343,8 @@ export default function Home() {
   const { sendTransactionAsync } = useSendTransaction()
   const { writeContractAsync } = useWriteContract()
 
-  // 1. DEFAULT LANGUAGE CHANGED TO ENGLISH ('en')
-  const [lang, setLang] = useState<Lang>('en')
-  const t = translations[lang] || translations.en
+  const [lang, setLang] = useState<Lang>('hi')
+  const t = translations[lang] || translations.hi
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'treasury'>('upi')
   const [recipient, setRecipient] = useState('')
@@ -745,14 +744,12 @@ export default function Home() {
         
         <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 gap-3">
           <div className="flex items-center gap-3">
-            {/* 2. REAL FOGGY BRIDGE ICON (🌁 Bridge SVG) */}
-            <div className="w-10 h-10 bg-gradient-to-tr from-purple-800 to-indigo-600 rounded-lg flex items-center justify-center text-white shrink-0 p-2 shadow-lg">
+            {/* CORNER LOGO: BRIDGE SVG LOGO */}
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-800 to-indigo-600 rounded-lg flex items-center justify-center text-white shrink-0 p-2">
               <svg className="w-full h-full text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 17c3-3 6-3 9 0 3-3 6-3 9 0M3 12v5M21 12v5M12 10v7M3 12h18M5 8h14M8 5h8" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </div>
-            
-            {/* 3. CORRECTED SPELLING (Arc Settlement Hub) */}
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-sm sm:text-base font-bold tracking-tight text-white truncate">{t.title}</h1>
@@ -770,8 +767,8 @@ export default function Home() {
               onChange={(e) => setLang(e.target.value as Lang)}
               className="bg-[#05070a] border border-slate-800 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-purple-500 cursor-pointer"
             >
-              <option value="en">🇺🇸 English</option>
               <option value="hi">🇮🇳 हिंदी</option>
+              <option value="en">🌐 English</option>
               <option value="ko">🇰🇷 한국어</option>
               <option value="es">🇪🇸 Español</option>
             </select>
@@ -973,7 +970,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 3. CORRECTED TAB TITLE (Arc Yield Treasury) */}
         <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-3">
           <div className="flex border-b border-slate-800 gap-1 overflow-x-auto">
             <button 

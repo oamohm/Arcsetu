@@ -1,3 +1,5 @@
+'use client'
+
 import { useState, useEffect, useRef } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
 import { parseEther, parseUnits, erc20Abi } from 'viem'
@@ -16,6 +18,17 @@ const translations = {
     issueUpId: 'register handle',
     liveBalance: 'arc treasury balance',
     multichainHeader: 'arc ecosystem asset routing',
+    
+    // Route cards
+    nativeUsdc: 'native usdc',
+    cctpBridge: 'cross-chain bridge ↗',
+    speedBenchmark: 'speed benchmark',
+    autoSplitter: 'auto-split splitter',
+    clickSelectMode: 'click to select mode',
+    clickTestCctp: 'click to test cctp',
+    clickRunTest: 'click to run test',
+    clickConfigure: 'click to configure',
+
     workflowHeader: 'arc builder onboarding workflow',
     step1: '1. bind arc identity & wallet',
     step1Sub: 'deterministically registers identity on arc network',
@@ -29,6 +42,12 @@ const translations = {
     step3Sub: 'issues arc ecosystem verification badge',
     issued: 'issued ✓',
     claim: 'claim stamp',
+    
+    // Tabs
+    tabTransfer: 'arc usdc transfer',
+    tabQr: 'pos qr invoice',
+    tabTreasury: 'arc yield treasury',
+
     placeholder: 'send to @arc_id or 0x wallet address',
     payBtn: 'pay via arc usdc',
     processing: 'processing arc settlement...',
@@ -77,6 +96,17 @@ const translations = {
     issueUpId: 'हैंडल रजिस्टर करें',
     liveBalance: 'आर्क ट्रेजरी बैलेंस',
     multichainHeader: 'आर्क इकोसिस्टम एसेट रूटिंग',
+    
+    // Route cards
+    nativeUsdc: 'नेटिव usdc',
+    cctpBridge: 'क्रॉस-चैन ब्रिज ↗',
+    speedBenchmark: 'स्पीड बेंचमार्क',
+    autoSplitter: 'ऑटो-स्प्लिट स्प्लिट',
+    clickSelectMode: 'मोड चुनने के लिए क्लिक करें',
+    clickTestCctp: 'cctp टेस्ट करने के लिए क्लिक करें',
+    clickRunTest: 'टेस्ट चलाने के लिए क्लिक करें',
+    clickConfigure: 'कॉन्फ़िगर करने के लिए क्लिक करें',
+
     workflowHeader: 'आर्क बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
     step1: '1. आर्क पहचान और वॉलेट बाइंड करें',
     step1Sub: 'आर्क नेटवर्क पर पहचान दर्ज करता है',
@@ -90,6 +120,12 @@ const translations = {
     step3Sub: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
     issued: 'जारी हुआ ✓',
     claim: 'स्टैम्प क्लेम करें',
+    
+    // Tabs
+    tabTransfer: 'आर्क usdc ट्रांसफर',
+    tabQr: 'pos qr इनवॉइस',
+    tabTreasury: 'आर्क ईल्ड ट्रेजरी',
+
     placeholder: '@arc_id या 0x वॉलेट पता दर्ज करें',
     payBtn: 'आर्क usdc द्वारा भुगतान करें',
     processing: 'आर्क सेटलमेंट प्रॉसेस हो रहा है...',
@@ -138,6 +174,16 @@ const translations = {
     issueUpId: '핸들 등록',
     liveBalance: 'arc 실시간 잔액',
     multichainHeader: 'arc 생태계 자산 라우팅',
+    
+    nativeUsdc: '네이티브 usdc',
+    cctpBridge: '크로스체인 브릿지 ↗',
+    speedBenchmark: '속도 벤치마크',
+    autoSplitter: '자동 분할 스플리터',
+    clickSelectMode: '모드 선택 클릭',
+    clickTestCctp: 'cctp 테스트 클릭',
+    clickRunTest: '테스트 실행 클릭',
+    clickConfigure: '설정하려면 클릭',
+
     workflowHeader: 'arc 빌더 온보딩 워크플로우',
     step1: '1. arc 신원 및 지갑 연결',
     step1Sub: 'arc 네트워크에서 확정적 신원 등록',
@@ -151,6 +197,11 @@ const translations = {
     step3Sub: 'arc 생태계 검증 배지 발급',
     issued: '발급됨 ✓',
     claim: '스탬프 받기',
+    
+    tabTransfer: 'arc usdc 전송',
+    tabQr: 'pos qr 인보이스',
+    tabTreasury: 'arc 수익 금고',
+
     placeholder: '@arc_id 또는 0x 지갑 주소 입력',
     payBtn: 'arc usdc 결제',
     processing: 'arc 정산 처리 중...',
@@ -199,6 +250,16 @@ const translations = {
     issueUpId: 'registrar nombre',
     liveBalance: 'saldo de tesorería arc',
     multichainHeader: 'enrutamiento de activos en red arc',
+    
+    nativeUsdc: 'usdc nativo',
+    cctpBridge: 'puente cross-chain ↗',
+    speedBenchmark: 'prueba de velocidad',
+    autoSplitter: 'divisor automático',
+    clickSelectMode: 'clic para seleccionar modo',
+    clickTestCctp: 'clic para probar cctp',
+    clickRunTest: 'clic para ejecutar prueba',
+    clickConfigure: 'clic para configurar',
+
     workflowHeader: 'flujo de trabajo para creadores arc',
     step1: '1. vincular identidad arc y billetera',
     step1Sub: 'registra identidad de forma determinista en arc',
@@ -212,6 +273,11 @@ const translations = {
     step3Sub: 'emite insignia de verificación arc',
     issued: 'emitido ✓',
     claim: 'reclamar sello',
+    
+    tabTransfer: 'transferencia arc usdc',
+    tabQr: 'factura qr pos',
+    tabTreasury: 'bóveda de rendimiento arc',
+
     placeholder: 'enviar a @arc_id o billetera 0x',
     payBtn: 'pagar con arc usdc',
     processing: 'procesando en red arc...',
@@ -281,8 +347,8 @@ export default function Home() {
   const { sendTransactionAsync } = useSendTransaction()
   const { writeContractAsync } = useWriteContract()
 
-  const [lang, setLang] = useState<Lang>('en')
-  const t = translations[lang] || translations.en
+  const [lang, setLang] = useState<Lang>('hi')
+  const t = translations[lang] || translations.hi
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'treasury'>('upi')
   const [recipient, setRecipient] = useState('')
@@ -700,10 +766,10 @@ export default function Home() {
             <select 
               value={lang} 
               onChange={(e) => setLang(e.target.value as Lang)}
-              className="bg-[#05070a] border border-slate-800 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-purple-500"
+              className="bg-[#05070a] border border-slate-800 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-purple-500 cursor-pointer"
             >
-              <option value="en">🌐 English</option>
               <option value="hi">🇮🇳 हिंदी</option>
+              <option value="en">🌐 English</option>
               <option value="ko">🇰🇷 한국어</option>
               <option value="es">🇪🇸 Español</option>
             </select>
@@ -781,17 +847,23 @@ export default function Home() {
                 }`}
               >
                 <p className="text-purple-400 font-semibold text-[10px]">arc testnet</p>
-                <p className="text-slate-200 mt-0.5 font-bold text-xs">native usdc</p>
-                <p className="text-[9px] text-slate-400 mt-1">click to select mode</p>
+                <p className="text-slate-200 mt-0.5 font-bold text-xs">{t.nativeUsdc}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{t.clickSelectMode}</p>
               </button>
 
+              {/* BRIDGE CARD WITH SVG LOGO AND TRANSLATION */}
               <button 
                 onClick={() => setCctpModalOpen(true)}
-                className="bg-[#05070a] hover:border-emerald-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
+                className="bg-[#05070a] hover:border-emerald-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all relative overflow-hidden group"
               >
-                <p className="text-slate-400 font-semibold text-[10px]">circle cctp</p>
-                <p className="text-emerald-400 mt-0.5 font-bold text-xs">cross-chain bridge ↗</p>
-                <p className="text-[9px] text-slate-400 mt-1">click to test cctp</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-slate-400 font-semibold text-[10px]">circle cctp</p>
+                  <svg className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <p className="text-emerald-400 mt-0.5 font-bold text-xs">{t.cctpBridge}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{t.clickTestCctp}</p>
               </button>
 
               <button 
@@ -800,8 +872,8 @@ export default function Home() {
                 className="bg-[#05070a] hover:border-indigo-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
               >
                 <p className="text-slate-400 font-semibold text-[10px]">deterministic engine</p>
-                <p className="text-indigo-400 mt-0.5 font-bold text-xs">speed benchmark</p>
-                <p className="text-[9px] text-slate-400 mt-1">{speedTestRunning ? 'testing...' : 'click to run test'}</p>
+                <p className="text-indigo-400 mt-0.5 font-bold text-xs">{t.speedBenchmark}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{speedTestRunning ? 'testing...' : t.clickRunTest}</p>
               </button>
 
               <button 
@@ -809,8 +881,8 @@ export default function Home() {
                 className="bg-[#05070a] hover:border-amber-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
               >
                 <p className="text-slate-400 font-semibold text-[10px]">payment ux</p>
-                <p className="text-amber-400 mt-0.5 font-bold text-xs">auto-split splitter</p>
-                <p className="text-[9px] text-slate-400 mt-1">click to configure</p>
+                <p className="text-amber-400 mt-0.5 font-bold text-xs">{t.autoSplitter}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{t.clickConfigure}</p>
               </button>
 
             </div>
@@ -908,7 +980,7 @@ export default function Home() {
                 activeTab === 'upi' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              arc usdc transfer
+              {t.tabTransfer}
             </button>
             <button 
               onClick={() => setActiveTab('qr')}
@@ -916,7 +988,7 @@ export default function Home() {
                 activeTab === 'qr' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              pos qr invoice
+              {t.tabQr}
             </button>
             <button 
               onClick={() => setActiveTab('treasury')}
@@ -924,7 +996,7 @@ export default function Home() {
                 activeTab === 'treasury' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              arc yield treasury
+              {t.tabTreasury}
             </button>
           </div>
 

@@ -347,8 +347,8 @@ export default function Home() {
   const { sendTransactionAsync } = useSendTransaction()
   const { writeContractAsync } = useWriteContract()
 
-  const [lang, setLang] = useState<Lang>('hi')
-  const t = translations[lang] || translations.hi
+  const [lang, setLang] = useState<Lang>('en')
+  const t = translations[lang] || translations.en
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'treasury'>('upi')
   const [recipient, setRecipient] = useState('')
@@ -768,8 +768,8 @@ export default function Home() {
               onChange={(e) => setLang(e.target.value as Lang)}
               className="bg-[#05070a] border border-slate-800 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-purple-500 cursor-pointer"
             >
-              <option value="hi">🇮🇳 हिंदी</option>
               <option value="en">🌐 English</option>
+              <option value="hi">🇮🇳 हिंदी</option>
               <option value="ko">🇰🇷 한국어</option>
               <option value="es">🇪🇸 Español</option>
             </select>
@@ -851,13 +851,14 @@ export default function Home() {
                 <p className="text-[9px] text-slate-400 mt-1">{t.clickSelectMode}</p>
               </button>
 
-              {/* BRIDGE CARD WITH SVG LOGO AND TRANSLATION */}
+              {/* BRIDGE CARD WITH LOGO AND DYNAMIC TRANSLATION */}
               <button 
                 onClick={() => setCctpModalOpen(true)}
                 className="bg-[#05070a] hover:border-emerald-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all relative overflow-hidden group"
               >
                 <div className="flex items-center justify-between">
                   <p className="text-slate-400 font-semibold text-[10px]">circle cctp</p>
+                  {/* Added Bridge SVG Logo */}
                   <svg className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                   </svg>

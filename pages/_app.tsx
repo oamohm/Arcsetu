@@ -12,15 +12,18 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-[#0a192f] text-slate-100 p-3 sm:p-6 font-mono relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
       
-      {/* header section */}
+      {/* header section with exact bridge & gold A logo */}
       <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#112240] p-4 rounded-xl border border-blue-900/40 gap-3 shadow-lg mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#f97316] via-indigo-600 to-blue-600 rounded-lg p-[1px] shadow-md flex items-center justify-center shrink-0">
-            <div className="w-full h-full bg-[#112240] rounded-lg flex items-center justify-center text-[#f97316]">
-              <svg className="w-4 h-4" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v7M16 14v7" />
-              </svg>
-            </div>
+          <div className="w-9 h-9 bg-gradient-to-b from-[#162a4a] to-[#0a192f] rounded-lg border border-blue-500/30 shadow-md flex items-center justify-center shrink-0 p-1">
+            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow">
+              <path d="M50 8 C44 8 41 14 43 20 C45 25 48 28 50 32 C52 28 55 25 57 20 C59 14 56 8 50 8 Z" fill="#facc15" />
+              <path d="M35 75 L35 32 L40 32 L40 75 Z M60 75 L60 32 L65 32 L65 75 Z" fill="#94a3b8" />
+              <path d="M15 72 L85 72 L85 77 L15 77 Z" fill="#64748b" />
+              <path d="M37 32 Q 50 50 63 32 M37 45 Q 50 58 63 45 M37 60 Q 50 70 63 60" fill="none" stroke="#cbd5e1" strokeWidth="3" />
+              <path d="M37 32 L20 70 L15 68 L35 30 Z M63 32 L80 70 L85 68 L65 30 Z" fill="#94a3b8" />
+              <ellipse cx="50" cy="85" rx="18" ry="4" fill="#64748b" />
+            </svg>
           </div>
           <div>
             <h1 className="text-sm sm:text-base font-bold tracking-tight text-white flex items-center gap-2">

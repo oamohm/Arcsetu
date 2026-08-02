@@ -8,58 +8,6 @@ export default function Page() {
   const [amount, setAmount] = useState('0.1')
   const [feeAddress, setFeeAddress] = useState('')
   const [activeTab, setActiveTab] = useState('transfer')
-  const [isWalletConnected, setIsWalletConnected] = useState(false)
-  const [treasuryBalance, setTreasuryBalance] = useState('0.00')
-  const [settlementCount, setSettlementCount] = useState(0)
-  const [stampClaimed, setStampClaimed] = useState(false)
-  const [logMessage, setLogMessage] = useState('connect wallet to view arc settlement activity.')
-
-  const handleConnectWallet = () => {
-    setIsWalletConnected(true)
-    setTreasuryBalance('1,450.25')
-    setLogMessage('wallet connected: arc network active (0x7F9...3A1)')
-  }
-
-  const handleRunSettlement = () => {
-    if (!isWalletConnected) {
-      alert('please connect wallet first')
-      return
-    }
-    const newCount = settlementCount + 1
-    setSettlementCount(newCount)
-    setLogMessage(`settlement txn executed successfully (#${newCount}): routed 1.50 usdc via arc bridge`)
-  }
-
-  const handleClaimStamp = () => {
-    if (!isWalletConnected) {
-      alert('please connect wallet first')
-      return
-    }
-    if (settlementCount === 0) {
-      alert('run at least one settlement before claiming stamp')
-      return
-    }
-    setStampClaimed(true)
-    setLogMessage('arc builder verification stamp successfully issued to account')
-  }
-
-  const handleDistributeFee = () => {
-    if (!feeAddress) {
-      alert('enter valid recipient address or handle')
-      return
-    }
-    setLogMessage(`fee distributed: 0.05 usdc sent to ${feeAddress}`)
-    setFeeAddress('')
-  }
-
-  const handleTransfer = () => {
-    if (!recipient) {
-      alert('enter recipient address or @arc_id')
-      return
-    }
-    setLogMessage(`transfer success: ${amount} usdc sent to ${recipient}`)
-    setRecipient('')
-  }
 
   return (
     <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
@@ -87,11 +35,8 @@ export default function Page() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
           <span style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '6px 12px', borderRadius: '8px', border: '1px solid #334155' }}>English</span>
-          <button 
-            onClick={handleConnectWallet}
-            style={{ background: isWalletConnected ? '#166534' : 'linear-gradient(to right, #9333ea, #4f46e5)', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
-          >
-            {isWalletConnected ? 'Wallet Connected' : 'Connect Wallet'}
+          <button style={{ background: 'linear-gradient(to right, #9333ea, #4f46e5)', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
+            Connect Wallet
           </button>
         </div>
       </header>
@@ -100,9 +45,7 @@ export default function Page() {
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', margin: 0 }}>arc multi-chain identity</h2>
-          <span style={{ fontSize: '10px', background: isWalletConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isWalletConnected ? '#4ade80' : '#f87171', padding: '2px 8px', borderRadius: '4px', border: `1px solid ${isWalletConnected ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
-            {isWalletConnected ? 'wallet active' : 'wallet disconnected'}
-          </span>
+          <span style={{ fontSize: '10px', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(239, 68, 68, 0.2)' }}>wallet disconnected</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
           <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -113,11 +56,11 @@ export default function Page() {
               onChange={(e) => setArcId(e.target.value)}
               style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', color: '#f1f5f9', fontSize: '12px' }}
             />
-            <span style={{ fontSize: '10px', color: '#475569' }}>{arcId ? 'bound' : '--'}</span>
+            <span style={{ fontSize: '10px', color: '#475569' }}>--</span>
           </div>
           <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
             <span>arc treasury balance</span>
-            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{treasuryBalance} USDC</span>
+            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>--</span>
           </div>
         </div>
       </section>
@@ -126,22 +69,22 @@ export default function Page() {
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>arc ecosystem asset routing</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-          <div onClick={() => alert('arc testnet native usdc mode selected')} style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.4)', cursor: 'pointer' }}>
+          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid rgba(168, 85, 247, 0.4)' }}>
             <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>arc testnet</p>
             <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>native usdc</p>
             <p style={{ fontSize: '9px', color: '#c084fc', margin: 0 }}>click to select mode</p>
           </div>
-          <div onClick={() => alert('circle cctp cross-chain bridge initialized')} style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', cursor: 'pointer' }}>
+          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b' }}>
             <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>circle cctp</p>
             <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>cross-chain bridge</p>
             <p style={{ fontSize: '9px', color: '#64748b', margin: 0 }}>click to test cctp</p>
           </div>
-          <div onClick={() => alert('deterministic engine speed test benchmark: 12ms finality')} style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', cursor: 'pointer' }}>
+          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b' }}>
             <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>deterministic engine</p>
             <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>speed benchmark</p>
             <p style={{ fontSize: '9px', color: '#64748b', margin: 0 }}>click to run test</p>
           </div>
-          <div onClick={() => alert('payment ux auto-split splitter configured')} style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', cursor: 'pointer' }}>
+          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b' }}>
             <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>payment ux</p>
             <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>auto-split splitter</p>
             <p style={{ fontSize: '9px', color: '#64748b', margin: 0 }}>click to configure</p>
@@ -166,10 +109,7 @@ export default function Page() {
             defaultValue="0.05" 
             style={{ width: '100px', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', textAlign: 'center', outline: 'none' }}
           />
-          <button 
-            onClick={handleDistributeFee}
-            style={{ backgroundColor: '#2563eb', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
-          >
+          <button style={{ backgroundColor: '#2563eb', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}>
             distribute fee
           </button>
         </div>
@@ -184,19 +124,14 @@ export default function Page() {
               <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 2px 0' }}>1. bind arc identity & wallet</p>
               <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>deterministically registers identity on arc network</p>
             </div>
-            <span style={{ fontSize: '10px', backgroundColor: isWalletConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: isWalletConnected ? '#4ade80' : '#fbbf24', padding: '4px 8px', borderRadius: '4px', border: `1px solid ${isWalletConnected ? 'rgba(34, 197, 94, 0.2)' : 'rgba(245, 158, 11, 0.2)'}` }}>
-              {isWalletConnected ? 'completed' : 'pending'}
-            </span>
+            <span style={{ fontSize: '10px', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', padding: '4px 8px', borderRadius: '4px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>pending</span>
           </div>
           <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 2px 0' }}>2. execute arc usdc settlement</p>
-              <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>executed: {settlementCount} settlement txns</p>
+              <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>executed: 0 settlement txns</p>
             </div>
-            <button 
-              onClick={handleRunSettlement}
-              style={{ backgroundColor: 'rgba(147, 51, 234, 0.8)', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
-            >
+            <button style={{ backgroundColor: 'rgba(147, 51, 234, 0.8)', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}>
               run settlement
             </button>
           </div>
@@ -205,11 +140,8 @@ export default function Page() {
               <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 2px 0' }}>3. claim arc builder stamp</p>
               <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>issues arc ecosystem verification badge</p>
             </div>
-            <button 
-              onClick={handleClaimStamp}
-              style={{ backgroundColor: stampClaimed ? '#166534' : '#1e293b', color: stampClaimed ? '#4ade80' : '#64748b', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: stampClaimed ? 'default' : 'pointer' }}
-            >
-              {stampClaimed ? 'claimed' : 'claim stamp'}
+            <button style={{ backgroundColor: '#1e293b', color: '#64748b', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'not-allowed' }}>
+              claim stamp
             </button>
           </div>
         </div>
@@ -231,7 +163,7 @@ export default function Page() {
               onChange={(e) => setRecipient(e.target.value)}
               style={{ flex: 1, backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
             />
-            <button onClick={() => alert('qr scanner modal opened')} style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>scan qr</button>
+            <button style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>scan qr</button>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0a192f', padding: '8px 12px', borderRadius: '8px', border: '1px solid #1e1b4b', fontSize: '10px', color: '#94a3b8' }}>
             <span>transfer route:</span>
@@ -246,10 +178,7 @@ export default function Page() {
             onChange={(e) => setAmount(e.target.value)}
             style={{ width: '100%', boxSizing: 'border-box', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
           />
-          <button 
-            onClick={handleTransfer}
-            style={{ width: '100%', backgroundColor: '#9333ea', color: '#ffffff', fontWeight: '500', fontSize: '12px', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)' }}
-          >
+          <button style={{ width: '100%', backgroundColor: '#9333ea', color: '#ffffff', fontWeight: '500', fontSize: '12px', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)' }}>
             pay via arc usdc ({amount} usdc)
           </button>
         </div>
@@ -259,15 +188,15 @@ export default function Page() {
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>arc ecosystem infrastructure links</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-          <div onClick={() => alert('redirecting to arcscan explorer')} style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
+          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>arcscan explorer</span>
             <span style={{ color: '#475569' }}>→</span>
           </div>
-          <div onClick={() => alert('redirecting to circle usdc faucet')} style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
+          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>circle usdc faucet</span>
             <span style={{ color: '#475569' }}>→</span>
           </div>
-          <div onClick={() => alert('redirecting to arc protocol docs')} style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1', cursor: 'pointer' }}>
+          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>arc protocol docs</span>
             <span style={{ color: '#475569' }}>→</span>
           </div>
@@ -277,8 +206,8 @@ export default function Page() {
       {/* network activity logs */}
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>arc network activity & verification logs</h2>
-        <div style={{ backgroundColor: '#0a192f', padding: '24px', borderRadius: '8px', border: '1px solid #1e1b4b', textAlign: 'center', fontSize: '12px', color: isWalletConnected ? '#38bdf8' : '#64748b' }}>
-          {logMessage}
+        <div style={{ backgroundColor: '#0a192f', padding: '24px', borderRadius: '8px', border: '1px solid #1e1b4b', textAlign: 'center', fontSize: '12px', color: '#64748b' }}>
+          connect wallet to view arc settlement activity.
         </div>
       </section>
 

@@ -12,11 +12,11 @@ export default function Page() {
   return (
     <main className="min-h-screen bg-[#0a192f] text-slate-100 p-3 sm:p-6 font-mono relative overflow-x-hidden selection:bg-purple-500 selection:text-white">
       
-      {/* header section with exact bridge & gold A logo */}
+      {/* header section */}
       <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#112240] p-4 rounded-xl border border-blue-900/40 gap-3 shadow-lg mb-6">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-gradient-to-b from-[#162a4a] to-[#0a192f] rounded-lg border border-blue-500/30 shadow-md flex items-center justify-center shrink-0 p-1">
-            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow">
+            <svg width="32" height="32" viewBox="0 0 100 100" className="w-8 h-8 drop-shadow shrink-0">
               <path d="M50 8 C44 8 41 14 43 20 C45 25 48 28 50 32 C52 28 55 25 57 20 C59 14 56 8 50 8 Z" fill="#facc15" />
               <path d="M35 75 L35 32 L40 32 L40 75 Z M60 75 L60 32 L65 32 L65 75 Z" fill="#94a3b8" />
               <path d="M15 72 L85 72 L85 77 L15 77 Z" fill="#64748b" />

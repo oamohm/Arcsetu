@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-/// @title GiwaSetu Progress Tracker
+/// @title Arcsetu Progress Tracker
 /// @notice Records a user's Web3 onboarding milestones on-chain:
 ///         wallet creation, practice transactions, and course completion.
 contract GiwaSetuProgress {

@@ -1,8 +1,8 @@
 # 🌉 ArcSetu (`arcsetu.vercel.app`)
 
-> **Programmable USDC Settlement Engine & Payment UX Infrastructure on Arc Network.**
+> **Programmable USDC Settlement Engine & Cross-Chain Payment Bridge on Arc Network.**
 
-ArcSetu is an end-to-end payment infrastructure engineered specifically for Arc Network and Circle ecosystem. Built to leverage Arc's sub-second deterministic finality, it provides native USDC gasless transfers, Arc UP handle resolution, automated revenue splitting, dynamic POS checkout, and transparent auditability.
+ArcSetu serves as a native Web3 payment bridge connecting users, merchants, and liquidity vaults with sub-second finality.
 
 ---
 
@@ -16,5 +16,33 @@ ArcSetu is an end-to-end payment infrastructure engineered specifically for Arc 
 
 ---
 
-## 🏗 System Architecture & End-to-End Flow
+## 🌉 System Architecture & End-to-End Flow
 
+<pre>
++-----------------------------------------------------------------------+
+|                          USER INTERFACE LAYER                         |
+|  Next.js Dashboard / Tailwind CSS / Multi-Language i18n Engine        |
+|  Hosted on Vercel Edge Network @ https://arcsetu.vercel.app           |
++-----------------------------------------------------------------------+
+                                   │
+                                   ▼
++-----------------------------------------------------------------------+
+|                        WEB3 ABSTRACTION LAYER                         |
+|  Wagmi Hooks / Viem Engine / RainbowKit Wallet Connector              |
+|  HTML5 Camera POS Scanner & Dynamic Invoice Generator                 |
++-----------------------------------------------------------------------+
+                                   │
+                                   ▼
++-----------------------------------------------------------------------+
+|                       SMART CONTRACT LOGIC LAYER                      |
+|  Arc Native Settlement Engine / Arc UP Handle Resolver Registry       |
+|  Programmable Revenue Splitter (80/15/5) / Treasury Yield Vault       |
++-----------------------------------------------------------------------+
+                                   │
+                                   ▼
++-----------------------------------------------------------------------+
+|                         ON-CHAIN STATE LAYER                          |
+|  Arc Testnet Consensus Engine / Circle CCTP Routing Bridge            |
+|  Sub-Second Finality Ledger & ArcScan Explorer Verification           |
++-----------------------------------------------------------------------+
+</pre>

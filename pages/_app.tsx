@@ -151,15 +151,8 @@ function Dashboard() {
       {/* header section */}
       <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '48px', height: '48px', background: 'radial-gradient(circle, #1e3a8a 0%, #0a192f 100%)', borderRadius: '10px', border: '1px solid rgba(250, 204, 21, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, padding: '2px', boxShadow: '0 0 12px rgba(250, 204, 21, 0.15)' }}>
-            <svg width="40" height="40" viewBox="0 0 100 100" style={{ width: '40px', height: '40px' }}>
-              <path d="M50 6 C42 6 38 12 40 19 C42 25 47 28 50 32 C53 28 58 25 60 19 C62 12 58 6 50 6 Z" fill="#facc15" />
-              <path d="M32 78 L32 32 L38 32 L38 78 Z M62 78 L62 32 L68 32 L68 78 Z" fill="#94a3b8" />
-              <path d="M12 72 L88 72 L88 78 L12 78 Z" fill="#64748b" />
-              <path d="M35 32 Q 50 48 65 32 M35 46 Q 50 62 65 46 M35 60 Q 50 74 65 60" fill="none" stroke="#e2e8f0" strokeWidth="3" />
-              <path d="M35 32 L18 68 L12 66 L32 30 Z M65 32 L82 68 L88 66 L68 30 Z" fill="#cbd5e1" />
-              <ellipse cx="50" cy="88" rx="22" ry="4" fill="#475569" />
-            </svg>
+          <div style={{ width: '48px', height: '48px', background: 'radial-gradient(circle, #1e3a8a 0%, #0a192f 100%)', borderRadius: '10px', border: '1px solid rgba(250, 204, 21, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '24px', boxShadow: '0 0 12px rgba(250, 204, 21, 0.15)' }}>
+            🌁
           </div>
           <div>
             <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>
@@ -177,7 +170,6 @@ function Dashboard() {
             {locale === 'en' ? 'हिन्दी' : 'English'}
           </button>
           <div suppressHydrationWarning>
-            {/* RainbowKit Connect Button integrated natively */}
             {React.createElement(require('@rainbow-me/rainbowkit').ConnectButton, { chainStatus: 'icon', showBalance: false })}
           </div>
         </div>

@@ -1,19 +1,18 @@
 'use client'
 
-import React from 'react'
-import WalletConnect from '@/components/WalletConnect'
-import TransferModule from '@/components/TransferModule'
-import FaucetModule from '@/components/FaucetModule'
+import React, { useState } from 'react'
 
 export default function Page() {
+  const [address, setAddress] = useState('')
+  const [amount, setAmount] = useState('0.1')
+
   return (
     <main className="min-h-screen bg-[#0a192f] text-slate-100 p-3 sm:p-6 font-mono relative overflow-x-hidden">
       
-      {/* Header Section with Bridge Logo */}
+      {/* header section */}
       <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#112240] p-4 rounded-xl border border-blue-900/40 gap-3 shadow-lg mb-6">
         <div className="flex items-center gap-3">
           
-          {/* Bridge Logo Box */}
           <div className="w-8 h-8 bg-gradient-to-br from-[#f97316] via-indigo-600 to-blue-600 rounded-lg p-[1px] shadow-md flex items-center justify-center shrink-0">
             <div className="w-full h-full bg-[#112240] rounded-lg flex items-center justify-center text-[#f97316]">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -30,16 +29,29 @@ export default function Page() {
             <p className="text-[10px] sm:text-xs text-slate-400">programmable usdc settlement engine on the arc network</p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2 justify-end">
-          <WalletConnect />
-        </div>
       </header>
 
-      {/* Main Content Modules */}
-      <div className="grid gap-6">
-        <TransferModule />
-        <FaucetModule />
+      {/* transfer module section */}
+      <div className="bg-[#112240] p-4 rounded-xl border border-blue-950 shadow-md">
+        <h2 className="text-xs font-bold text-purple-400 tracking-wider uppercase mb-3">arc usdc transfer</h2>
+        <div className="space-y-3">
+          <input 
+            type="text" 
+            placeholder="send to @arc_id or 0x wallet address" 
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="w-full bg-[#0a192f] border border-blue-900/50 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+          />
+          <input 
+            type="text" 
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-full bg-[#0a192f] border border-blue-900/50 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+          />
+          <button className="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs py-2.5 rounded-lg transition-colors">
+            pay via arc usdc ({amount} usdc)
+          </button>
+        </div>
       </div>
 
     </main>

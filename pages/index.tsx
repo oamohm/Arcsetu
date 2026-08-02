@@ -19,7 +19,6 @@ const translations = {
     liveBalance: 'arc treasury balance',
     multichainHeader: 'arc ecosystem asset routing',
     
-    // Route cards
     nativeUsdc: 'native usdc',
     cctpBridge: 'cross-chain bridge ↗',
     speedBenchmark: 'speed benchmark',
@@ -43,7 +42,6 @@ const translations = {
     issued: 'issued ✓',
     claim: 'claim stamp',
     
-    // Tabs
     tabTransfer: 'arc usdc transfer',
     tabQr: 'pos qr invoice',
     tabTreasury: 'arc yield treasury',
@@ -97,7 +95,6 @@ const translations = {
     liveBalance: 'आर्क ट्रेजरी बैलेंस',
     multichainHeader: 'आर्क इकोसिस्टम एसेट रूटिंग',
     
-    // Route cards
     nativeUsdc: 'नेटिव usdc',
     cctpBridge: 'क्रॉस-चैन ब्रिज ↗',
     speedBenchmark: 'स्पीड बेंचमार्क',
@@ -121,7 +118,6 @@ const translations = {
     issued: 'जारी हुआ ✓',
     claim: 'स्टैम्प क्लेम करें',
     
-    // Tabs
     tabTransfer: 'आर्क usdc ट्रांसफर',
     tabQr: 'pos qr इनवॉइस',
     tabTreasury: 'आर्क ईल्ड ट्रेजरी',
@@ -748,8 +744,11 @@ export default function Home() {
         
         <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-purple-800 to-indigo-600 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0">
-              ARC
+            {/* CORNER LOGO: BRIDGE SVG LOGO */}
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-800 to-indigo-600 rounded-lg flex items-center justify-center text-white shrink-0 p-2">
+              <svg className="w-full h-full text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -851,7 +850,6 @@ export default function Home() {
                 <p className="text-[9px] text-slate-400 mt-1">{t.clickSelectMode}</p>
               </button>
 
-              {/* BRIDGE CARD WITH SVG LOGO AND TRANSLATION */}
               <button 
                 onClick={() => setCctpModalOpen(true)}
                 className="bg-[#05070a] hover:border-emerald-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all relative overflow-hidden group"

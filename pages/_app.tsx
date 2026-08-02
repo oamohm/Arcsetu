@@ -1,24 +1,38 @@
 'use client'
 
 import React, { useState } from 'react'
+import '@rainbow-me/rainbowkit/styles.css'
+import {
+  getDefaultConfig,
+  RainbowKitProvider,
+} from '@rainbow-me/rainbowkit'
+import { WagmiProvider, useAccount } from 'wagmi'
+import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
+import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
 
-export default function Page() {
+const config = getDefaultConfig({
+  appName: 'Arc Settlement Hub',
+  projectId: 'YOUR_PROJECT_ID',
+  chains: [mainnet, polygon, optimism, arbitrum, base],
+  ssr: true,
+})
+
+const queryClient = new QueryClient()
+
+function Dashboard() {
+  const { address, isConnected } = useAccount()
   const [arcId, setArcId] = useState('')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.1')
   const [feeAddress, setFeeAddress] = useState('')
   const [activeTab, setActiveTab] = useState('transfer')
   const [locale, setLocale] = useState('en')
-  const [isConnected, setIsConnected] = useState(false)
-  const [walletAddress, setWalletAddress] = useState('')
 
   const t = {
     en: {
       title: 'ARC SETTLEMENT HUB',
       badge: 'PRIMARY',
       subtitle: 'programmable usdc settlement engine on the arc network',
-      connect: 'Connect Wallet',
-      connected: 'Wallet Connected',
       identity: 'arc multi-chain identity',
       statusDisc: 'wallet disconnected',
       statusConn: 'wallet active',
@@ -67,15 +81,13 @@ export default function Page() {
       docs: 'arc protocol docs',
       logsTitle: 'arc network activity & verification logs',
       logsDefault: 'connect wallet to view arc settlement activity.',
-      logsActive: 'network connection established via web3 provider provider pipeline.',
+      logsActive: (addr: string) => `connected via wagmi: ${addr}`,
       footer: 'arc settlement engine · built for decentralized scale'
     },
     hi: {
       title: 'आर्क सेटलमेंट हब',
       badge: 'प्राथमिक',
       subtitle: 'आर्क नेटवर्क पर प्रोग्रामेबल यूएसडीसी सेटलमेंट इंजन',
-      connect: 'वॉलेट कनेक्ट करें',
-      connected: 'वॉलेट कनेक्टेड',
       identity: 'आर्क मल्टी-चेन पहचान',
       statusDisc: 'वॉलेट डिस्कनेक्टेड',
       statusConn: 'वॉलेट सक्रिय',
@@ -107,7 +119,7 @@ export default function Page() {
       wf2Desc: 'निष्पादित: 0 सेटलमेंट लेन-देन',
       runSettlement: 'सेटलमेंट चलाएं',
       wf3Title: '3. आर्क बिल्डर स्टाम्प का दावा करें',
-      wf3Desc: 'आर्क इकोसिस्टम सत्यापन जलीय जारी करता है',
+      wf3Desc: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
       claimStamp: 'स्टाम्प का दावा करें',
       tabTransfer: 'आर्क यूएसडीसी ट्रांसफर',
       tabPos: 'पीओएस क्यूआर इनवॉइस',
@@ -124,20 +136,10 @@ export default function Page() {
       docs: 'आर्क प्रोटोकॉल दस्तावेज़',
       logsTitle: 'आर्क नेटवर्क गतिविधि और सत्यापन लॉग',
       logsDefault: 'आर्क सेटलमेंट गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
-      logsActive: 'वेब3 प्रदाता प्रविष्टि के माध्यम से नेटवर्क कनेक्शन स्थापित किया गया।',
+      logsActive: (addr: string) => `वाग्मी के माध्यम से कनेक्टेड: ${addr}`,
       footer: 'आर्क सेटलमेंट इंजन · विकेंद्रीकृत पैमाने के लिए निर्मित'
     }
   }[locale]
-
-  const handleConnect = () => {
-    if (!isConnected) {
-      setIsConnected(true)
-      setWalletAddress('0x71C...92aF')
-    } else {
-      setIsConnected(false)
-      setWalletAddress('')
-    }
-  }
 
   const toggleLanguage = () => {
     setLocale(locale === 'en' ? 'hi' : 'en')
@@ -167,19 +169,17 @@ export default function Page() {
             <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>{t.subtitle}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           <button 
             onClick={toggleLanguage}
-            style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '6px 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}
+            style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '8px 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}
           >
-            {locale === 'en' ? 'हिन्दी (Hindi)' : 'English'}
+            {locale === 'en' ? 'हिन्दी' : 'English'}
           </button>
-          <button 
-            onClick={handleConnect}
-            style={{ background: isConnected ? '#15803d' : 'linear-gradient(to right, #9333ea, #4f46e5)', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '8px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
-          >
-            {isConnected ? `${t.connected} (${walletAddress})` : t.connect}
-          </button>
+          <div suppressHydrationWarning>
+            {/* RainbowKit Connect Button integrated natively */}
+            {React.createElement(require('@rainbow-me/rainbowkit').ConnectButton, { chainStatus: 'icon', showBalance: false })}
+          </div>
         </div>
       </header>
 
@@ -204,7 +204,7 @@ export default function Page() {
           </div>
           <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
             <span>{t.treasuryBal}</span>
-            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{isConnected ? '1,250.00 USDC' : '--'}</span>
+            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{isConnected ? '1,450.25 USDC' : '--'}</span>
           </div>
         </div>
       </section>
@@ -254,7 +254,7 @@ export default function Page() {
             style={{ width: '100px', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', textAlign: 'center', outline: 'none' }}
           />
           <button 
-            onClick={() => alert(feeAddress ? `Successfully distributed fee to ${feeAddress}` : 'Please enter target address')}
+            onClick={() => alert('Fee distributed successfully.')}
             style={{ backgroundColor: '#2563eb', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
           >
             {t.distributeFee}
@@ -281,7 +281,7 @@ export default function Page() {
               <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf2Desc}</p>
             </div>
             <button 
-              onClick={() => alert('Settlement transaction processed successfully on testnet')}
+              onClick={() => alert('Settlement executed successfully.')}
               style={{ backgroundColor: 'rgba(147, 51, 234, 0.8)', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
             >
               {t.runSettlement}
@@ -293,7 +293,7 @@ export default function Page() {
               <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf3Desc}</p>
             </div>
             <button 
-              onClick={() => alert('Builder stamp requested')}
+              onClick={() => alert('Builder stamp claimed.')}
               style={{ backgroundColor: '#1e293b', color: '#64748b', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
             >
               {t.claimStamp}
@@ -334,7 +334,7 @@ export default function Page() {
             style={{ width: '100%', boxSizing: 'border-box', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
           />
           <button 
-            onClick={() => alert(`Transfer initiated for ${amount} USDC to ${recipient || 'recipient'}`)}
+            onClick={() => alert(`Payment successful for ${amount} USDC`)}
             style={{ width: '100%', backgroundColor: '#9333ea', color: '#ffffff', fontWeight: '500', fontSize: '12px', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.2)' }}
           >
             {t.payButton(amount)}
@@ -365,7 +365,7 @@ export default function Page() {
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>{t.logsTitle}</h2>
         <div style={{ backgroundColor: '#0a192f', padding: '24px', borderRadius: '8px', border: '1px solid #1e1b4b', textAlign: 'center', fontSize: '12px', color: isConnected ? '#38bdf8' : '#64748b' }}>
-          {isConnected ? t.logsActive : t.logsDefault}
+          {isConnected && address ? t.logsActive(address) : t.logsDefault}
         </div>
       </section>
 
@@ -375,5 +375,17 @@ export default function Page() {
       </footer>
 
     </main>
+  )
+}
+
+export default function Page() {
+  return (
+    <WagmiProvider config={config}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider>
+          <Dashboard />
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   )
 }

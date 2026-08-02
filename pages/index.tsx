@@ -1,14 +1,23 @@
-import { useState, useEffect, useRef } from 'react'
-import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
+'use client'
+
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract, useDisconnect } from 'wagmi'
 import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
-type Lang = 'en' | 'ko' | 'hi' | 'es'
+type Lang = 'en' | 'hi' | 'ko' | 'es'
 
 const translations = {
   en: {
-    title: 'ARC SETTLEMENT HUB',
-    subtitle: 'programmable usdc settlement engine on arc network',
+    welcomeTitle: 'welcome to arc settlement hub',
+    welcomeSubtitle: 'the sub-second programmable usdc settlement engine on arc network.',
+    getStarted: 'enter app & connect wallet',
+    thankYouTitle: 'thank you for using arc hub',
+    thankYouSubtitle: 'your session has ended securely. reconnect wallet to manage settlements.',
+    reconnect: 'reconnect wallet',
+    
+    title: 'Arc Settlement Hub',
+    subtitle: 'programmable usdc settlement engine on the arc network',
     identityHeader: 'arc multi-chain identity',
     verified: 'verified arc builder',
     notConnected: 'wallet disconnected',
@@ -16,8 +25,18 @@ const translations = {
     issueUpId: 'register handle',
     liveBalance: 'arc treasury balance',
     multichainHeader: 'arc ecosystem asset routing',
+    
+    nativeUsdc: 'native usdc',
+    cctpBridge: 'cross-chain bridge ↗',
+    speedBenchmark: 'speed benchmark',
+    autoSplitter: 'auto-split splitter',
+    clickSelectMode: 'click to select mode',
+    clickTestCctp: 'click to test cctp',
+    clickRunTest: 'click to run test',
+    clickConfigure: 'click to configure',
+
     workflowHeader: 'arc builder onboarding workflow',
-    step1: '1. bind arc identity & wallet',
+    step1: '1. bind arc identity and wallet',
     step1Sub: 'deterministically registers identity on arc network',
     done: 'done ✓',
     pending: 'pending',
@@ -29,19 +48,23 @@ const translations = {
     step3Sub: 'issues arc ecosystem verification badge',
     issued: 'issued ✓',
     claim: 'claim stamp',
+    
+    tabTransfer: 'arc usdc transfer',
+    tabQr: 'pos qr invoice',
+    tabTreasury: 'arc yield treasury',
+
     placeholder: 'send to @arc_id or 0x wallet address',
     payBtn: 'pay via arc usdc',
     processing: 'processing arc settlement...',
     noTxConnected: 'no arc settlement logs recorded for this wallet.',
-    noTxDisconnected: 'connect wallet to view arc settlement activity.',
-    activityHeader: 'arc network activity & verification logs',
+    activityHeader: 'arc network activity and verification logs',
     downloadCsv: 'export csv ↗',
     resourcesHeader: 'arc ecosystem infrastructure links',
     scanQr: 'scan qr',
     closeQr: 'close camera',
     qrTitle: 'arc dynamic pos qr invoice',
     royaltyHeader: 'arc programmable fee engine',
-    royaltyDesc: 'distribute creator fees, split payments, or send cross-chain royalties natively on arc.',
+    royaltyDesc: 'distribute creator fees or split payments directly on arc network.',
     distributeRoyalty: 'distribute fee',
     txSuccessTitle: 'arc settlement confirmed',
     txSuccessDesc: 'your transaction was settled with sub-second finality on arc testnet.',
@@ -68,6 +91,13 @@ const translations = {
     scanned: 'scanned: '
   },
   hi: {
+    welcomeTitle: 'आर्क सेटलमेंट हब में आपका स्वागत है',
+    welcomeSubtitle: 'आर्क नेटवर्क पर सब-सेकंड प्रोग्रामेबल usdc सेटलमेंट इंजन।',
+    getStarted: 'ऐप में प्रवेश करें और वॉलेट कनेक्ट करें',
+    thankYouTitle: 'आर्क हब का उपयोग करने के लिए धन्यवाद',
+    thankYouSubtitle: 'आपका सत्र सुरक्षित रूप से समाप्त हो गया है। सेटलमेंट प्रबंधित करने के लिए पुन: कनेक्ट करें।',
+    reconnect: 'वॉलेट पुन: कनेक्ट करें',
+
     title: 'आर्क सेटलमेंट हब',
     subtitle: 'आर्क नेटवर्क पर प्रोग्रामेबल usdc सेटलमेंट इंजन',
     identityHeader: 'आर्क मल्टी-चैन पहचान',
@@ -77,6 +107,16 @@ const translations = {
     issueUpId: 'हैंडल रजिस्टर करें',
     liveBalance: 'आर्क ट्रेजरी बैलेंस',
     multichainHeader: 'आर्क इकोसिस्टम एसेट रूटिंग',
+    
+    nativeUsdc: 'नेटिव usdc',
+    cctpBridge: 'क्रॉस-चैन ब्रिज ↗',
+    speedBenchmark: 'स्पीड बेंचमार्क',
+    autoSplitter: 'ऑटो-स्प्लिट स्प्लिट',
+    clickSelectMode: 'मोड चुनने के लिए क्लिक करें',
+    clickTestCctp: 'cctp टेस्ट करने के लिए क्लिक करें',
+    clickRunTest: 'टेस्ट चलाने के लिए क्लिक करें',
+    clickConfigure: 'कॉन्फ़िगर करने के लिए क्लिक करें',
+
     workflowHeader: 'आर्क बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
     step1: '1. आर्क पहचान और वॉलेट बाइंड करें',
     step1Sub: 'आर्क नेटवर्क पर पहचान दर्ज करता है',
@@ -90,11 +130,15 @@ const translations = {
     step3Sub: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
     issued: 'जारी हुआ ✓',
     claim: 'स्टैम्प क्लेम करें',
+    
+    tabTransfer: 'आर्क usdc ट्रांसफर',
+    tabQr: 'pos qr इनवॉइस',
+    tabTreasury: 'आर्क ईल्ड ट्रेजरी',
+
     placeholder: '@arc_id या 0x वॉलेट पता दर्ज करें',
     payBtn: 'आर्क usdc द्वारा भुगतान करें',
     processing: 'आर्क सेटलमेंट प्रॉसेस हो रहा है...',
     noTxConnected: 'इस वॉलेट के लिए कोई आर्क सेटलमेंट दर्ज नहीं है।',
-    noTxDisconnected: 'गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
     activityHeader: 'आर्क नेटवर्क गतिविधि और सत्यापन लॉग',
     downloadCsv: 'csv एक्सपोर्ट ↗',
     resourcesHeader: 'आर्क इकोसिस्टम इंफ्रास्ट्रक्चर लिंक्स',
@@ -129,7 +173,14 @@ const translations = {
     scanned: 'स्कैन हुआ: '
   },
   ko: {
-    title: 'ARC SETTLEMENT HUB',
+    welcomeTitle: 'Arc Settlement Hub에 오신 것을 환영합니다',
+    welcomeSubtitle: 'arc 네트워크 기반 초고속 프로그래머블 usdc 정산 엔진.',
+    getStarted: '앱 진입 및 지갑 연결',
+    thankYouTitle: 'Arc Hub를 이용해 주셔서 감사합니다',
+    thankYouSubtitle: '세션이 안전하게 종료되었습니다. 정산을 관리하려면 지갑을 다시 연결하세요.',
+    reconnect: '지갑 다시 연결',
+
+    title: 'Arc Settlement Hub',
     subtitle: 'arc 네트워크 기반 프로그래머블 usdc 정산 엔진',
     identityHeader: 'arc 멀티체인 신원',
     verified: '검증된 arc 빌더',
@@ -138,6 +189,16 @@ const translations = {
     issueUpId: '핸들 등록',
     liveBalance: 'arc 실시간 잔액',
     multichainHeader: 'arc 생태계 자산 라우팅',
+    
+    nativeUsdc: '네이티브 usdc',
+    cctpBridge: '크로스체인 브릿지 ↗',
+    speedBenchmark: '속도 벤치마크',
+    autoSplitter: '자동 분할 스플리터',
+    clickSelectMode: '모드 선택 클릭',
+    clickTestCctp: 'cctp 테스트 클릭',
+    clickRunTest: '테스트 실행 클릭',
+    clickConfigure: '설정하려면 클릭',
+
     workflowHeader: 'arc 빌더 온보딩 워크플로우',
     step1: '1. arc 신원 및 지갑 연결',
     step1Sub: 'arc 네트워크에서 확정적 신원 등록',
@@ -151,11 +212,15 @@ const translations = {
     step3Sub: 'arc 생태계 검증 배지 발급',
     issued: '발급됨 ✓',
     claim: '스탬프 받기',
+    
+    tabTransfer: 'arc usdc 전송',
+    tabQr: 'pos qr 인보이스',
+    tabTreasury: 'arc 수익 금고',
+
     placeholder: '@arc_id 또는 0x 지갑 주소 입력',
     payBtn: 'arc usdc 결제',
     processing: 'arc 정산 처리 중...',
     noTxConnected: '기록된 arc 정산 내역이 없습니다.',
-    noTxDisconnected: '지갑을 연결하여 arc 내역을 확인하세요.',
     activityHeader: 'arc 네트워크 활동 및 검증 로그',
     downloadCsv: 'csv 내보내기 ↗',
     resourcesHeader: 'arc 생태계 인프라 링크',
@@ -190,7 +255,14 @@ const translations = {
     scanned: '스캔됨: '
   },
   es: {
-    title: 'ARC SETTLEMENT HUB',
+    welcomeTitle: 'bienvenido a arc settlement hub',
+    welcomeSubtitle: 'el motor de liquidación usdc programable en red arc.',
+    getStarted: 'entrar a la app y conectar billetera',
+    thankYouTitle: 'gracias por usar arc hub',
+    thankYouSubtitle: 'su sesión ha finalizado de forma segura. reconecte para administrar sus pagos.',
+    reconnect: 'reconectar billetera',
+
+    title: 'Arc Settlement Hub',
     subtitle: 'motor de liquidación usdc programable en red arc',
     identityHeader: 'identidad arc multi-cadena',
     verified: 'creador arc verificado',
@@ -199,6 +271,16 @@ const translations = {
     issueUpId: 'registrar nombre',
     liveBalance: 'saldo de tesorería arc',
     multichainHeader: 'enrutamiento de activos en red arc',
+    
+    nativeUsdc: 'usdc nativo',
+    cctpBridge: 'puente cross-chain ↗',
+    speedBenchmark: 'prueba de velocidad',
+    autoSplitter: 'divisor automático',
+    clickSelectMode: 'clic para seleccionar modo',
+    clickTestCctp: 'clic para probar cctp',
+    clickRunTest: 'clic para ejecutar prueba',
+    clickConfigure: 'clic para configurar',
+
     workflowHeader: 'flujo de trabajo para creadores arc',
     step1: '1. vincular identidad arc y billetera',
     step1Sub: 'registra identidad de forma determinista en arc',
@@ -212,11 +294,15 @@ const translations = {
     step3Sub: 'emite insignia de verificación arc',
     issued: 'emitido ✓',
     claim: 'reclamar sello',
+    
+    tabTransfer: 'transferencia arc usdc',
+    tabQr: 'factura qr pos',
+    tabTreasury: 'bóveda de rendimiento arc',
+
     placeholder: 'enviar a @arc_id o billetera 0x',
     payBtn: 'pagar con arc usdc',
     processing: 'procesando en red arc...',
     noTxConnected: 'no hay registros de liquidación en arc.',
-    noTxDisconnected: 'conecte billetera para ver historial de arc.',
     activityHeader: 'registro de actividad y verificación arc',
     downloadCsv: 'exportar csv ↗',
     resourcesHeader: 'enlaces de infraestructura arc',
@@ -276,13 +362,18 @@ const DEFAULT_TREASURY = '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   const { address, isConnected } = useAccount()
+  const { disconnect } = useDisconnect()
   const chainId = useChainId()
   const { data: balanceData, refetch: refetchBalance } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
   const { writeContractAsync } = useWriteContract()
 
   const [lang, setLang] = useState<Lang>('en')
-  const t = translations[lang] || translations.en
+  const t = useMemo(() => translations[lang] || translations.en, [lang])
+
+  // App Session State (Welcome Modal & Disconnect State)
+  const [hasEntered, setHasEntered] = useState(false)
+  const [wasConnected, setWasConnected] = useState(false)
 
   const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'treasury'>('upi')
   const [recipient, setRecipient] = useState('')
@@ -318,7 +409,15 @@ export default function Home() {
     setMounted(true)
   }, [])
 
-  const currentWallet = address ? address.toLowerCase() : ''
+  // Detect wallet connection & disconnect session states
+  useEffect(() => {
+    if (isConnected) {
+      setWasConnected(true)
+      setHasEntered(true)
+    }
+  }, [isConnected])
+
+  const currentWallet = useMemo(() => address ? address.toLowerCase() : '', [address])
   const explorerBase = 'https://testnet.arcscan.app/tx/'
 
   useEffect(() => {
@@ -393,7 +492,7 @@ export default function Home() {
     setIsScannerOpen(false)
   }
 
-  const resolveRecipientAddress = (input: string): `0x${string}` => {
+  const resolveRecipientAddress = useCallback((input: string): `0x${string}` => {
     const clean = input.trim()
     if (clean.startsWith('0x') && clean.length === 42) {
       return clean as `0x${string}`
@@ -405,9 +504,9 @@ export default function Home() {
       }
     }
     return DEFAULT_TREASURY as `0x${string}`
-  }
+  }, [registeredIds])
 
-  const saveActivity = (newAct: ActivityItem) => {
+  const saveActivity = useCallback((newAct: ActivityItem) => {
     if (!currentWallet || typeof window === 'undefined') return
     const historyKey = `arc_history_${currentWallet}`
     setActivities(prev => {
@@ -415,9 +514,9 @@ export default function Home() {
       localStorage.setItem(historyKey, JSON.stringify(updated))
       return updated
     })
-  }
+  }, [currentWallet])
 
-  const triggerSuccess = (title: string, amountStr: string, hash: string, latencyMs: number) => {
+  const triggerSuccess = useCallback((title: string, amountStr: string, hash: string, latencyMs: number) => {
     const fullExplorerUrl = `${explorerBase}${hash}`
     if (refetchBalance) refetchBalance()
     setSuccessModal({
@@ -427,10 +526,10 @@ export default function Home() {
       url: fullExplorerUrl,
       latencyMs,
     })
-  }
+  }, [explorerBase, refetchBalance])
 
-  const autoDerivedId = address ? `@ARC-${address.slice(-5)}` : '--'
-  const userUpId = currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId
+  const autoDerivedId = useMemo(() => address ? `@ARC-${address.slice(-5)}` : '--', [address])
+  const userUpId = useMemo(() => currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId, [currentWallet, registeredIds, autoDerivedId])
 
   const handleRegisterUpId = () => {
     if (!currentWallet) {
@@ -501,7 +600,7 @@ export default function Home() {
       setStatusMsg('')
     } catch (err: any) {
       setStatusMsg(t.txCancelled)
-    } finally {
+    } fontally {
       setTxLoading(false)
     }
   }
@@ -661,14 +760,76 @@ export default function Home() {
     a.click()
   }
 
-  const receiveQrData = isConnected && address
+  const receiveQrData = useMemo(() => isConnected && address
     ? `ethereum:${address}@5042002?label=${encodeURIComponent(userUpId)}`
-    : 'connect wallet to generate arc qr'
+    : 'connect wallet to generate arc qr', [isConnected, address, userUpId])
 
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-[#05070a] text-slate-100 p-4 font-mono flex items-center justify-center">
-        <p className="text-xs text-purple-400 animate-pulse">loading arc settlement engine...</p>
+      <main className="min-h-screen bg-[#060911] text-slate-100 p-4 font-mono flex items-center justify-center">
+        <p className="text-xs text-[#00F0FF] animate-pulse">initializing arc network engine...</p>
+      </main>
+    )
+  }
+
+  // 1. Initial Welcome Modal Screen
+  if (!hasEntered && !isConnected) {
+    return (
+      <main className="min-h-screen bg-[#060911] text-slate-100 p-4 font-mono flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-tr from-[#00F0FF]/10 via-transparent to-cyan-900/10 pointer-events-none" />
+        <div className="bg-[#0A0F1D] border border-[#00F0FF]/30 p-6 sm:p-8 rounded-2xl max-w-md w-full text-center space-y-6 shadow-2xl relative z-10">
+          
+          <div className="w-16 h-16 bg-[#00F0FF]/10 border border-[#00F0FF]/40 rounded-2xl flex items-center justify-center mx-auto text-[#00F0FF]">
+            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 17c3-3 6-3 9 0 3-3 6-3 9 0M3 12v5M21 12v5M12 10v7M3 12h18M5 8h14M8 5h8" />
+            </svg>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-lg font-bold tracking-tight text-white uppercase">{t.welcomeTitle}</h1>
+            <p className="text-xs text-slate-400 leading-relaxed">{t.welcomeSubtitle}</p>
+          </div>
+
+          <div className="pt-2 flex flex-col items-center gap-3">
+            <button 
+              onClick={() => setHasEntered(true)}
+              className="w-full bg-[#00F0FF] hover:bg-cyan-400 text-slate-950 font-bold text-xs py-3 rounded-xl transition-all shadow-lg shadow-[#00F0FF]/20 uppercase tracking-wide"
+            >
+              {t.getStarted}
+            </button>
+
+            <select 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value as Lang)}
+              className="bg-[#060911] border border-slate-800 text-slate-400 text-xs px-3 py-1.5 rounded-lg focus:outline-none cursor-pointer mt-1"
+            >
+              <option value="en">🇺🇸 English</option>
+              <option value="hi">🇮🇳 हिंदी</option>
+              <option value="ko">🇰🇷 한국어</option>
+              <option value="es">🇪🇸 Español</option>
+            </select>
+          </div>
+
+        </div>
+      </main>
+    )
+  }
+
+  // 2. Disconnected Blank Screen (Sign-Out / Disconnect Flow)
+  if (wasConnected && !isConnected) {
+    return (
+      <main className="min-h-screen bg-[#060911] text-slate-100 p-4 font-mono flex items-center justify-center relative">
+        <div className="bg-[#0A0F1D] border border-slate-800 p-6 rounded-2xl max-w-md w-full text-center space-y-4 shadow-xl">
+          <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-center mx-auto text-emerald-400 text-xl">
+            ✓
+          </div>
+          <h2 className="text-sm font-bold text-white uppercase">{t.thankYouTitle}</h2>
+          <p className="text-xs text-slate-400">{t.thankYouSubtitle}</p>
+          
+          <div className="pt-2 flex justify-center">
+            <ConnectButton showBalance={false} />
+          </div>
+        </div>
       </main>
     )
   }
@@ -676,19 +837,23 @@ export default function Home() {
   const activeResolvedAddress = recipient ? resolveRecipientAddress(recipient) : null
 
   return (
-    <main className="min-h-screen bg-[#05070a] text-slate-100 p-3 sm:p-6 font-mono relative overflow-x-hidden">
+    <main className="min-h-screen bg-[#060911] text-slate-100 p-3 sm:p-6 font-mono relative overflow-x-hidden">
       
       <div className="max-w-3xl mx-auto space-y-4">
         
-        <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 gap-3">
+        {/* Header with Electric Cyan Theme */}
+        <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0A0F1D] p-4 rounded-xl border border-[#00F0FF]/20 gap-3 shadow-lg">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-purple-800 to-indigo-600 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0">
-              ARC
+            <div className="w-10 h-10 bg-[#00F0FF]/10 border border-[#00F0FF]/40 rounded-lg flex items-center justify-center text-[#00F0FF] shrink-0 p-2 shadow-md">
+              <svg className="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M3 17c3-3 6-3 9 0 3-3 6-3 9 0M3 12v5M21 12v5M12 10v7M3 12h18M5 8h14M8 5h8" />
+              </svg>
             </div>
+            
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-sm sm:text-base font-bold tracking-tight text-white truncate">{t.title}</h1>
-                <span className="text-[9px] bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded border border-purple-800/60 font-medium shrink-0">
+                <span className="text-[9px] bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/30 px-1.5 py-0.5 rounded font-medium shrink-0">
                   PRIMARY
                 </span>
               </div>
@@ -700,9 +865,9 @@ export default function Home() {
             <select 
               value={lang} 
               onChange={(e) => setLang(e.target.value as Lang)}
-              className="bg-[#05070a] border border-slate-800 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-purple-500"
+              className="bg-[#060911] border border-slate-800 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-[#00F0FF] cursor-pointer"
             >
-              <option value="en">🌐 English</option>
+              <option value="en">🇺🇸 English</option>
               <option value="hi">🇮🇳 हिंदी</option>
               <option value="ko">🇰🇷 한국어</option>
               <option value="es">🇪🇸 Español</option>
@@ -713,15 +878,16 @@ export default function Home() {
         </header>
 
         {statusMsg && (
-          <div className="bg-purple-950/60 border border-purple-500/50 text-purple-200 p-2.5 rounded-lg text-xs flex justify-between items-center gap-2">
+          <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/40 text-[#00F0FF] p-2.5 rounded-lg text-xs flex justify-between items-center gap-2">
             <span className="truncate">{statusMsg}</span>
             <button onClick={() => setStatusMsg('')} className="text-slate-400 hover:text-white px-1">✕</button>
           </div>
         )}
 
-        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-3">
+        {/* Arc Identity Section */}
+        <section className="bg-[#0A0F1D] p-4 rounded-xl border border-slate-800 space-y-3">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2.5">
-            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">{t.identityHeader}</span>
+            <span className="text-xs font-semibold text-[#00F0FF] uppercase tracking-wider">{t.identityHeader}</span>
             <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${
               isConnected 
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
@@ -732,11 +898,11 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+            <div className="bg-[#060911] p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
               <span className="text-slate-400">{t.boundId}</span>
-              <span className="font-semibold text-purple-300">{isConnected ? userUpId : '--'}</span>
+              <span className="font-semibold text-cyan-300">{isConnected ? userUpId : '--'}</span>
             </div>
-            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+            <div className="bg-[#060911] p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
               <span className="text-slate-400">{t.liveBalance}</span>
               <span className="font-semibold text-emerald-400">
                 {isConnected 
@@ -747,17 +913,17 @@ export default function Home() {
           </div>
 
           {isConnected && (
-            <div className="bg-[#05070a] p-2.5 rounded-lg border border-slate-800 flex gap-2 items-center">
+            <div className="bg-[#060911] p-2.5 rounded-lg border border-slate-800 flex gap-2 items-center">
               <input 
                 type="text" 
                 placeholder="register handle (e.g. @bhupendra)" 
                 value={customUpId}
                 onChange={(e) => setCustomUpId(e.target.value)}
-                className="bg-[#0a0d14] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 w-full"
+                className="bg-[#0A0F1D] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#00F0FF] w-full"
               />
               <button 
                 onClick={handleRegisterUpId}
-                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium shrink-0"
+                className="bg-[#00F0FF] hover:bg-cyan-400 text-slate-950 text-xs px-3 py-1.5 rounded-lg transition-all font-semibold shrink-0"
               >
                 {t.issueUpId}
               </button>
@@ -776,50 +942,56 @@ export default function Home() {
                 }}
                 className={`p-2.5 rounded-lg border text-left transition-all ${
                   transferMode === 'native' 
-                    ? 'bg-purple-950/40 border-purple-500' 
-                    : 'bg-[#05070a] border-slate-800 hover:border-slate-700'
+                    ? 'bg-[#00F0FF]/10 border-[#00F0FF]' 
+                    : 'bg-[#060911] border-slate-800 hover:border-slate-700'
                 }`}
               >
-                <p className="text-purple-400 font-semibold text-[10px]">arc testnet</p>
-                <p className="text-slate-200 mt-0.5 font-bold text-xs">native usdc</p>
-                <p className="text-[9px] text-slate-400 mt-1">click to select mode</p>
+                <p className="text-[#00F0FF] font-semibold text-[10px]">arc testnet</p>
+                <p className="text-slate-200 mt-0.5 font-bold text-xs">{t.nativeUsdc}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{t.clickSelectMode}</p>
               </button>
 
               <button 
                 onClick={() => setCctpModalOpen(true)}
-                className="bg-[#05070a] hover:border-emerald-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
+                className="bg-[#060911] hover:border-emerald-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all relative overflow-hidden group"
               >
-                <p className="text-slate-400 font-semibold text-[10px]">circle cctp</p>
-                <p className="text-emerald-400 mt-0.5 font-bold text-xs">cross-chain bridge ↗</p>
-                <p className="text-[9px] text-slate-400 mt-1">click to test cctp</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-slate-400 font-semibold text-[10px]">circle cctp</p>
+                  <svg className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <p className="text-emerald-400 mt-0.5 font-bold text-xs">{t.cctpBridge}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{t.clickTestCctp}</p>
               </button>
 
               <button 
                 onClick={handleRunSpeedTest}
                 disabled={speedTestRunning}
-                className="bg-[#05070a] hover:border-indigo-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
+                className="bg-[#060911] hover:border-cyan-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
               >
                 <p className="text-slate-400 font-semibold text-[10px]">deterministic engine</p>
-                <p className="text-indigo-400 mt-0.5 font-bold text-xs">speed benchmark</p>
-                <p className="text-[9px] text-slate-400 mt-1">{speedTestRunning ? 'testing...' : 'click to run test'}</p>
+                <p className="text-cyan-400 mt-0.5 font-bold text-xs">{t.speedBenchmark}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{speedTestRunning ? 'testing...' : t.clickRunTest}</p>
               </button>
 
               <button 
                 onClick={() => setSplitModalOpen(true)}
-                className="bg-[#05070a] hover:border-amber-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
+                className="bg-[#060911] hover:border-amber-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
               >
                 <p className="text-slate-400 font-semibold text-[10px]">payment ux</p>
-                <p className="text-amber-400 mt-0.5 font-bold text-xs">auto-split splitter</p>
-                <p className="text-[9px] text-slate-400 mt-1">click to configure</p>
+                <p className="text-amber-400 mt-0.5 font-bold text-xs">{t.autoSplitter}</p>
+                <p className="text-[9px] text-slate-400 mt-1">{t.clickConfigure}</p>
               </button>
 
             </div>
           </div>
         </section>
 
-        <section className="bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 space-y-2.5">
+        {/* Royalty Fee Engine */}
+        <section className="bg-[#0A0F1D] p-4 rounded-xl border border-[#00F0FF]/20 space-y-2.5">
           <div>
-            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">{t.royaltyHeader}</span>
+            <span className="text-xs font-semibold text-[#00F0FF] uppercase tracking-wider">{t.royaltyHeader}</span>
             <p className="text-[10px] text-slate-400 mt-0.5">{t.royaltyDesc}</p>
           </div>
 
@@ -829,7 +1001,7 @@ export default function Home() {
               placeholder="address 0x... or @handle"
               value={royaltyRecipient}
               onChange={(e) => setRoyaltyRecipient(e.target.value)}
-              className="flex-1 bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+              className="flex-1 bg-[#060911] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#00F0FF]"
             />
             <div className="flex gap-2 w-full sm:w-auto">
               <input 
@@ -837,12 +1009,12 @@ export default function Home() {
                 placeholder="amount"
                 value={royaltyAmount}
                 onChange={(e) => setRoyaltyAmount(e.target.value)}
-                className="w-1/2 sm:w-20 bg-[#05070a] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                className="w-1/2 sm:w-20 bg-[#060911] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#00F0FF]"
               />
               <button
                 onClick={handleRoyaltyPayout}
                 disabled={txLoading || !isConnected}
-                className="w-1/2 sm:w-auto bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-lg px-3 py-2 transition-all shrink-0"
+                className="w-1/2 sm:w-auto bg-[#00F0FF] hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-semibold text-xs rounded-lg px-3 py-2 transition-all shrink-0"
               >
                 {t.distributeRoyalty}
               </button>
@@ -850,10 +1022,11 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-2.5">
+        {/* Builder Onboarding Workflow */}
+        <section className="bg-[#0A0F1D] p-4 rounded-xl border border-slate-800 space-y-2.5">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.workflowHeader}</h2>
           
-          <div className="flex justify-between items-center bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 gap-2">
+          <div className="flex justify-between items-center bg-[#060911] p-2.5 rounded-lg border border-slate-800/80 gap-2">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-200 truncate">{t.step1}</p>
               <p className="text-[10px] text-slate-500 truncate">{t.step1Sub}</p>
@@ -867,7 +1040,7 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="flex justify-between items-center bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 gap-2">
+          <div className="flex justify-between items-center bg-[#060911] p-2.5 rounded-lg border border-slate-800/80 gap-2">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-200 truncate">{t.step2}</p>
               <p className="text-[10px] text-slate-500 truncate">{t.step2Sub.replace('{count}', practiceCount.toString())}</p>
@@ -875,13 +1048,13 @@ export default function Home() {
             <button 
               onClick={handlePracticeTx}
               disabled={txLoading || !isConnected}
-              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3 py-1 rounded-lg transition-all font-medium shrink-0"
+              className="text-xs bg-[#00F0FF] hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 px-3 py-1 rounded-lg transition-all font-semibold shrink-0"
             >
               {txLoading ? t.running : t.run}
             </button>
           </div>
 
-          <div className="flex justify-between items-center bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 gap-2">
+          <div className="flex justify-between items-center bg-[#060911] p-2.5 rounded-lg border border-slate-800/80 gap-2">
             <div className="min-w-0">
               <p className="text-xs font-medium text-slate-200 truncate">{t.step3}</p>
               <p className="text-[10px] text-slate-500 truncate">{t.step3Sub}</p>
@@ -900,31 +1073,32 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-3">
+        {/* Transfer / Dynamic QR / Vault Tabs */}
+        <section className="bg-[#0A0F1D] p-4 rounded-xl border border-slate-800 space-y-3">
           <div className="flex border-b border-slate-800 gap-1 overflow-x-auto">
             <button 
               onClick={() => setActiveTab('upi')}
               className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 shrink-0 ${
-                activeTab === 'upi' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                activeTab === 'upi' ? 'border-[#00F0FF] text-[#00F0FF]' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              arc usdc transfer
+              {t.tabTransfer}
             </button>
             <button 
               onClick={() => setActiveTab('qr')}
               className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 shrink-0 ${
-                activeTab === 'qr' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                activeTab === 'qr' ? 'border-[#00F0FF] text-[#00F0FF]' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              pos qr invoice
+              {t.tabQr}
             </button>
             <button 
               onClick={() => setActiveTab('treasury')}
               className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 shrink-0 ${
-                activeTab === 'treasury' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                activeTab === 'treasury' ? 'border-[#00F0FF] text-[#00F0FF]' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              arc yield treasury
+              {t.tabTreasury}
             </button>
           </div>
 
@@ -936,11 +1110,11 @@ export default function Home() {
                   placeholder={t.placeholder} 
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
-                  className="flex-1 bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                  className="flex-1 bg-[#060911] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#00F0FF]"
                 />
                 <button
                   onClick={isScannerOpen ? stopCamera : startCamera}
-                  className="bg-[#05070a] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 py-2 rounded-lg transition-all flex items-center justify-center gap-1 font-medium shrink-0"
+                  className="bg-[#060911] border border-slate-700 hover:border-[#00F0FF] text-[#00F0FF] text-xs px-3 py-2 rounded-lg transition-all flex items-center justify-center gap-1 font-medium shrink-0"
                 >
                   {isScannerOpen ? t.closeQr : t.scanQr}
                 </button>
@@ -949,24 +1123,24 @@ export default function Home() {
               {recipient && activeResolvedAddress && (
                 <div className="text-[10px] bg-slate-900/80 p-2 rounded-lg border border-slate-800 text-slate-400 flex justify-between gap-2 overflow-hidden">
                   <span>resolved address:</span>
-                  <span className="text-purple-300 font-mono truncate">{activeResolvedAddress}</span>
+                  <span className="text-[#00F0FF] font-mono truncate">{activeResolvedAddress}</span>
                 </div>
               )}
 
               {isScannerOpen && (
-                <div className="bg-[#05070a] p-3 rounded-lg border border-purple-500/50 space-y-2">
+                <div className="bg-[#060911] p-3 rounded-lg border border-[#00F0FF]/50 space-y-2">
                   <div id="qr-reader-container" className="w-full h-48 rounded-lg overflow-hidden bg-black mx-auto max-w-xs" />
                   <p className="text-[10px] text-center text-slate-400">{t.pointCamera}</p>
                 </div>
               )}
               
-              <div className="flex justify-between items-center bg-[#05070a] p-2 rounded-lg border border-slate-800 text-xs">
+              <div className="flex justify-between items-center bg-[#060911] p-2 rounded-lg border border-slate-800 text-xs">
                 <span className="text-slate-400 text-[10px]">transfer route:</span>
                 <div className="flex gap-1.5">
                   <button 
                     onClick={() => setTransferMode('native')}
                     className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                      transferMode === 'native' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'
+                      transferMode === 'native' ? 'bg-[#00F0FF] text-slate-950 font-bold' : 'bg-slate-800 text-slate-400'
                     }`}
                   >
                     native gas usdc
@@ -974,7 +1148,7 @@ export default function Home() {
                   <button 
                     onClick={() => setTransferMode('erc20')}
                     className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                      transferMode === 'erc20' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'
+                      transferMode === 'erc20' ? 'bg-[#00F0FF] text-slate-950 font-bold' : 'bg-slate-800 text-slate-400'
                     }`}
                   >
                     erc-20 contract
@@ -987,12 +1161,12 @@ export default function Home() {
                   type="text" 
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-1/3 bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                  className="w-1/3 bg-[#060911] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#00F0FF]"
                 />
                 <button 
                   onClick={handlePayment}
                   disabled={txLoading || !isConnected}
-                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-lg py-2 transition-all"
+                  className="w-2/3 bg-[#00F0FF] hover:bg-cyan-400 disabled:bg-slate-800 disabled:text-slate-500 text-slate-950 font-bold text-xs rounded-lg py-2 transition-all"
                 >
                   {txLoading ? t.processing : `${t.payBtn} (${amount} usdc)`}
                 </button>
@@ -1001,10 +1175,10 @@ export default function Home() {
           )}
 
           {activeTab === 'qr' && (
-            <div className="bg-[#05070a] p-5 rounded-lg border border-slate-800 text-center space-y-3">
+            <div className="bg-[#060911] p-5 rounded-lg border border-slate-800 text-center space-y-3">
               <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{t.qrTitle}</p>
               
-              <div className="w-36 h-36 bg-slate-900 border border-purple-500/30 mx-auto rounded-lg flex flex-col items-center justify-center p-2">
+              <div className="w-36 h-36 bg-slate-900 border border-[#00F0FF]/30 mx-auto rounded-lg flex flex-col items-center justify-center p-2">
                 <img 
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(receiveQrData)}`} 
                   alt="arc receiver qr code"
@@ -1013,7 +1187,7 @@ export default function Home() {
               </div>
 
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-purple-400">{userUpId}</p>
+                <p className="text-xs font-bold text-[#00F0FF]">{userUpId}</p>
                 <p className="text-[10px] text-slate-400 break-all max-w-xs mx-auto">{address || 'no wallet connected'}</p>
                 <p className="text-[10px] text-emerald-400 font-semibold pt-1">network: arc testnet (usdc)</p>
               </div>
@@ -1021,10 +1195,10 @@ export default function Home() {
           )}
 
           {activeTab === 'treasury' && (
-            <div className="bg-[#05070a] p-3.5 rounded-lg border border-slate-800 space-y-3">
+            <div className="bg-[#060911] p-3.5 rounded-lg border border-slate-800 space-y-3">
               <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                 <div>
-                  <h3 className="text-xs font-bold text-purple-300 uppercase">{t.treasuryVaultTitle}</h3>
+                  <h3 className="text-xs font-bold text-cyan-300 uppercase">{t.treasuryVaultTitle}</h3>
                   <p className="text-[10px] text-slate-400">{t.treasuryVaultDesc}</p>
                 </div>
                 <div className="text-right">
@@ -1034,11 +1208,11 @@ export default function Home() {
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
-                <div className="bg-[#0a0d14] p-2.5 rounded-lg border border-slate-800">
+                <div className="bg-[#0A0F1D] p-2.5 rounded-lg border border-slate-800">
                   <p className="text-[10px] text-slate-400">{t.depositedBalance}</p>
-                  <p className="text-xs font-bold text-purple-300 mt-0.5">{vaultBalance} usdc</p>
+                  <p className="text-xs font-bold text-[#00F0FF] mt-0.5">{vaultBalance} usdc</p>
                 </div>
-                <div className="bg-[#0a0d14] p-2.5 rounded-lg border border-slate-800">
+                <div className="bg-[#0A0F1D] p-2.5 rounded-lg border border-slate-800">
                   <p className="text-[10px] text-slate-400">{t.estAnnualYield}</p>
                   <p className="text-xs font-bold text-emerald-400 mt-0.5">
                     {(parseFloat(vaultBalance) * 0.0485).toFixed(4)} usdc
@@ -1052,7 +1226,7 @@ export default function Home() {
                   value={treasuryDeposit}
                   onChange={(e) => setTreasuryDeposit(e.target.value)}
                   placeholder="amount in usdc"
-                  className="w-1/2 bg-[#0a0d14] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                  className="w-1/2 bg-[#0A0F1D] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#00F0FF]"
                 />
                 <button 
                   onClick={handleTreasuryDeposit}
@@ -1066,7 +1240,8 @@ export default function Home() {
           )}
         </section>
 
-        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-2.5">
+        {/* Resources Section */}
+        <section className="bg-[#0A0F1D] p-4 rounded-xl border border-slate-800 space-y-2.5">
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t.resourcesHeader}</p>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
@@ -1074,7 +1249,7 @@ export default function Home() {
               href="https://testnet.arcscan.app/" 
               target="_blank" 
               rel="noreferrer" 
-              className="bg-[#05070a] hover:bg-[#0f1420] p-2.5 rounded-lg border border-purple-900/50 text-purple-300 transition-all font-medium flex items-center justify-between"
+              className="bg-[#060911] hover:bg-[#0d1427] p-2.5 rounded-lg border border-[#00F0FF]/30 text-[#00F0FF] transition-all font-medium flex items-center justify-between"
             >
               <span>arcscan explorer</span>
               <span className="text-[10px]">↗</span>
@@ -1083,7 +1258,7 @@ export default function Home() {
               href="https://faucet.circle.com/" 
               target="_blank" 
               rel="noreferrer" 
-              className="bg-[#05070a] hover:bg-[#0f1420] p-2.5 rounded-lg border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              className="bg-[#060911] hover:bg-[#0d1427] p-2.5 rounded-lg border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
             >
               <span>circle usdc faucet</span>
               <span className="text-[10px]">↗</span>
@@ -1092,7 +1267,7 @@ export default function Home() {
               href="https://www.arc.io/" 
               target="_blank" 
               rel="noreferrer" 
-              className="bg-[#05070a] hover:bg-[#0f1420] p-2.5 rounded-lg border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              className="bg-[#060911] hover:bg-[#0d1427] p-2.5 rounded-lg border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
             >
               <span>arc protocol docs</span>
               <span className="text-[10px]">↗</span>
@@ -1100,7 +1275,8 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-2.5">
+        {/* Verification Logs */}
+        <section className="bg-[#0A0F1D] p-4 rounded-xl border border-slate-800 space-y-2.5">
           <div className="flex justify-between items-center">
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t.activityHeader}</span>
             {isConnected && activities.length > 0 && (
@@ -1117,10 +1293,10 @@ export default function Home() {
             {isConnected ? (
               activities.length > 0 ? (
                 activities.map((act) => (
-                  <div key={act.id} className="bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 flex justify-between items-center gap-2">
+                  <div key={act.id} className="bg-[#060911] p-2.5 rounded-lg border border-slate-800/80 flex justify-between items-center gap-2">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <p className="text-purple-300 font-medium truncate">{act.title}</p>
+                        <p className="text-cyan-300 font-medium truncate">{act.title}</p>
                         {act.latencyMs && (
                           <span className="text-[8px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1 py-0.2 rounded shrink-0">
                             {act.latencyMs}ms
@@ -1134,7 +1310,7 @@ export default function Home() {
                         href={act.explorerUrl} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="text-purple-400 hover:underline text-[10px] block font-mono"
+                        className="text-[#00F0FF] hover:underline text-[10px] block font-mono"
                       >
                         verify ↗ ({act.txHash})
                       </a>
@@ -1142,23 +1318,20 @@ export default function Home() {
                   </div>
                 ))
               ) : (
-                <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800/80 text-center text-slate-500 text-xs">
+                <div className="bg-[#060911] p-3 rounded-lg border border-slate-800/80 text-center text-slate-500 text-xs">
                   {t.noTxConnected}
                 </div>
               )
-            ) : (
-              <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800/80 text-center text-slate-500 text-xs">
-                {t.noTxDisconnected}
-              </div>
-            )}
+            ) : null}
           </div>
         </section>
 
       </div>
 
+      {/* CCTP Modal */}
       {cctpModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0d14] border border-emerald-500/40 w-full max-w-sm rounded-xl p-4 space-y-3">
+          <div className="bg-[#0A0F1D] border border-emerald-500/40 w-full max-w-sm rounded-xl p-4 space-y-3">
             <h3 className="text-xs font-bold text-emerald-400 uppercase">circle cctp native bridge</h3>
             <p className="text-[11px] text-slate-400">burn & mint native usdc across arc network via circle cctp protocol.</p>
             
@@ -1168,7 +1341,7 @@ export default function Home() {
                 type="text" 
                 value={cctpAmount}
                 onChange={(e) => setCctpAmount(e.target.value)}
-                className="w-full bg-[#05070a] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200"
+                className="w-full bg-[#060911] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200"
               />
             </div>
 
@@ -1193,13 +1366,14 @@ export default function Home() {
         </div>
       )}
 
+      {/* Splitter Modal */}
       {splitModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0d14] border border-amber-500/40 w-full max-w-sm rounded-xl p-4 space-y-3">
+          <div className="bg-[#0A0F1D] border border-amber-500/40 w-full max-w-sm rounded-xl p-4 space-y-3">
             <h3 className="text-xs font-bold text-amber-400 uppercase">programmable auto-splitter</h3>
             <p className="text-[11px] text-slate-400">automatically split incoming usdc settlements: 80% merchant, 15% treasury, 5% royalty fee.</p>
             
-            <div className="bg-[#05070a] p-2.5 rounded-lg border border-slate-800 space-y-1.5 text-xs">
+            <div className="bg-[#060911] p-2.5 rounded-lg border border-slate-800 space-y-1.5 text-xs">
               <div className="flex justify-between">
                 <span className="text-slate-400">merchant payout:</span>
                 <span className="text-slate-200 font-bold">80%</span>
@@ -1210,7 +1384,7 @@ export default function Home() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">protocol fee:</span>
-                <span className="text-purple-400 font-bold">5%</span>
+                <span className="text-[#00F0FF] font-bold">5%</span>
               </div>
             </div>
 
@@ -1227,9 +1401,10 @@ export default function Home() {
         </div>
       )}
 
+      {/* Success Modal */}
       {successModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#0a0d14] border border-purple-500/40 w-full max-w-sm rounded-xl p-5 text-center space-y-3">
+          <div className="bg-[#0A0F1D] border border-[#00F0FF]/40 w-full max-w-sm rounded-xl p-5 text-center space-y-3 shadow-2xl">
             <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xl mx-auto border border-emerald-500/40">
               ✓
             </div>
@@ -1239,14 +1414,14 @@ export default function Home() {
               <p className="text-[11px] text-slate-400">{t.txSuccessDesc}</p>
             </div>
 
-            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 text-left space-y-1.5 text-xs">
+            <div className="bg-[#060911] p-3 rounded-lg border border-slate-800 text-left space-y-1.5 text-xs">
               <div className="flex justify-between items-center text-[10px] text-slate-400 border-b border-slate-800 pb-1">
                 <span>execution speed:</span>
                 <span className="text-emerald-400 font-bold bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-800">
                   {successModal.latencyMs} ms
                 </span>
               </div>
-              <p className="text-purple-300 font-semibold truncate">{successModal.title}</p>
+              <p className="text-[#00F0FF] font-semibold truncate">{successModal.title}</p>
               <p className="text-emerald-400 font-bold">{successModal.amount}</p>
               <p className="text-slate-500 text-[9px] truncate">hash: {successModal.hash}</p>
             </div>
@@ -1256,7 +1431,7 @@ export default function Home() {
                 href={successModal.url}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs py-2 rounded-lg block"
+                className="w-full bg-[#00F0FF] hover:bg-cyan-400 text-slate-950 font-bold text-xs py-2 rounded-lg block"
               >
                 {t.viewExplorer}
               </a>
@@ -1270,6 +1445,7 @@ export default function Home() {
           </div>
         </div>
       )}
+
     </main>
   )
 }

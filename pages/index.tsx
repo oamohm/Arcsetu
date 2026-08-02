@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract, useDisconnect } from 'wagmi'
 import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -369,7 +369,7 @@ export default function Home() {
   const { writeContractAsync } = useWriteContract()
 
   const [lang, setLang] = useState<Lang>('en')
-  const t = useMemo(() => translations[lang] || translations.en, [lang])
+  const t = translations[lang] || translations.en
 
   // App Session State (Welcome Modal & Disconnect State)
   const [hasEntered, setHasEntered] = useState(false)
@@ -417,7 +417,7 @@ export default function Home() {
     }
   }, [isConnected])
 
-  const currentWallet = useMemo(() => address ? address.toLowerCase() : '', [address])
+  const currentWallet = address ? address.toLowerCase() : ''
   const explorerBase = 'https://testnet.arcscan.app/tx/'
 
   useEffect(() => {
@@ -492,7 +492,7 @@ export default function Home() {
     setIsScannerOpen(false)
   }
 
-  const resolveRecipientAddress = useCallback((input: string): `0x${string}` => {
+  const resolveRecipientAddress = (input: string): `0x${string}` => {
     const clean = input.trim()
     if (clean.startsWith('0x') && clean.length === 42) {
       return clean as `0x${string}`
@@ -504,9 +504,9 @@ export default function Home() {
       }
     }
     return DEFAULT_TREASURY as `0x${string}`
-  }, [registeredIds])
+  }
 
-  const saveActivity = useCallback((newAct: ActivityItem) => {
+  const saveActivity = (newAct: ActivityItem) => {
     if (!currentWallet || typeof window === 'undefined') return
     const historyKey = `arc_history_${currentWallet}`
     setActivities(prev => {
@@ -514,9 +514,9 @@ export default function Home() {
       localStorage.setItem(historyKey, JSON.stringify(updated))
       return updated
     })
-  }, [currentWallet])
+  }
 
-  const triggerSuccess = useCallback((title: string, amountStr: string, hash: string, latencyMs: number) => {
+  const triggerSuccess = (title: string, amountStr: string, hash: string, latencyMs: number) => {
     const fullExplorerUrl = `${explorerBase}${hash}`
     if (refetchBalance) refetchBalance()
     setSuccessModal({
@@ -526,10 +526,10 @@ export default function Home() {
       url: fullExplorerUrl,
       latencyMs,
     })
-  }, [explorerBase, refetchBalance])
+  }
 
-  const autoDerivedId = useMemo(() => address ? `@ARC-${address.slice(-5)}` : '--', [address])
-  const userUpId = useMemo(() => currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId, [currentWallet, registeredIds, autoDerivedId])
+  const autoDerivedId = address ? `@ARC-${address.slice(-5)}` : '--'
+  const userUpId = currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId
 
   const handleRegisterUpId = () => {
     if (!currentWallet) {
@@ -600,7 +600,7 @@ export default function Home() {
       setStatusMsg('')
     } catch (err: any) {
       setStatusMsg(t.txCancelled)
-    } fontally {
+    } finally {
       setTxLoading(false)
     }
   }
@@ -760,9 +760,9 @@ export default function Home() {
     a.click()
   }
 
-  const receiveQrData = useMemo(() => isConnected && address
+  const receiveQrData = isConnected && address
     ? `ethereum:${address}@5042002?label=${encodeURIComponent(userUpId)}`
-    : 'connect wallet to generate arc qr', [isConnected, address, userUpId])
+    : 'connect wallet to generate arc qr'
 
   if (!mounted) {
     return (

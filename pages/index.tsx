@@ -8,11 +8,32 @@ import {
 import { WagmiProvider, useAccount } from 'wagmi'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
+import { defineChain } from 'viem'
+
+// Arc Testnet custom chain setup
+export const arcTestnet = defineChain({
+  id: 5042002,
+  name: 'Arc Testnet',
+  nativeCurrency: {
+    name: 'USDC',
+    symbol: 'USDC',
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://rpc-testnet.arcscan.app'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
+  },
+  testnet: true,
+})
 
 const config = getDefaultConfig({
   appName: 'Arc Settlement Hub',
   projectId: 'YOUR_PROJECT_ID',
-  chains: [mainnet, polygon, optimism, arbitrum, base],
+  chains: [arcTestnet, mainnet, polygon, optimism, arbitrum, base],
   ssr: true,
 })
 
@@ -292,7 +313,7 @@ function DashboardContent() {
         <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #1e1b4b', paddingBottom: '8px', marginBottom: '12px', fontSize: '12px', fontWeight: '600' }}>
           <button onClick={() => setActiveTab('transfer')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'transfer' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'transfer' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTransfer}</button>
           <button onClick={() => setActiveTab('pos')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'pos' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'pos' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabPos}</button>
-          <button onClick={() => setActiveTab('treasury')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'treasury' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'treasury' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTreasury}</button>
+          <button onClick={() => setActiveTab('treasury')} style={{ background: 'none', border: 'none', cursor: 'padding', color: activeTab === 'treasury' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'treasury' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTreasury}</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '8px' }}>
           <div style={{ display: 'flex', gap: '8px' }}>

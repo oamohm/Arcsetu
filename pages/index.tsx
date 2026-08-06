@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import '@rainbow-me/rainbowkit/styles.css'
 import {
   getDefaultConfig,
   RainbowKitProvider,
@@ -21,12 +20,17 @@ const queryClient = new QueryClient()
 
 function DashboardContent() {
   const { address, isConnected } = useAccount()
+  const [mounted, setMounted] = useState(false)
   const [arcId, setArcId] = useState('')
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.1')
   const [feeAddress, setFeeAddress] = useState('')
   const [activeTab, setActiveTab] = useState('transfer')
   const [locale, setLocale] = useState<'en' | 'hi'>('en')
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const t = {
     en: {
@@ -141,6 +145,8 @@ function DashboardContent() {
     }
   }[locale]
 
+  const walletActive = mounted && isConnected
+
   return (
     <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
@@ -170,8 +176,8 @@ function DashboardContent() {
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', margin: 0 }}>{t.identity}</h2>
-          <span style={{ fontSize: '10px', background: isConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: isConnected ? '#4ade80' : '#f87171', padding: '2px 8px', borderRadius: '4px', border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
-            {isConnected ? t.statusConn : t.statusDisc}
+          <span style={{ fontSize: '10px', background: walletActive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: walletActive ? '#4ade80' : '#f87171', padding: '2px 8px', borderRadius: '4px', border: `1px solid ${walletActive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
+            {walletActive ? t.statusConn : t.statusDisc}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
@@ -187,7 +193,7 @@ function DashboardContent() {
           </div>
           <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
             <span>{t.treasuryBal}</span>
-            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{isConnected ? '1,450.25 USDC' : '--'}</span>
+            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{walletActive ? '1,450.25 USDC' : '--'}</span>
           </div>
         </div>
       </section>
@@ -251,8 +257,8 @@ function DashboardContent() {
               <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 2px 0' }}>{t.wf1Title}</p>
               <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf1Desc}</p>
             </div>
-            <span style={{ fontSize: '10px', backgroundColor: isConnected ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: isConnected ? '#4ade80' : '#fbbf24', padding: '4px 8px', borderRadius: '4px', border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.2)' : 'rgba(245, 158, 11, 0.2)'}` }}>
-              {isConnected ? t.wf1Complete : t.wf1Pending}
+            <span style={{ fontSize: '10px', backgroundColor: walletActive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: walletActive ? '#4ade80' : '#fbbf24', padding: '4px 8px', borderRadius: '4px', border: `1px solid ${walletActive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(245, 158, 11, 0.2)'}` }}>
+              {walletActive ? t.wf1Complete : t.wf1Pending}
             </span>
           </div>
           <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -341,8 +347,8 @@ function DashboardContent() {
 
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>{t.logsTitle}</h2>
-        <div style={{ backgroundColor: '#0a192f', padding: '24px', borderRadius: '8px', border: '1px solid #1e1b4b', textAlign: 'center', fontSize: '12px', color: isConnected ? '#38bdf8' : '#64748b' }}>
-          {isConnected && address ? t.logsActive(address) : t.logsDefault}
+        <div style={{ backgroundColor: '#0a192f', padding: '24px', borderRadius: '8px', border: '1px solid #1e1b4b', textAlign: 'center', fontSize: '12px', color: walletActive ? '#38bdf8' : '#64748b' }}>
+          {walletActive && address ? t.logsActive(address) : t.logsDefault}
         </div>
       </section>
 

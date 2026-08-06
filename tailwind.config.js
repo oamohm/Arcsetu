@@ -12,10 +12,10 @@ module.exports = {
           bg: '#0a192f',
           card: '#112240',
           border: '#1e3a8a',
-          accent: '#f97316',
-          text: '#f8fafc',
-          muted: '#94a3b8'
-        }
+          accent: '#a855f7',
+          text: '#f1f5f9',
+          muted: '#94a3b8',
+        },
       },
     },
   },

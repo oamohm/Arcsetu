@@ -5,12 +5,11 @@ import {
   RainbowKitProvider,
   ConnectButton,
 } from '@rainbow-me/rainbowkit'
-import { WagmiProvider, useAccount } from 'wagmi'
+import { WagmiProvider, useAccount, useBalance, useSendTransaction } from 'wagmi'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { defineChain } from 'viem'
+import { defineChain, parseEther } from 'viem'
 
-// Arc Testnet custom chain setup
 export const arcTestnet = defineChain({
   id: 5042002,
   name: 'Arc Testnet',
@@ -46,12 +45,57 @@ function DashboardContent() {
   const [recipient, setRecipient] = useState('')
   const [amount, setAmount] = useState('0.1')
   const [feeAddress, setFeeAddress] = useState('')
+  const [feeAmount, setFeeAmount] = useState('0.05')
   const [activeTab, setActiveTab] = useState('transfer')
   const [locale, setLocale] = useState<'en' | 'hi'>('en')
+  const [settlementCount, setSettlementCount] = useState(0)
+  const [builderStamp, setBuilderStamp] = useState(false)
+
+  const { data: balanceData, refetch: refetchBalance } = useBalance({
+    address: address,
+  })
+
+  const { sendTransaction, isPending } = useSendTransaction()
 
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  const handlePay = () => {
+    if (!recipient || !amount) return
+    try {
+      sendTransaction({
+        to: recipient as `0x${string}`,
+        value: parseEther(amount),
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleDistributeFee = () => {
+    if (!feeAddress || !feeAmount) return
+    try {
+      sendTransaction({
+        to: feeAddress as `0x${string}`,
+        value: parseEther(feeAmount),
+      })
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleRunSettlement = () => {
+    setSettlementCount((prev) => prev + 1)
+  }
+
+  const handleClaimStamp = () => {
+    if (walletActive) {
+      setBuilderStamp(true)
+    }
+  }
+
+  const walletActive = mounted && isConnected
 
   const t = {
     en: {
@@ -62,7 +106,7 @@ function DashboardContent() {
       statusDisc: 'wallet disconnected',
       statusConn: 'wallet active',
       boundId: 'bound arc up id',
-      treasuryBal: 'arc treasury balance',
+      treasuryBal: 'arc native balance',
       routing: 'arc ecosystem asset routing',
       testnet: 'arc testnet',
       nativeUsdc: 'native usdc',
@@ -78,7 +122,7 @@ function DashboardContent() {
       config: 'click to configure',
       feeEngine: 'arc programmable fee engine',
       feeDesc: 'distribute creator fees, split payments, or send cross-chain royalties natively on arc.',
-      feePlaceholder: 'address 0x... or @handle',
+      feePlaceholder: 'address 0x...',
       distributeFee: 'distribute fee',
       workflow: 'arc builder onboarding workflow',
       wf1Title: '1. bind arc identity & wallet',
@@ -86,20 +130,20 @@ function DashboardContent() {
       wf1Pending: 'pending',
       wf1Complete: 'completed',
       wf2Title: '2. execute arc usdc settlement',
-      wf2Desc: 'executed: 0 settlement txns',
+      wf2Desc: `executed: ${settlementCount} settlement txns`,
       runSettlement: 'run settlement',
       wf3Title: '3. claim arc builder stamp',
       wf3Desc: 'issues arc ecosystem verification badge',
-      claimStamp: 'claim stamp',
+      claimStamp: builderStamp ? 'stamp claimed' : 'claim stamp',
       tabTransfer: 'arc usdc transfer',
       tabPos: 'pos qr invoice',
       tabTreasury: 'arc yield treasury',
-      sendPlaceholder: 'send to @arc_id or 0x wallet address',
-      scanQr: 'scan qr',
+      sendPlaceholder: 'send to 0x wallet address',
+      scanQr: 'refresh balance',
       transferRoute: 'transfer route:',
       gasUsdc: 'native gas usdc',
       erc20: 'erc-20 contract',
-      payButton: (amt: string) => `pay via arc usdc (${amt} usdc)`,
+      payButton: (amt: string) => isPending ? 'processing...' : `pay via arc usdc (${amt} usdc)`,
       infra: 'arc ecosystem infrastructure links',
       explorer: 'arcscan explorer',
       faucet: 'circle usdc faucet',
@@ -117,7 +161,7 @@ function DashboardContent() {
       statusDisc: 'वॉलेट डिस्कनेक्टेड',
       statusConn: 'वॉलेट सक्रिय',
       boundId: 'बाउंड आर्क अप आईडी',
-      treasuryBal: 'आर्क ट्रेजरी शेष',
+      treasuryBal: 'आर्क नेटिव बैलेंस',
       routing: 'आर्क इकोसिस्टम एसेट रूटिंग',
       testnet: 'आर्क टेस्टनेट',
       nativeUsdc: 'मूल यूएसडीसी',
@@ -133,7 +177,7 @@ function DashboardContent() {
       config: 'कॉन्फ़िगर करने के लिए क्लिक करें',
       feeEngine: 'आर्क प्रोग्रामेबल फीस इंजन',
       feeDesc: 'रॉयल्टी या क्रिएटर फीस को आर्क पर मूल रूप से वितरित करें।',
-      feePlaceholder: 'पता 0x... या @handle',
+      feePlaceholder: 'पता 0x...',
       distributeFee: 'फीस वितरित करें',
       workflow: 'आर्क बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
       wf1Title: '1. आर्क पहचान और वॉलेट बांधें',
@@ -141,20 +185,20 @@ function DashboardContent() {
       wf1Pending: 'लंबित',
       wf1Complete: 'पूर्ण',
       wf2Title: '2. आर्क यूएसडीसी सेटलमेंट निष्पादित करें',
-      wf2Desc: 'निष्पादित: 0 सेटलमेंट लेन-देन',
+      wf2Desc: `निष्पादित: ${settlementCount} सेटलमेंट लेन-देन`,
       runSettlement: 'सेटलमेंट चलाएं',
       wf3Title: '3. आर्क बिल्डर स्टाम्प का दावा करें',
       wf3Desc: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
-      claimStamp: 'स्टाम्प का दावा करें',
+      claimStamp: builderStamp ? 'स्टाम्प प्राप्त हुआ' : 'स्टाम्प का दावा करें',
       tabTransfer: 'आर्क यूएसडीसी ट्रांसफर',
       tabPos: 'पीओएस क्यूआर इनवॉइस',
       tabTreasury: 'आर्क यील्ड ट्रेजरी',
-      sendPlaceholder: '@arc_id या 0x वॉलेट पते पर भेजें',
-      scanQr: 'क्यूआर स्कैन करें',
+      sendPlaceholder: '0x वॉलेट पते पर भेजें',
+      scanQr: 'बैलेंस रिफ्रेश करें',
       transferRoute: 'ट्रांसफर रूट:',
       gasUsdc: 'मूल गैस यूएसडीसी',
       erc20: 'ईआरसी-20 अनुबंध',
-      payButton: (amt: string) => `आर्क यूएसडीसी के माध्यम से भुगतान करें (${amt} यूएसडीसी)`,
+      payButton: (amt: string) => isPending ? 'प्रोसेस हो रहा है...' : `आर्क यूएसडीसी भुगतान करें (${amt} यूएसडीसी)`,
       infra: 'आर्क इकोसिस्टम इंफ्रास्ट्रक्चर लिंक',
       explorer: 'आर्कस्केन एक्सप्लोरर',
       faucet: 'सर्कल यूएसडीसी फॉसेट',
@@ -165,8 +209,6 @@ function DashboardContent() {
       footer: 'आर्क सेटलमेंट इंजन · विकेंद्रीकृत पैमाने के लिए निर्मित'
     }
   }[locale]
-
-  const walletActive = mounted && isConnected
 
   return (
     <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
@@ -214,7 +256,9 @@ function DashboardContent() {
           </div>
           <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
             <span>{t.treasuryBal}</span>
-            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>{walletActive ? '1,450.25 USDC' : '--'}</span>
+            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>
+              {walletActive && balanceData ? `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : '--'}
+            </span>
           </div>
         </div>
       </section>
@@ -258,12 +302,14 @@ function DashboardContent() {
           />
           <input 
             type="text" 
-            defaultValue="0.05" 
+            value={feeAmount}
+            onChange={(e) => setFeeAmount(e.target.value)}
             style={{ width: '100px', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', textAlign: 'center', outline: 'none' }}
           />
           <button 
-            onClick={() => alert('Fee distributed successfully.')}
-            style={{ backgroundColor: '#2563eb', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+            onClick={handleDistributeFee}
+            disabled={!walletActive || !feeAddress}
+            style={{ backgroundColor: walletActive && feeAddress ? '#2563eb' : '#1e293b', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
           >
             {t.distributeFee}
           </button>
@@ -288,7 +334,7 @@ function DashboardContent() {
               <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf2Desc}</p>
             </div>
             <button 
-              onClick={() => alert('Settlement executed successfully.')}
+              onClick={handleRunSettlement}
               style={{ backgroundColor: 'rgba(147, 51, 234, 0.8)', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
             >
               {t.runSettlement}
@@ -300,8 +346,9 @@ function DashboardContent() {
               <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf3Desc}</p>
             </div>
             <button 
-              onClick={() => alert('Builder stamp claimed.')}
-              style={{ backgroundColor: '#1e293b', color: '#64748b', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+              onClick={handleClaimStamp}
+              disabled={!walletActive || builderStamp}
+              style={{ backgroundColor: builderStamp ? 'rgba(34, 197, 94, 0.2)' : '#1e293b', color: builderStamp ? '#4ade80' : '#cbd5e1', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
             >
               {t.claimStamp}
             </button>
@@ -313,7 +360,7 @@ function DashboardContent() {
         <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #1e1b4b', paddingBottom: '8px', marginBottom: '12px', fontSize: '12px', fontWeight: '600' }}>
           <button onClick={() => setActiveTab('transfer')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'transfer' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'transfer' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTransfer}</button>
           <button onClick={() => setActiveTab('pos')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'pos' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'pos' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabPos}</button>
-          <button onClick={() => setActiveTab('treasury')} style={{ background: 'none', border: 'none', cursor: 'padding', color: activeTab === 'treasury' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'treasury' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTreasury}</button>
+          <button onClick={() => setActiveTab('treasury')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'treasury' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'treasury' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTreasury}</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '8px' }}>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -324,7 +371,7 @@ function DashboardContent() {
               onChange={(e) => setRecipient(e.target.value)}
               style={{ flex: 1, backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
             />
-            <button style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>{t.scanQr}</button>
+            <button onClick={() => refetchBalance()} style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>{t.scanQr}</button>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0a192f', padding: '8px 12px', borderRadius: '8px', border: '1px solid #1e1b4b', fontSize: '10px', color: '#94a3b8' }}>
             <span>{t.transferRoute}</span>
@@ -340,8 +387,9 @@ function DashboardContent() {
             style={{ width: '100%', boxSizing: 'border-box', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
           />
           <button 
-            onClick={() => alert(`Payment successful for ${amount} USDC`)}
-            style={{ width: '100%', backgroundColor: '#9333ea', color: '#ffffff', fontWeight: '500', fontSize: '12px', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
+            onClick={handlePay}
+            disabled={!walletActive || !recipient || isPending}
+            style={{ width: '100%', backgroundColor: walletActive && recipient ? '#9333ea' : '#1e293b', color: '#ffffff', fontWeight: '500', fontSize: '12px', padding: '12px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
           >
             {t.payButton(amount)}
           </button>
@@ -351,18 +399,18 @@ function DashboardContent() {
       <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>{t.infra}</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
+          <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>{t.explorer}</span>
             <span style={{ color: '#475569' }}>→</span>
-          </div>
-          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
+          </a>
+          <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>{t.faucet}</span>
             <span style={{ color: '#475569' }}>→</span>
-          </div>
-          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
+          </a>
+          <a href="https://docs.arc.network" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>{t.docs}</span>
             <span style={{ color: '#475569' }}>→</span>
-          </div>
+          </a>
         </div>
       </section>
 

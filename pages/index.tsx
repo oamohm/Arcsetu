@@ -5,10 +5,25 @@ import {
   RainbowKitProvider,
   ConnectButton,
 } from '@rainbow-me/rainbowkit'
-import { WagmiProvider, useAccount, useBalance, useSendTransaction, useChainId, useSwitchChain } from 'wagmi'
+import { WagmiProvider, useAccount, useBalance, useWriteContract, useChainId, useSwitchChain } from 'wagmi'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { defineChain, parseEther } from 'viem'
+import { defineChain, parseUnits, formatUnits } from 'viem'
+
+export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000' // arc testnet usdc address
+
+export const erc20Abi = [
+  {
+    type: 'function',
+    name: 'transfer',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'recipient', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ type: 'bool' }],
+  },
+] as const
 
 export const arcTestnet = defineChain({
   id: 5042002,
@@ -74,10 +89,11 @@ function DashboardContent() {
 
   const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading } = useBalance({
     address: address,
+    token: ARC_USDC_ADDRESS as `0x${string}`,
     chainId: arcTestnet.id,
   })
 
-  const { sendTransactionAsync, isPending: isTxPending } = useSendTransaction()
+  const { writeContractAsync, isPending: isTxPending } = useWriteContract()
 
   useEffect(() => {
     setMounted(true)
@@ -137,9 +153,11 @@ function DashboardContent() {
     await ensureArcChain()
 
     try {
-      const hash = await sendTransactionAsync({
-        to: recipient as `0x${string}`,
-        value: parseEther(amount),
+      const hash = await writeContractAsync({
+        address: ARC_USDC_ADDRESS as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'transfer',
+        args: [recipient as `0x${string}`, parseUnits(amount, 6)],
       })
 
       saveLog({
@@ -153,15 +171,15 @@ function DashboardContent() {
       })
       refetchBalance()
     } catch (e) {
+      console.error('transfer error', e)
       saveLog({
         id: logId,
-        type: 'USDC Transfer (Simulated)',
+        type: 'USDC Transfer (Failed)',
         amount: `${amount} USDC`,
         to: recipient,
         timestamp: new Date().toLocaleTimeString(),
-        status: 'completed',
+        status: 'failed',
       })
-      refetchBalance()
     }
   }
 
@@ -172,9 +190,11 @@ function DashboardContent() {
     await ensureArcChain()
 
     try {
-      const hash = await sendTransactionAsync({
-        to: feeAddress as `0x${string}`,
-        value: parseEther(feeAmount),
+      const hash = await writeContractAsync({
+        address: ARC_USDC_ADDRESS as `0x${string}`,
+        abi: erc20Abi,
+        functionName: 'transfer',
+        args: [feeAddress as `0x${string}`, parseUnits(feeAmount, 6)],
       })
 
       saveLog({
@@ -188,15 +208,15 @@ function DashboardContent() {
       })
       refetchBalance()
     } catch (e) {
+      console.error('fee distribution error', e)
       saveLog({
         id: logId,
-        type: 'Fee Distribution (Simulated)',
+        type: 'Fee Distribution (Failed)',
         amount: `${feeAmount} USDC`,
         to: feeAddress,
         timestamp: new Date().toLocaleTimeString(),
-        status: 'completed',
+        status: 'failed',
       })
-      refetchBalance()
     }
   }
 
@@ -362,10 +382,10 @@ function DashboardContent() {
   const displayBalance = () => {
     if (!walletActive) return '--'
     if (isBalanceLoading) return 'fetching...'
-    if (balanceData && parseFloat(balanceData.formatted) > 0) {
+    if (balanceData) {
       return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
     }
-    return '10.0000 USDC (Testnet)'
+    return '0.0000 USDC'
   }
 
   return (

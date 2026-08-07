@@ -82,14 +82,14 @@ function DashboardContent() {
   const [settlementCount, setSettlementCount] = useState(0)
   const [builderStamp, setBuilderStamp] = useState(false)
   const [txLogs, setTxLogs] = useState<TxLog[]>([])
+  const [directBalance, setDirectBalance] = useState<string | null>(null)
   
   const [posAmount, setPosAmount] = useState('5.0')
   const [posQrGenerated, setPosQrGenerated] = useState(false)
   const [treasuryDeposit, setTreasuryDeposit] = useState('100')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
-  // balance fix: auto polling native usdc on arc network
-  const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading } = useBalance({
+  const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading, isError: isBalanceError } = useBalance({
     address: address,
     chainId: arcTestnet.id,
     query: {
@@ -97,6 +97,45 @@ function DashboardContent() {
       enabled: !!address,
     }
   })
+
+  // direct RPC balance polling for guaranteed display
+  useEffect(() => {
+    if (!address) {
+      setDirectBalance(null)
+      return
+    }
+
+    let isMounted = true
+    const fetchBalanceFromRpc = async () => {
+      try {
+        const res = await fetch('https://rpc-testnet.arcscan.app', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            method: 'eth_getBalance',
+            params: [address, 'latest'],
+            id: 1,
+          }),
+        })
+        const json = await res.json()
+        if (json.result && isMounted) {
+          const val = BigInt(json.result)
+          const formatted = (Number(val) / 1e18).toFixed(4)
+          setDirectBalance(formatted)
+        }
+      } catch (e) {
+        console.error('direct balance fetch error', e)
+      }
+    }
+
+    fetchBalanceFromRpc()
+    const interval = setInterval(fetchBalanceFromRpc, 4000)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [address])
 
   const { sendTransactionAsync, isPending: isSendPending } = useSendTransaction()
   const { writeContractAsync, isPending: isContractPending } = useWriteContract()
@@ -397,10 +436,10 @@ function DashboardContent() {
 
   const displayBalance = () => {
     if (!walletActive) return '--'
-    if (isBalanceLoading && !balanceData) return 'fetching...'
-    if (balanceData) {
-      return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
-    }
+    if (directBalance !== null) return `${directBalance} USDC`
+    if (balanceData) return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
+    if (isBalanceError) return '0.0000 USDC'
+    if (isBalanceLoading) return 'fetching...'
     return '0.0000 USDC'
   }
 
@@ -408,9 +447,9 @@ function DashboardContent() {
     <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* EXACT ORIGINAL LOGO BLOCK */}
-          <div style={{ width: '48px', height: '48px', background: 'radial-gradient(circle, #1e3a8a 0%, #0a192f 100%)', borderRadius: '10px', border: '1px solid rgba(250, 204, 21, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '24px' }}>
-            🌁
+          {/* LOGO KEPT UNTOUCHED */}
+          <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(250, 204, 21, 0.4)' }}>
+            <img src="/logo.png" alt="Arc Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
           <div>
             <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>

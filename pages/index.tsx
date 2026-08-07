@@ -64,14 +64,13 @@ interface TxLog {
 }
 
 const ArcLogo = () => (
-  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="32" height="32" rx="8" fill="url(#arc-grad)" />
-    <path d="M8 22C8 14.268 14.268 8 22 8" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" />
-    <circle cx="22" cy="22" r="3.5" fill="#38bdf8" />
+  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="28" height="28" rx="6" fill="url(#arc_header_grad)" />
+    <path d="M7 19C7 12.3726 12.3726 7 19 7" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+    <circle cx="19" cy="19" r="2.5" fill="#38bdf8" />
     <defs>
-      <linearGradient id="arc-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#ef4444" />
-        <stop offset="0.5" stopColor="#a855f7" />
+      <linearGradient id="arc_header_grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#a855f7" />
         <stop offset="1" stopColor="#3b82f6" />
       </linearGradient>
     </defs>
@@ -102,9 +101,15 @@ function DashboardContent() {
   const [treasuryDeposit, setTreasuryDeposit] = useState('10')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
-  const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading } = useBalance({
+  const { data: nativeBalanceData, refetch: refetchNative, isLoading: isNativeLoading } = useBalance({
     address: address,
     chainId: arcTestnet.id,
+  })
+
+  const { data: tokenBalanceData, refetch: refetchToken, isLoading: isTokenLoading } = useBalance({
+    address: address,
+    chainId: arcTestnet.id,
+    token: ARC_USDC_ADDRESS as `0x${string}`,
   })
 
   const { sendTransactionAsync, isPending: isNativeTxPending } = useSendTransaction()
@@ -132,6 +137,11 @@ function DashboardContent() {
   }, [])
 
   if (!mounted) return null
+
+  const refetchAllBalances = () => {
+    refetchNative()
+    refetchToken()
+  }
 
   const ensureArcChain = async () => {
     if (currentChainId !== arcTestnet.id && switchChainAsync) {
@@ -191,7 +201,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchBalance()
+      refetchAllBalances()
     } catch (e) {
       console.error('transfer error', e)
       saveLog({
@@ -226,7 +236,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchBalance()
+      refetchAllBalances()
     } catch (e) {
       console.error('fee distribution error', e)
       saveLog({
@@ -265,7 +275,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchBalance()
+      refetchAllBalances()
     } catch (e) {
       console.error('settlement execution failed', e)
     }
@@ -294,7 +304,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchBalance()
+      refetchAllBalances()
     } catch (e) {
       console.error('claim stamp error', e)
     }
@@ -327,7 +337,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchBalance()
+      refetchAllBalances()
     } catch (e) {
       console.error('treasury deposit error', e)
     }
@@ -340,11 +350,13 @@ function DashboardContent() {
 
   const displayBalance = () => {
     if (!isConnected) return '0.0000 USDC'
-    if (isBalanceLoading) return 'fetching...'
-    if (balanceData) {
-      return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
-    }
-    return '0.0000 USDC'
+    if (isNativeLoading || isTokenLoading) return 'fetching...'
+    
+    const nativeVal = nativeBalanceData ? parseFloat(nativeBalanceData.formatted) : 0
+    const tokenVal = tokenBalanceData ? parseFloat(tokenBalanceData.formatted) : 0
+
+    const total = nativeVal > 0 ? nativeVal : tokenVal
+    return `${total.toFixed(4)} USDC`
   }
 
   const t = {
@@ -457,7 +469,7 @@ function DashboardContent() {
   return (
     <main style={{ minHeight: '100vh', backgroundColor: '#060d19', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
       
-      {/* Header with ArcLogo Component */}
+      {/* Header with restored ArcLogo Component */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <ArcLogo />
@@ -595,7 +607,7 @@ function DashboardContent() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <input type="text" placeholder={t.sendPlaceholder} value={recipient} onChange={(e) => setRecipient(e.target.value)} style={{ flex: 1, backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
-              <button onClick={() => refetchBalance()} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#94a3b8', padding: '0 12px', borderRadius: '6px', fontSize: '10px', cursor: 'pointer' }}>
+              <button onClick={refetchAllBalances} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#94a3b8', padding: '0 12px', borderRadius: '6px', fontSize: '10px', cursor: 'pointer' }}>
                 {t.scanQr}
               </button>
             </div>

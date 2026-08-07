@@ -23,7 +23,7 @@ export const arcTestnet = defineChain({
 const config = getDefaultConfig({
   appName: 'Arc Settlement Hub',
   projectId: 'YOUR_PROJECT_ID',
-  chains: [arcTestnet, base, mainnet, polygon, optimism, arbitrum],
+  chains: [arcTestnet, base, mainnet, polygon, arbitrum, optimism],
   ssr: true,
 })
 

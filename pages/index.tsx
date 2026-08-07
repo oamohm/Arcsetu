@@ -460,9 +460,23 @@ function DashboardContent() {
       <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           
-          {/* LOCKED LOGO ELEMENT */}
-          <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(250, 204, 21, 0.4)' }}>
-            <img src="/logo.png" alt="Arc Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {/* PERMANENT HARD-LOCKED INLINE SVG LOGO (NO BROKEN IMAGE DEPENDENCY) */}
+          <div style={{ 
+            width: '44px', 
+            height: '44px', 
+            borderRadius: '10px', 
+            background: 'linear-gradient(135deg, #2563eb 0%, #a855f7 100%)', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            flexShrink: 0,
+            boxShadow: '0 0 12px rgba(168, 85, 247, 0.3)',
+            border: '1px solid rgba(250, 204, 21, 0.5)' 
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3L2 21H7.5L12 12.5L16.5 21H22L12 3Z" fill="#ffffff" />
+              <path d="M12 6.5L8 14.5H16L12 6.5Z" fill="#0a192f" opacity="0.6" />
+            </svg>
           </div>
 
           <div>

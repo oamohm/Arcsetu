@@ -237,19 +237,35 @@ function DashboardContent() {
     }
   }
 
-  const handleRunSettlement = () => {
-    const newCount = settlementCount + 1
-    setSettlementCount(newCount)
-    localStorage.setItem('arc_settlement_count', newCount.toString())
-    
-    saveLog({
-      id: 'settle_' + Date.now(),
-      type: 'Deterministic Settlement Engine Test',
-      amount: '0.00 USDC (Gas Optimized)',
-      to: address || 'Arc Network Core',
-      timestamp: new Date().toLocaleTimeString(),
-      status: 'completed',
-    })
+  const handleRunSettlement = async () => {
+    if (!walletActive || !address) return
+    await ensureArcChain()
+    const logId = 'settle_' + Date.now()
+
+    try {
+      const hash = await sendTransactionAsync({
+        to: address as `0x${string}`,
+        value: parseUnits('0.0001', 18),
+        chainId: arcTestnet.id,
+      })
+
+      const newCount = settlementCount + 1
+      setSettlementCount(newCount)
+      localStorage.setItem('arc_settlement_count', newCount.toString())
+      
+      saveLog({
+        id: logId,
+        type: 'Deterministic Settlement Engine Test',
+        amount: '0.0001 USDC',
+        to: address,
+        timestamp: new Date().toLocaleTimeString(),
+        status: 'completed',
+        hash: hash,
+      })
+      refetchBalance()
+    } catch (e) {
+      console.error('settlement test error', e)
+    }
   }
 
   const handleClaimStamp = () => {
@@ -319,7 +335,7 @@ function DashboardContent() {
       wf1Complete: 'completed',
       wf2Title: '2. execute arc usdc settlement',
       wf2Desc: `executed: ${settlementCount} settlement txns`,
-      runSettlement: 'run settlement',
+      runSettlement: 'run settlement (0.0001 usdc)',
       wf3Title: '3. claim arc builder stamp',
       wf3Desc: 'issues arc ecosystem verification badge',
       claimStamp: builderStamp ? 'stamp claimed' : 'claim stamp',
@@ -335,7 +351,7 @@ function DashboardContent() {
       infra: 'arc ecosystem infrastructure links',
       explorer: 'arcscan explorer',
       faucet: 'circle usdc faucet',
-      docs: 'arc protocol docs',
+      docs: 'arcscan testnet portal',
       logsTitle: 'arc network activity & verification logs',
       logsDefault: 'connect wallet to view arc settlement activity.',
       logsActive: (addr: string) => `connected via wagmi: ${addr}`,
@@ -371,7 +387,7 @@ function DashboardContent() {
       wf1Complete: 'पूर्ण',
       wf2Title: '2. आर्क यूएसडीसी सेटलमेंट निष्पादित करें',
       wf2Desc: `निष्पादित: ${settlementCount} सेटलमेंट लेन-देन`,
-      runSettlement: 'सेटलमेंट चलाएं',
+      runSettlement: 'सेटलमेंट चलाएं (0.0001 usdc)',
       wf3Title: '3. आर्क बिल्डर स्टाम्प का दावा करें',
       wf3Desc: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
       claimStamp: builderStamp ? 'स्टाम्प प्राप्त हुआ' : 'स्टाम्प का दावा करें',
@@ -387,7 +403,7 @@ function DashboardContent() {
       infra: 'आर्क इकोसिस्टम इंफ्रास्ट्रक्चर लिंक',
       explorer: 'आर्कस्केन एक्सप्लोरर',
       faucet: 'सर्कल यूएसडीसी फॉसेट',
-      docs: 'आर्क प्रोटोकॉल दस्तावेज़',
+      docs: 'आर्कस्केन पोर्टल',
       logsTitle: 'आर्क नेटवर्क गतिविधि और सत्यापन लॉग',
       logsDefault: 'आर्क सेटलमेंट गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
       logsActive: (addr: string) => `वाग्मी (Wagmi) से कनेक्टेड: ${addr}`,
@@ -423,7 +439,7 @@ function DashboardContent() {
       wf1Complete: 'completado',
       wf2Title: '2. ejecutar liquidación usdc arc',
       wf2Desc: `ejecutado: ${settlementCount} transacciones`,
-      runSettlement: 'ejecutar liquidación',
+      runSettlement: 'ejecutar liquidación (0.0001 usdc)',
       wf3Title: '3. reclamar sello de desarrollador arc',
       wf3Desc: 'emite insignia de verificación del ecosistema arc',
       claimStamp: builderStamp ? 'sello reclamado' : 'reclamar sello',
@@ -439,7 +455,7 @@ function DashboardContent() {
       infra: 'enlaces de infraestructura del ecosistema arc',
       explorer: 'explorador arcscan',
       faucet: 'faucet circle usdc',
-      docs: 'documentación de protocolo arc',
+      docs: 'portal arcscan testnet',
       logsTitle: 'registros de actividad y verificación de la red arc',
       logsDefault: 'conecte la billetera para ver la actividad de liquidación.',
       logsActive: (addr: string) => `conectado vía wagmi: ${addr}`,
@@ -475,7 +491,7 @@ function DashboardContent() {
       wf1Complete: '已完成',
       wf2Title: '2. 执行 ARC USDC 结算',
       wf2Desc: `已执行: ${settlementCount} 次结算交易`,
-      runSettlement: '运行结算',
+      runSettlement: '运行结算 (0.0001 usdc)',
       wf3Title: '3. 申领 ARC 开发者勋章',
       wf3Desc: '颁发 ARC 生态系统验证徽章',
       claimStamp: builderStamp ? '勋章已申领' : '申领勋章',
@@ -491,7 +507,7 @@ function DashboardContent() {
       infra: 'ARC 生态基础设施链接',
       explorer: 'ArcScan 区块浏览器',
       faucet: 'Circle USDC 水龙头',
-      docs: 'ARC 协议文档',
+      docs: 'ArcScan 测试网入口',
       logsTitle: 'ARC 网络活动与验证日志',
       logsDefault: '连接钱包以查看 ARC 结算活动。',
       logsActive: (addr: string) => `通过 Wagmi 连接: ${addr}`,
@@ -527,7 +543,7 @@ function DashboardContent() {
       wf1Complete: 'terminé',
       wf2Title: '2. exécuter le règlement usdc arc',
       wf2Desc: `exécuté: ${settlementCount} transactions`,
-      runSettlement: 'exécuter le règlement',
+      runSettlement: 'exécuter le règlement (0.0001 usdc)',
       wf3Title: '3. réclamer le badge développeur arc',
       wf3Desc: 'délivre le badge de vérification de l\'écosystème arc',
       claimStamp: builderStamp ? 'badge réclamé' : 'réclamer le badge',
@@ -543,7 +559,7 @@ function DashboardContent() {
       infra: 'liens d\'infrastructure de l\'écosystème arc',
       explorer: 'explorateur arcscan',
       faucet: 'robinet circle usdc',
-      docs: 'documentation du protocole arc',
+      docs: 'portail arcscan testnet',
       logsTitle: 'journaux d\'activité et de vérification du réseau arc',
       logsDefault: 'connectez votre portefeuille pour voir l\'activité de règlement.',
       logsActive: (addr: string) => `connecté via wagmi: ${addr}`,
@@ -579,7 +595,7 @@ function DashboardContent() {
       wf1Complete: 'مكتمل',
       wf2Title: '2. تنفيذ تسوية آرك USDC',
       wf2Desc: `تم التنفيذ: ${settlementCount} معاملات تسوية`,
-      runSettlement: 'تشغيل التسوية',
+      runSettlement: 'تشغيل التسوية (0.0001 usdc)',
       wf3Title: '3. المطالبة بختم مطور آرك',
       wf3Desc: 'إصدار شارة التحقق من منظومة آرك',
       claimStamp: builderStamp ? 'تم استلام الختم' : 'المطالبة بالختم',
@@ -595,7 +611,7 @@ function DashboardContent() {
       infra: 'روابط البنية التحتية لمنظومة آرك',
       explorer: 'مستكشف ArcScan',
       faucet: 'صنبور Circle USDC',
-      docs: 'وثائق بروتوكول آرك',
+      docs: 'بوابة ArcScan Testnet',
       logsTitle: 'سجلات نشاط والتحقق لشبكة آرك',
       logsDefault: 'قم بتوصيل المحفظة لعرض نشاط التسوية.',
       logsActive: (addr: string) => `متصل عبر Wagmi: ${addr}`,
@@ -835,9 +851,10 @@ function DashboardContent() {
             </div>
             <button 
               onClick={handleRunSettlement}
-              style={{ backgroundColor: 'rgba(147, 51, 234, 0.8)', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
+              disabled={!walletActive || isTxPending}
+              style={{ backgroundColor: walletActive ? 'rgba(147, 51, 234, 0.8)' : '#1e293b', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: walletActive ? 'pointer' : 'not-allowed' }}
             >
-              {t.runSettlement}
+              {isTxPending ? 'processing...' : t.runSettlement}
             </button>
           </div>
           <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -960,7 +977,7 @@ function DashboardContent() {
             <span>{t.faucet}</span>
             <span style={{ color: '#475569' }}>→</span>
           </a>
-          <a href="https://docs.arcscan.app" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
+          <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>{t.docs}</span>
             <span style={{ color: '#475569' }}>→</span>
           </a>

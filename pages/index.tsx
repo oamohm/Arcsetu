@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import {
@@ -47,11 +49,20 @@ export const arcTestnet = defineChain({
 const config = getDefaultConfig({
   appName: 'Arc Settlement Hub',
   projectId: 'YOUR_PROJECT_ID',
-  chains: [arcTestnet, mainnet, polygon, optimism, arbitrum, base],
+  chains: [arcTestnet, base, mainnet, polygon, optimism, arbitrum],
   ssr: true,
 })
 
 const queryClient = new QueryClient()
+
+const usdcAddresses: Record<number, `0x${string}` | undefined> = {
+  5042002: undefined,
+  8453: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
+  1: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
+  137: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
+  10: '0x0b2c639c533813f4aa9d78372f07242308b025e6',
+  42161: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
+}
 
 interface TxLog {
   id: string
@@ -90,14 +101,17 @@ function DashboardContent() {
   const [treasuryDeposit, setTreasuryDeposit] = useState('100')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
-  // erc-20 token balance explicitly bound
+  const activeTokenAddress = currentChainId === arcTestnet.id && transferRoute === 'erc20'
+    ? (ARC_USDC_ADDRESS as `0x${string}`)
+    : usdcAddresses[currentChainId]
+
   const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading, isError: isBalanceError } = useBalance({
     address: address,
-    token: transferRoute === 'erc20' ? (ARC_USDC_ADDRESS as `0x${string}`) : undefined,
-    chainId: arcTestnet.id,
+    token: activeTokenAddress,
+    chainId: currentChainId,
     query: {
       refetchInterval: 3000,
-      enabled: Boolean(address),
+      enabled: Boolean(address && currentChainId),
     }
   })
 

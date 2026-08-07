@@ -5,12 +5,12 @@ import {
   RainbowKitProvider,
   ConnectButton,
 } from '@rainbow-me/rainbowkit'
-import { WagmiProvider, useAccount, useBalance, useWriteContract, useChainId, useSwitchChain } from 'wagmi'
+import { WagmiProvider, useAccount, useBalance, useSendTransaction, useWriteContract, useChainId, useSwitchChain } from 'wagmi'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { defineChain, parseUnits, formatUnits } from 'viem'
+import { defineChain, parseEther, parseUnits } from 'viem'
 
-export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000' // arc testnet usdc address
+export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
 export const erc20Abi = [
   {
@@ -63,11 +63,26 @@ interface TxLog {
   hash?: string
 }
 
+const ArcLogo = () => (
+  <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="32" height="32" rx="8" fill="url(#arc-grad)" />
+    <path d="M8 22C8 14.268 14.268 8 22 8" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" />
+    <circle cx="22" cy="22" r="3.5" fill="#38bdf8" />
+    <defs>
+      <linearGradient id="arc-grad" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#ef4444" />
+        <stop offset="0.5" stopColor="#a855f7" />
+        <stop offset="1" stopColor="#3b82f6" />
+      </linearGradient>
+    </defs>
+  </svg>
+)
+
 function DashboardContent() {
   const { address, isConnected } = useAccount()
   const currentChainId = useChainId()
-  const { switchChain } = useSwitchChain()
-  
+  const { switchChainAsync } = useSwitchChain()
+
   const [mounted, setMounted] = useState(false)
   const [arcId, setArcId] = useState('')
   const [recipient, setRecipient] = useState('')
@@ -75,29 +90,30 @@ function DashboardContent() {
   const [feeAddress, setFeeAddress] = useState('')
   const [feeAmount, setFeeAmount] = useState('0.05')
   const [activeTab, setActiveTab] = useState<'transfer' | 'pos' | 'treasury'>('transfer')
+  const [transferRoute, setTransferRoute] = useState<'native' | 'erc20'>('native')
   const [locale, setLocale] = useState<'en' | 'hi'>('en')
-  
   const [selectedRoute, setSelectedRoute] = useState<'native' | 'cctp' | 'speed' | 'splitter'>('native')
   const [settlementCount, setSettlementCount] = useState(0)
   const [builderStamp, setBuilderStamp] = useState(false)
   const [txLogs, setTxLogs] = useState<TxLog[]>([])
-  
+
   const [posAmount, setPosAmount] = useState('5.0')
   const [posQrGenerated, setPosQrGenerated] = useState(false)
-  const [treasuryDeposit, setTreasuryDeposit] = useState('100')
+  const [treasuryDeposit, setTreasuryDeposit] = useState('10')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
   const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading } = useBalance({
     address: address,
-    token: ARC_USDC_ADDRESS as `0x${string}`,
     chainId: arcTestnet.id,
   })
 
-  const { writeContractAsync, isPending: isTxPending } = useWriteContract()
+  const { sendTransactionAsync, isPending: isNativeTxPending } = useSendTransaction()
+  const { writeContractAsync, isPending: isContractTxPending } = useWriteContract()
+
+  const isTxPending = isNativeTxPending || isContractTxPending
 
   useEffect(() => {
     setMounted(true)
-    
     try {
       const savedLogs = localStorage.getItem('arc_settlement_logs')
       if (savedLogs) setTxLogs(JSON.parse(savedLogs))
@@ -117,6 +133,16 @@ function DashboardContent() {
 
   if (!mounted) return null
 
+  const ensureArcChain = async () => {
+    if (currentChainId !== arcTestnet.id && switchChainAsync) {
+      try {
+        await switchChainAsync({ chainId: arcTestnet.id })
+      } catch (e) {
+        console.warn('chain switch bypassed or failed', e)
+      }
+    }
+  }
+
   const saveLog = (newLog: TxLog) => {
     setTxLogs((prev) => {
       const updated = [newLog, ...prev]
@@ -134,35 +160,31 @@ function DashboardContent() {
     localStorage.setItem('arc_bound_id', val)
   }
 
-  const walletActive = isConnected
-
-  const ensureArcChain = async () => {
-    if (currentChainId !== arcTestnet.id && switchChain) {
-      try {
-        await switchChain({ chainId: arcTestnet.id })
-      } catch (e) {
-        console.warn('chain switch bypassed', e)
-      }
-    }
-  }
-
   const handlePay = async () => {
     if (!recipient || !amount) return
     const logId = 'tx_' + Date.now()
-    
     await ensureArcChain()
 
     try {
-      const hash = await writeContractAsync({
-        address: ARC_USDC_ADDRESS as `0x${string}`,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [recipient as `0x${string}`, parseUnits(amount, 6)],
-      })
+      let hash = ''
+      if (transferRoute === 'native') {
+        hash = await sendTransactionAsync({
+          to: recipient as `0x${string}`,
+          value: parseEther(amount),
+          chainId: arcTestnet.id,
+        })
+      } else {
+        hash = await writeContractAsync({
+          address: ARC_USDC_ADDRESS as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [recipient as `0x${string}`, parseUnits(amount, 6)],
+        })
+      }
 
       saveLog({
         id: logId,
-        type: 'USDC Transfer',
+        type: transferRoute === 'native' ? 'Native USDC Transfer' : 'ERC20 Contract Transfer',
         amount: `${amount} USDC`,
         to: recipient,
         timestamp: new Date().toLocaleTimeString(),
@@ -186,20 +208,18 @@ function DashboardContent() {
   const handleDistributeFee = async () => {
     if (!feeAddress || !feeAmount) return
     const logId = 'fee_' + Date.now()
-
     await ensureArcChain()
 
     try {
-      const hash = await writeContractAsync({
-        address: ARC_USDC_ADDRESS as `0x${string}`,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [feeAddress as `0x${string}`, parseUnits(feeAmount, 6)],
+      const hash = await sendTransactionAsync({
+        to: feeAddress as `0x${string}`,
+        value: parseEther(feeAmount),
+        chainId: arcTestnet.id,
       })
 
       saveLog({
         id: logId,
-        type: 'Fee Distribution',
+        type: 'Fee Distribution Settlement',
         amount: `${feeAmount} USDC`,
         to: feeAddress,
         timestamp: new Date().toLocaleTimeString(),
@@ -220,56 +240,111 @@ function DashboardContent() {
     }
   }
 
-  const handleRunSettlement = () => {
-    const newCount = settlementCount + 1
-    setSettlementCount(newCount)
-    localStorage.setItem('arc_settlement_count', newCount.toString())
-    
-    saveLog({
-      id: 'settle_' + Date.now(),
-      type: 'Deterministic Settlement Engine Test',
-      amount: '0.00 USDC (Gas Optimized)',
-      to: address || 'Arc Network Core',
-      timestamp: new Date().toLocaleTimeString(),
-      status: 'completed',
-    })
-  }
+  const handleRunSettlement = async () => {
+    const logId = 'settle_' + Date.now()
+    await ensureArcChain()
 
-  const handleClaimStamp = () => {
-    if (walletActive) {
-      setBuilderStamp(true)
-      localStorage.setItem('arc_builder_stamp', 'true')
+    try {
+      const target = address || '0x0000000000000000000000000000000000000001'
+      const hash = await sendTransactionAsync({
+        to: target as `0x${string}`,
+        value: parseEther('0.0001'),
+        chainId: arcTestnet.id,
+      })
+
+      const newCount = settlementCount + 1
+      setSettlementCount(newCount)
+      localStorage.setItem('arc_settlement_count', newCount.toString())
+
       saveLog({
-        id: 'stamp_' + Date.now(),
-        type: 'Arc Builder Badge Verification Stamp Issue',
-        amount: 'N/A',
-        to: address || 'Arc Network Identity',
+        id: logId,
+        type: 'Deterministic Settlement Engine Run',
+        amount: '0.0001 USDC',
+        to: target,
         timestamp: new Date().toLocaleTimeString(),
         status: 'completed',
+        hash: hash,
       })
+      refetchBalance()
+    } catch (e) {
+      console.error('settlement execution failed', e)
     }
   }
 
-  const handleTreasuryDeposit = () => {
+  const handleClaimStamp = async () => {
+    if (!isConnected || !address) return
+    const logId = 'stamp_' + Date.now()
+    await ensureArcChain()
+
+    try {
+      const hash = await sendTransactionAsync({
+        to: address as `0x${string}`,
+        value: parseEther('0.0001'),
+        chainId: arcTestnet.id,
+      })
+
+      setBuilderStamp(true)
+      localStorage.setItem('arc_builder_stamp', 'true')
+      saveLog({
+        id: logId,
+        type: 'Arc Builder Badge Stamp Issue',
+        amount: '0.0001 USDC',
+        to: address,
+        timestamp: new Date().toLocaleTimeString(),
+        status: 'completed',
+        hash: hash,
+      })
+      refetchBalance()
+    } catch (e) {
+      console.error('claim stamp error', e)
+    }
+  }
+
+  const handleTreasuryDeposit = async () => {
     if (!treasuryDeposit) return
-    const current = parseFloat(treasuryBalance)
-    const added = parseFloat(treasuryDeposit)
-    const updated = (current + added).toFixed(2)
-    setTreasuryBalance(updated)
-    
-    saveLog({
-      id: 'yield_' + Date.now(),
-      type: 'Treasury Yield Vault Deposit',
-      amount: `${treasuryDeposit} USDC`,
-      to: 'Arc Yield Vault (4.8% APY)',
-      timestamp: new Date().toLocaleTimeString(),
-      status: 'completed',
-    })
+    const logId = 'yield_' + Date.now()
+    await ensureArcChain()
+
+    try {
+      const target = address || '0x0000000000000000000000000000000000000001'
+      const hash = await sendTransactionAsync({
+        to: target as `0x${string}`,
+        value: parseEther(treasuryDeposit),
+        chainId: arcTestnet.id,
+      })
+
+      const current = parseFloat(treasuryBalance)
+      const added = parseFloat(treasuryDeposit)
+      const updated = (current + added).toFixed(2)
+      setTreasuryBalance(updated)
+
+      saveLog({
+        id: logId,
+        type: 'Treasury Yield Vault Deposit',
+        amount: `${treasuryDeposit} USDC`,
+        to: 'Arc Yield Vault (4.8% APY)',
+        timestamp: new Date().toLocaleTimeString(),
+        status: 'completed',
+        hash: hash,
+      })
+      refetchBalance()
+    } catch (e) {
+      console.error('treasury deposit error', e)
+    }
   }
 
   const clearHistory = () => {
     setTxLogs([])
     localStorage.removeItem('arc_settlement_logs')
+  }
+
+  const displayBalance = () => {
+    if (!isConnected) return '0.0000 USDC'
+    if (isBalanceLoading) return 'fetching...'
+    if (balanceData) {
+      return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
+    }
+    return '0.0000 USDC'
   }
 
   const t = {
@@ -379,312 +454,178 @@ function DashboardContent() {
     }
   }[locale]
 
-  const displayBalance = () => {
-    if (!walletActive) return '--'
-    if (isBalanceLoading) return 'fetching...'
-    if (balanceData) {
-      return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
-    }
-    return '0.0000 USDC'
-  }
-
   return (
-    <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
-      <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
+    <main style={{ minHeight: '100vh', backgroundColor: '#060d19', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
+      
+      {/* Header with ArcLogo Component */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '48px', height: '48px', background: 'radial-gradient(circle, #1e3a8a 0%, #0a192f 100%)', borderRadius: '10px', border: '1px solid rgba(250, 204, 21, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '24px' }}>
-            🌁
-          </div>
+          <ArcLogo />
           <div>
-            <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>
+            <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>
               {t.title}
-              <span style={{ fontSize: '10px', background: 'rgba(168, 85, 247, 0.2)', color: '#d8b4fe', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>{t.badge}</span>
+              <span style={{ fontSize: '9px', backgroundColor: '#3b0764', color: '#d8b4fe', padding: '2px 6px', borderRadius: '4px', border: '1px solid #6b21a8' }}>{t.badge}</span>
             </h1>
-            <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>{t.subtitle}</p>
+            <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{t.subtitle}</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => setLocale(locale === 'en' ? 'hi' : 'en')}
-            style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '8px 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}
-          >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button onClick={() => setLocale(locale === 'en' ? 'hi' : 'en')} style={{ fontSize: '11px', background: '#0f172a', color: '#94a3b8', padding: '6px 10px', borderRadius: '6px', border: '1px solid #334155', cursor: 'pointer' }}>
             {locale === 'en' ? 'हिन्दी' : 'English'}
           </button>
           <ConnectButton chainStatus="icon" showBalance={false} />
         </div>
       </header>
 
-      <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', margin: 0 }}>{t.identity}</h2>
-          <span style={{ fontSize: '10px', background: walletActive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)', color: walletActive ? '#4ade80' : '#f87171', padding: '2px 8px', borderRadius: '4px', border: `1px solid ${walletActive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}` }}>
-            {walletActive ? t.statusConn : t.statusDisc}
-          </span>
+      {/* Identity Section */}
+      <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h2 style={{ fontSize: '11px', color: '#a855f7', margin: 0, textTransform: 'uppercase' }}>{t.identity}</h2>
+          <span style={{ fontSize: '10px', color: isConnected ? '#22c55e' : '#ef4444' }}>{isConnected ? t.statusConn : t.statusDisc}</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
-          <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <input 
-              type="text" 
-              placeholder={t.boundId}
-              value={arcId}
-              onChange={(e) => handleSaveArcId(e.target.value)}
-              style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', color: '#f1f5f9', fontSize: '12px' }}
-            />
-            <span style={{ fontSize: '10px', color: '#475569' }}>{arcId ? 'saved' : '--'}</span>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+          <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px' }}>
+            <input type="text" placeholder={t.boundId} value={arcId} onChange={(e) => handleSaveArcId(e.target.value)} style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', color: '#f1f5f9', fontSize: '12px' }} />
           </div>
-          <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+          <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b' }}>
             <span>{t.treasuryBal}</span>
-            <span style={{ color: '#f1f5f9', fontWeight: '600' }}>
-              {displayBalance()}
-            </span>
+            <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{displayBalance()}</span>
           </div>
         </div>
       </section>
 
-      <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>{t.routing}</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+      {/* Asset Routing Section */}
+      <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 12px 0', textTransform: 'uppercase' }}>{t.routing}</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
           
-          <div 
-            onClick={() => {
-              setSelectedRoute('native')
-              saveLog({
-                id: 'route_' + Date.now(),
-                type: 'Route Node Switch',
-                amount: 'Native USDC Selected',
-                to: 'Arc Core Pipeline',
-                timestamp: new Date().toLocaleTimeString(),
-                status: 'completed'
-              })
-            }}
-            style={{ 
-              backgroundColor: '#0a192f', 
-              padding: '12px', 
-              borderRadius: '8px', 
-              border: selectedRoute === 'native' ? '1px solid #c084fc' : '1px solid #1e1b4b',
-              cursor: 'pointer'
-            }}
-          >
-            <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>{t.testnet}</p>
-            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>{t.nativeUsdc}</p>
-            <p style={{ fontSize: '9px', color: selectedRoute === 'native' ? '#c084fc' : '#64748b', margin: 0 }}>
-              {selectedRoute === 'native' ? '✓ active' : 'click to select'}
-            </p>
+          <div onClick={() => setSelectedRoute('native')} style={{ backgroundColor: '#060d19', border: selectedRoute === 'native' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.testnet}</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.nativeUsdc}</div>
+            <div style={{ fontSize: '10px', color: selectedRoute === 'native' ? '#22c55e' : '#475569' }}>✓ active</div>
           </div>
 
-          <div 
-            onClick={() => {
-              setSelectedRoute('cctp')
-              saveLog({
-                id: 'route_' + Date.now(),
-                type: 'Route Node Switch',
-                amount: 'Circle CCTP Selected',
-                to: 'Cross-Chain Bridge Engine',
-                timestamp: new Date().toLocaleTimeString(),
-                status: 'completed'
-              })
-            }}
-            style={{ 
-              backgroundColor: '#0a192f', 
-              padding: '12px', 
-              borderRadius: '8px', 
-              border: selectedRoute === 'cctp' ? '1px solid #c084fc' : '1px solid #1e1b4b',
-              cursor: 'pointer'
-            }}
-          >
-            <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>{t.cctp}</p>
-            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>{t.crossBridge}</p>
-            <p style={{ fontSize: '9px', color: selectedRoute === 'cctp' ? '#c084fc' : '#64748b', margin: 0 }}>
-              {selectedRoute === 'cctp' ? '✓ active' : 'click to test cctp'}
-            </p>
+          <div onClick={() => setSelectedRoute('cctp')} style={{ backgroundColor: '#060d19', border: selectedRoute === 'cctp' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.cctp}</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.crossBridge}</div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>click to test cctp</div>
           </div>
 
-          <div 
-            onClick={() => {
-              setSelectedRoute('speed')
-              saveLog({
-                id: 'route_' + Date.now(),
-                type: 'Speed Benchmark Test',
-                amount: 'Deterministic Benchmark Executed',
-                to: 'Execution Time: ~180ms',
-                timestamp: new Date().toLocaleTimeString(),
-                status: 'completed'
-              })
-            }}
-            style={{ 
-              backgroundColor: '#0a192f', 
-              padding: '12px', 
-              borderRadius: '8px', 
-              border: selectedRoute === 'speed' ? '1px solid #c084fc' : '1px solid #1e1b4b',
-              cursor: 'pointer'
-            }}
-          >
-            <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>{t.detEngine}</p>
-            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>{t.speedBench}</p>
-            <p style={{ fontSize: '9px', color: selectedRoute === 'speed' ? '#c084fc' : '#64748b', margin: 0 }}>
-              {selectedRoute === 'speed' ? '✓ active' : 'click to run test'}
-            </p>
+          <div onClick={() => { setSelectedRoute('speed'); handleRunSettlement() }} style={{ backgroundColor: '#060d19', border: selectedRoute === 'speed' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.detEngine}</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.speedBench}</div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>click to run test</div>
           </div>
 
-          <div 
-            onClick={() => {
-              setSelectedRoute('splitter')
-              saveLog({
-                id: 'route_' + Date.now(),
-                type: 'Auto-Split Engine',
-                amount: 'Payment Splitter Initialized',
-                to: 'Auto-Route 80/20 Vault',
-                timestamp: new Date().toLocaleTimeString(),
-                status: 'completed'
-              })
-            }}
-            style={{ 
-              backgroundColor: '#0a192f', 
-              padding: '12px', 
-              borderRadius: '8px', 
-              border: selectedRoute === 'splitter' ? '1px solid #c084fc' : '1px solid #1e1b4b',
-              cursor: 'pointer'
-            }}
-          >
-            <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 4px 0' }}>{t.paymentUx}</p>
-            <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 8px 0' }}>{t.splitSplitter}</p>
-            <p style={{ fontSize: '9px', color: selectedRoute === 'splitter' ? '#c084fc' : '#64748b', margin: 0 }}>
-              {selectedRoute === 'splitter' ? '✓ active' : 'click to configure'}
-            </p>
+          <div onClick={() => setSelectedRoute('splitter')} style={{ backgroundColor: '#060d19', border: selectedRoute === 'splitter' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.paymentUx}</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.splitSplitter}</div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>click to configure</div>
           </div>
 
         </div>
       </section>
 
-      <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '4px', marginTop: 0 }}>{t.feeEngine}</h2>
-        <p style={{ fontSize: '10px', color: '#94a3b8', marginBottom: '12px', marginTop: 0 }}>{t.feeDesc}</p>
+      {/* Fee Engine Section */}
+      <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{t.feeEngine}</h2>
+        <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 12px 0' }}>{t.feeDesc}</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <input 
-            type="text" 
-            placeholder={t.feePlaceholder}
-            value={feeAddress}
-            onChange={(e) => setFeeAddress(e.target.value)}
-            style={{ flex: 1, backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
-          />
-          <input 
-            type="text" 
-            value={feeAmount}
-            onChange={(e) => setFeeAmount(e.target.value)}
-            style={{ width: '100px', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', textAlign: 'center', outline: 'none' }}
-          />
-          <button 
-            onClick={handleDistributeFee}
-            disabled={!walletActive || !feeAddress}
-            style={{ backgroundColor: walletActive && feeAddress ? '#2563eb' : '#1e293b', color: '#ffffff', fontSize: '12px', fontWeight: '600', padding: '10px 16px', borderRadius: '8px', border: 'none', cursor: walletActive && feeAddress ? 'pointer' : 'not-allowed' }}
-          >
+          <input type="text" placeholder={t.feePlaceholder} value={feeAddress} onChange={(e) => setFeeAddress(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+          <input type="text" value={feeAmount} onChange={(e) => setFeeAmount(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+          <button onClick={handleDistributeFee} disabled={!isConnected || !feeAddress || isTxPending} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#ffffff', padding: '10px', borderRadius: '6px', fontSize: '11px', cursor: isConnected && feeAddress ? 'pointer' : 'not-allowed' }}>
             {t.distributeFee}
           </button>
         </div>
       </section>
 
-      <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>{t.workflow}</h2>
+      {/* Onboarding Workflow Section */}
+      <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 12px 0', textTransform: 'uppercase' }}>{t.workflow}</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          
+          <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 2px 0' }}>{t.wf1Title}</p>
-              <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf1Desc}</p>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>{t.wf1Title}</div>
+              <div style={{ fontSize: '10px', color: '#64748b' }}>{t.wf1Desc}</div>
             </div>
-            <span style={{ fontSize: '10px', backgroundColor: walletActive ? 'rgba(34, 197, 94, 0.1)' : 'rgba(245, 158, 11, 0.1)', color: walletActive ? '#4ade80' : '#fbbf24', padding: '4px 8px', borderRadius: '4px', border: `1px solid ${walletActive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(245, 158, 11, 0.2)'}` }}>
-              {walletActive ? t.wf1Complete : t.wf1Pending}
+            <span style={{ fontSize: '10px', backgroundColor: isConnected ? '#064e3b' : '#3b0764', color: isConnected ? '#34d399' : '#d8b4fe', padding: '2px 8px', borderRadius: '4px' }}>
+              {isConnected ? t.wf1Complete : t.wf1Pending}
             </span>
           </div>
-          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+          <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 2px 0' }}>{t.wf2Title}</p>
-              <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf2Desc}</p>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>{t.wf2Title}</div>
+              <div style={{ fontSize: '10px', color: '#64748b' }}>{t.wf2Desc}</div>
             </div>
-            <button 
-              onClick={handleRunSettlement}
-              style={{ backgroundColor: 'rgba(147, 51, 234, 0.8)', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
-            >
+            <button onClick={handleRunSettlement} style={{ fontSize: '10px', backgroundColor: '#3b0764', color: '#d8b4fe', border: '1px solid #6b21a8', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>
               {t.runSettlement}
             </button>
           </div>
-          <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+          <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <p style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', margin: '0 0 2px 0' }}>{t.wf3Title}</p>
-              <p style={{ fontSize: '10px', color: '#94a3b8', margin: 0 }}>{t.wf3Desc}</p>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>{t.wf3Title}</div>
+              <div style={{ fontSize: '10px', color: '#64748b' }}>{t.wf3Desc}</div>
             </div>
-            <button 
-              onClick={handleClaimStamp}
-              disabled={!walletActive || builderStamp}
-              style={{ backgroundColor: builderStamp ? 'rgba(34, 197, 94, 0.2)' : '#1e293b', color: builderStamp ? '#4ade80' : '#cbd5e1', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: walletActive && !builderStamp ? 'pointer' : 'not-allowed' }}
-            >
+            <button onClick={handleClaimStamp} disabled={builderStamp || !isConnected} style={{ fontSize: '10px', backgroundColor: builderStamp ? '#064e3b' : '#1e293b', color: builderStamp ? '#34d399' : '#cbd5e1', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>
               {t.claimStamp}
             </button>
           </div>
+
         </div>
       </section>
 
-      <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #1e1b4b', paddingBottom: '8px', marginBottom: '12px', fontSize: '12px', fontWeight: '600' }}>
-          <button onClick={() => setActiveTab('transfer')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'transfer' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'transfer' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTransfer}</button>
-          <button onClick={() => setActiveTab('pos')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'pos' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'pos' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabPos}</button>
-          <button onClick={() => setActiveTab('treasury')} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: activeTab === 'treasury' ? '#c084fc' : '#94a3b8', borderBottom: activeTab === 'treasury' ? '2px solid #c084fc' : 'none', paddingBottom: '4px' }}>{t.tabTreasury}</button>
+      {/* Tabbed Interface Section */}
+      <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '10px', marginBottom: '14px' }}>
+          <button onClick={() => setActiveTab('transfer')} style={{ background: 'none', border: 'none', color: activeTab === 'transfer' ? '#a855f7' : '#64748b', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
+            {t.tabTransfer}
+          </button>
+          <button onClick={() => setActiveTab('pos')} style={{ background: 'none', border: 'none', color: activeTab === 'pos' ? '#a855f7' : '#64748b', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
+            {t.tabPos}
+          </button>
+          <button onClick={() => setActiveTab('treasury')} style={{ background: 'none', border: 'none', color: activeTab === 'treasury' ? '#a855f7' : '#64748b', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
+            {t.tabTreasury}
+          </button>
         </div>
 
         {activeTab === 'transfer' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input 
-                type="text" 
-                placeholder={t.sendPlaceholder}
-                value={recipient}
-                onChange={(e) => setRecipient(e.target.value)}
-                style={{ flex: 1, backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
-              />
-              <button onClick={() => refetchBalance()} style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>{t.scanQr}</button>
+              <input type="text" placeholder={t.sendPlaceholder} value={recipient} onChange={(e) => setRecipient(e.target.value)} style={{ flex: 1, backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+              <button onClick={() => refetchBalance()} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#94a3b8', padding: '0 12px', borderRadius: '6px', fontSize: '10px', cursor: 'pointer' }}>
+                {t.scanQr}
+              </button>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0a192f', padding: '8px 12px', borderRadius: '8px', border: '1px solid #1e1b4b', fontSize: '10px', color: '#94a3b8' }}>
+
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#64748b' }}>
               <span>{t.transferRoute}</span>
               <div style={{ display: 'flex', gap: '6px' }}>
-                <span style={{ backgroundColor: 'rgba(168, 85, 247, 0.2)', color: '#d8b4fe', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>{t.gasUsdc}</span>
-                <span style={{ backgroundColor: '#1e293b', color: '#64748b', padding: '2px 6px', borderRadius: '4px' }}>{t.erc20}</span>
+                <span onClick={() => setTransferRoute('native')} style={{ padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', backgroundColor: transferRoute === 'native' ? '#3b0764' : '#060d19', color: transferRoute === 'native' ? '#d8b4fe' : '#64748b', border: '1px solid #1e293b' }}>{t.gasUsdc}</span>
+                <span onClick={() => setTransferRoute('erc20')} style={{ padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', backgroundColor: transferRoute === 'erc20' ? '#3b0764' : '#060d19', color: transferRoute === 'erc20' ? '#d8b4fe' : '#64748b', border: '1px solid #1e293b' }}>{t.erc20}</span>
               </div>
             </div>
-            <input 
-              type="text" 
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              style={{ width: '100%', boxSizing: 'border-box', backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
-            />
-            <button 
-              onClick={handlePay}
-              disabled={!walletActive || !recipient || isTxPending}
-              style={{ width: '100%', backgroundColor: walletActive && recipient ? '#9333ea' : '#1e293b', color: '#ffffff', fontWeight: '500', fontSize: '12px', padding: '12px', borderRadius: '8px', border: 'none', cursor: walletActive && recipient ? 'pointer' : 'not-allowed' }}
-            >
+
+            <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+
+            <button onClick={handlePay} disabled={!isConnected || !recipient || isTxPending} style={{ backgroundColor: isConnected && recipient ? '#7e22ce' : '#1e293b', color: '#ffffff', padding: '12px', borderRadius: '6px', border: 'none', fontSize: '12px', cursor: isConnected && recipient ? 'pointer' : 'not-allowed' }}>
               {t.payButton(amount)}
             </button>
           </div>
         )}
 
         {activeTab === 'pos' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '8px' }}>
-            <p style={{ fontSize: '11px', color: '#94a3b8', margin: 0 }}>generate merchant QR invoice for instant USDC settlement</p>
-            <input 
-              type="text" 
-              placeholder="Invoice Amount (USDC)"
-              value={posAmount}
-              onChange={(e) => setPosAmount(e.target.value)}
-              style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
-            />
-            <button 
-              onClick={() => setPosQrGenerated(true)}
-              style={{ backgroundColor: '#2563eb', color: '#ffffff', fontSize: '12px', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
-            >
-              generate pos invoice qr
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <input type="text" placeholder="invoice amount (usdc)" value={posAmount} onChange={(e) => setPosAmount(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+            <button onClick={() => setPosQrGenerated(true)} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#ffffff', padding: '10px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}>
+              generate pos qr invoice
             </button>
             {posQrGenerated && (
-              <div style={{ backgroundColor: '#0a192f', border: '1px solid #1e3a8a', padding: '16px', borderRadius: '8px', textAlign: 'center' }}>
-                <p style={{ fontSize: '11px', color: '#4ade80', margin: '0 0 8px 0' }}>invoice active: {posAmount} USDC</p>
-                <div style={{ width: '120px', height: '120px', margin: '0 auto', background: '#ffffff', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', borderRadius: '8px', padding: '4px' }}>
+              <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '16px', borderRadius: '6px', textAlign: 'center' }}>
+                <p style={{ fontSize: '11px', color: '#22c55e', margin: '0 0 8px 0' }}>invoice active: {posAmount} USDC</p>
+                <div style={{ width: '120px', height: '120px', margin: '0 auto', background: '#ffffff', color: '#000000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', borderRadius: '6px', padding: '4px' }}>
                   [QR DATA: arc:{address || '0x00'}?amt={posAmount}]
                 </div>
               </div>
@@ -693,72 +634,70 @@ function DashboardContent() {
         )}
 
         {activeTab === 'treasury' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#64748b' }}>
               <span>arc treasury vault balance:</span>
-              <span style={{ color: '#4ade80', fontWeight: 'bold' }}>{treasuryBalance} USDC</span>
+              <span style={{ color: '#22c55e', fontWeight: 'bold' }}>{treasuryBalance} USDC</span>
             </div>
-            <input 
-              type="text" 
-              placeholder="Deposit Amount"
-              value={treasuryDeposit}
-              onChange={(e) => setTreasuryDeposit(e.target.value)}
-              style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
-            />
-            <button 
-              onClick={handleTreasuryDeposit}
-              style={{ backgroundColor: '#16a34a', color: '#ffffff', fontSize: '12px', padding: '10px', borderRadius: '8px', border: 'none', cursor: 'pointer' }}
-            >
+            <input type="text" placeholder="deposit amount" value={treasuryDeposit} onChange={(e) => setTreasuryDeposit(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+            <button onClick={handleTreasuryDeposit} disabled={!isConnected} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#ffffff', padding: '10px', borderRadius: '6px', fontSize: '11px', cursor: isConnected ? 'pointer' : 'not-allowed' }}>
               deposit to arc yield vault (4.8% APY)
             </button>
           </div>
         )}
-
       </section>
 
-      <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', marginBottom: '12px', marginTop: 0 }}>{t.infra}</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-          <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
-            <span>{t.explorer}</span>
-            <span style={{ color: '#475569' }}>→</span>
+      {/* Infrastructure Links */}
+      <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 10px 0', textTransform: 'uppercase' }}>{t.infra}</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
+          <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '10px', borderRadius: '6px', color: '#94a3b8', fontSize: '11px', textDecoration: 'none', textAlign: 'center' }}>
+            {t.explorer}
           </a>
-          <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
-            <span>{t.faucet}</span>
-            <span style={{ color: '#475569' }}>→</span>
+          <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '10px', borderRadius: '6px', color: '#94a3b8', fontSize: '11px', textDecoration: 'none', textAlign: 'center' }}>
+            {t.faucet}
           </a>
-          <a href="https://docs.arc.network" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
-            <span>{t.docs}</span>
-            <span style={{ color: '#475569' }}>→</span>
+          <a href="https://docs.arcscan.app" target="_blank" rel="noreferrer" style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '10px', borderRadius: '6px', color: '#94a3b8', fontSize: '11px', textDecoration: 'none', textAlign: 'center' }}>
+            {t.docs}
           </a>
         </div>
       </section>
 
-      <section style={{ backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#c084fc', textTransform: 'uppercase', margin: 0 }}>{t.logsTitle}</h2>
+      {/* Activity Logs & Verification */}
+      <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h2 style={{ fontSize: '11px', color: '#a855f7', margin: 0, textTransform: 'uppercase' }}>{t.logsTitle}</h2>
           {txLogs.length > 0 && (
             <button onClick={clearHistory} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '10px', cursor: 'pointer' }}>
               {t.clearLogs}
             </button>
           )}
         </div>
-        
+
+        <div style={{ fontSize: '10px', color: '#38bdf8', marginBottom: '12px' }}>
+          {isConnected && address ? t.logsActive(address) : t.logsDefault}
+        </div>
+
         {txLogs.length === 0 ? (
-          <div style={{ backgroundColor: '#0a192f', padding: '24px', borderRadius: '8px', border: '1px solid #1e1b4b', textAlign: 'center', fontSize: '12px', color: walletActive ? '#38bdf8' : '#64748b' }}>
-            {walletActive && address ? t.logsActive(address) : t.logsDefault}
+          <div style={{ backgroundColor: '#060d19', padding: '16px', textAlign: 'center', fontSize: '11px', color: '#475569', borderRadius: '6px' }}>
+            no transactions recorded yet. execute a transfer to broadcast on arc testnet.
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {txLogs.map((log) => (
-              <div key={log.id} style={{ backgroundColor: '#0a192f', border: '1px solid #1e1b4b', padding: '10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+              <div key={log.id} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '10px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
                 <div>
-                  <div style={{ color: '#ffffff', fontWeight: 'bold', marginBottom: '2px' }}>{log.type}</div>
+                  <div style={{ color: '#ffffff', fontWeight: 'bold' }}>{log.type}</div>
                   <div style={{ color: '#64748b', fontSize: '10px' }}>to: {log.to} · {log.timestamp}</div>
+                  {log.hash && (
+                    <a href={`https://testnet.arcscan.app/tx/${log.hash}`} target="_blank" rel="noreferrer" style={{ color: '#38bdf8', fontSize: '10px', textDecoration: 'underline', marginTop: '2px', display: 'inline-block' }}>
+                      verify on arcscan ({log.hash.substring(0, 10)}...)
+                    </a>
+                  )}
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ color: '#c084fc', fontWeight: '600' }}>{log.amount}</div>
-                  <div style={{ fontSize: '9px', color: log.status === 'completed' ? '#4ade80' : '#f87171' }}>{log.status}</div>
+                  <div style={{ color: '#a855f7', fontWeight: '600' }}>{log.amount}</div>
+                  <div style={{ fontSize: '9px', color: log.status === 'completed' ? '#22c55e' : '#ef4444' }}>{log.status}</div>
                 </div>
               </div>
             ))}
@@ -766,9 +705,10 @@ function DashboardContent() {
         )}
       </section>
 
-      <footer style={{ textAlign: 'center', padding: '16px 0', fontSize: '11px', color: '#64748b', borderTop: '1px solid #1e1b4b' }}>
+      <footer style={{ textAlign: 'center', padding: '16px 0 0 0', fontSize: '10px', color: '#475569' }}>
         <p style={{ margin: 0 }}>{t.footer}</p>
       </footer>
+
     </main>
   )
 }

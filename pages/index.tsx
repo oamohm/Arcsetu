@@ -8,7 +8,7 @@ import {
 import { WagmiProvider, useAccount, useBalance, useSendTransaction, useWriteContract, useChainId, useSwitchChain } from 'wagmi'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { defineChain, parseEther, parseUnits } from 'viem'
+import { defineChain, parseEther, parseUnits, formatEther } from 'viem'
 
 export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
@@ -63,19 +63,37 @@ interface TxLog {
   hash?: string
 }
 
-const ArcLogo = () => (
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect width="28" height="28" rx="6" fill="url(#arc_header_grad)" />
-    <path d="M7 19C7 12.3726 12.3726 7 19 7" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
-    <circle cx="19" cy="19" r="2.5" fill="#38bdf8" />
-    <defs>
-      <linearGradient id="arc_header_grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#a855f7" />
-        <stop offset="1" stopColor="#3b82f6" />
-      </linearGradient>
-    </defs>
-  </svg>
-)
+/* logo component with dual support: loads /logo.png first, falls back to arc svg layout */
+const ArcLogo = () => {
+  const [imgError, setImgError] = useState(false)
+
+  if (!imgError) {
+    return (
+      <img
+        src="/logo.png"
+        alt="Arc Logo"
+        onError={() => setImgError(true)}
+        style={{ width: '32px', height: '32px', borderRadius: '6px', objectFit: 'contain' }}
+      />
+    )
+  }
+
+  return (
+    <div style={{ width: '32px', height: '32px', borderRadius: '6px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width="32" height="32" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="28" height="28" rx="6" fill="url(#arc_header_grad)" />
+        <path d="M7 19C7 12.3726 12.3726 7 19 7" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="19" cy="19" r="2.5" fill="#38bdf8" />
+        <defs>
+          <linearGradient id="arc_header_grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#a855f7" />
+            <stop offset="1" stopColor="#3b82f6" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  )
+}
 
 function DashboardContent() {
   const { address, isConnected } = useAccount()
@@ -96,26 +114,52 @@ function DashboardContent() {
   const [builderStamp, setBuilderStamp] = useState(false)
   const [txLogs, setTxLogs] = useState<TxLog[]>([])
 
+  const [customBalance, setCustomBalance] = useState<string | null>(null)
+  const [isFetchingBal, setIsFetchingBal] = useState(false)
+
   const [posAmount, setPosAmount] = useState('5.0')
   const [posQrGenerated, setPosQrGenerated] = useState(false)
   const [treasuryDeposit, setTreasuryDeposit] = useState('10')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
-  const { data: nativeBalanceData, refetch: refetchNative, isLoading: isNativeLoading } = useBalance({
+  const { data: nativeBalanceData, refetch: refetchNative } = useBalance({
     address: address,
     chainId: arcTestnet.id,
-  })
-
-  const { data: tokenBalanceData, refetch: refetchToken, isLoading: isTokenLoading } = useBalance({
-    address: address,
-    chainId: arcTestnet.id,
-    token: ARC_USDC_ADDRESS as `0x${string}`,
   })
 
   const { sendTransactionAsync, isPending: isNativeTxPending } = useSendTransaction()
   const { writeContractAsync, isPending: isContractTxPending } = useWriteContract()
 
   const isTxPending = isNativeTxPending || isContractTxPending
+
+  const fetchBalanceDirect = async (accAddress: string) => {
+    setIsFetchingBal(true)
+    try {
+      const res = await fetch('https://rpc-testnet.arcscan.app', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_getBalance',
+          params: [accAddress, 'latest'],
+          id: 1,
+        }),
+      })
+      const data = await res.json()
+      if (data && data.result) {
+        const valWei = BigInt(data.result)
+        const formatted = parseFloat(formatEther(valWei)).toFixed(4)
+        setCustomBalance(`${formatted} USDC`)
+      } else {
+        setCustomBalance('0.0000 USDC')
+      }
+    } catch (e) {
+      console.error('direct rpc balance fetch failed', e)
+      setCustomBalance('0.0000 USDC')
+    } finally {
+      setIsFetchingBal(false)
+    }
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -136,11 +180,21 @@ function DashboardContent() {
     }
   }, [])
 
+  useEffect(() => {
+    if (isConnected && address) {
+      fetchBalanceDirect(address)
+    } else {
+      setCustomBalance(null)
+    }
+  }, [address, isConnected])
+
   if (!mounted) return null
 
   const refetchAllBalances = () => {
-    refetchNative()
-    refetchToken()
+    if (address) {
+      fetchBalanceDirect(address)
+      refetchNative()
+    }
   }
 
   const ensureArcChain = async () => {
@@ -250,6 +304,37 @@ function DashboardContent() {
     }
   }
 
+  const handleTreasuryDeposit = async () => {
+    if (!treasuryDeposit || !isConnected) return
+    const logId = 'vault_' + Date.now()
+    await ensureArcChain()
+
+    try {
+      const vaultTarget = '0x0000000000000000000000000000000000000000'
+      const hash = await sendTransactionAsync({
+        to: vaultTarget as `0x${string}`,
+        value: parseEther(treasuryDeposit),
+        chainId: arcTestnet.id,
+      })
+
+      const updatedVal = (parseFloat(treasuryBalance) + parseFloat(treasuryDeposit)).toFixed(2)
+      setTreasuryBalance(updatedVal)
+
+      saveLog({
+        id: logId,
+        type: 'Arc Treasury Vault Deposit',
+        amount: `${treasuryDeposit} USDC`,
+        to: vaultTarget,
+        timestamp: new Date().toLocaleTimeString(),
+        status: 'completed',
+        hash: hash,
+      })
+      refetchAllBalances()
+    } catch (e) {
+      console.error('treasury deposit error', e)
+    }
+  }
+
   const handleRunSettlement = async () => {
     const logId = 'settle_' + Date.now()
     await ensureArcChain()
@@ -310,175 +395,32 @@ function DashboardContent() {
     }
   }
 
-  const handleTreasuryDeposit = async () => {
-    if (!treasuryDeposit) return
-    const logId = 'yield_' + Date.now()
-    await ensureArcChain()
-
-    try {
-      const target = address || '0x0000000000000000000000000000000000000001'
-      const hash = await sendTransactionAsync({
-        to: target as `0x${string}`,
-        value: parseEther(treasuryDeposit),
-        chainId: arcTestnet.id,
-      })
-
-      const current = parseFloat(treasuryBalance)
-      const added = parseFloat(treasuryDeposit)
-      const updated = (current + added).toFixed(2)
-      setTreasuryBalance(updated)
-
-      saveLog({
-        id: logId,
-        type: 'Treasury Yield Vault Deposit',
-        amount: `${treasuryDeposit} USDC`,
-        to: 'Arc Yield Vault (4.8% APY)',
-        timestamp: new Date().toLocaleTimeString(),
-        status: 'completed',
-        hash: hash,
-      })
-      refetchAllBalances()
-    } catch (e) {
-      console.error('treasury deposit error', e)
-    }
-  }
-
   const clearHistory = () => {
     setTxLogs([])
     localStorage.removeItem('arc_settlement_logs')
   }
 
-  const displayBalance = () => {
+  const getDisplayBalance = () => {
     if (!isConnected) return '0.0000 USDC'
-    if (isNativeLoading || isTokenLoading) return 'fetching...'
-    
-    const nativeVal = nativeBalanceData ? parseFloat(nativeBalanceData.formatted) : 0
-    const tokenVal = tokenBalanceData ? parseFloat(tokenBalanceData.formatted) : 0
-
-    const total = nativeVal > 0 ? nativeVal : tokenVal
-    return `${total.toFixed(4)} USDC`
+    if (isFetchingBal && !customBalance) return 'fetching...'
+    if (customBalance) return customBalance
+    if (nativeBalanceData) return `${parseFloat(nativeBalanceData.formatted).toFixed(4)} USDC`
+    return '0.0000 USDC'
   }
-
-  const t = {
-    en: {
-      title: 'ARC SETTLEMENT HUB',
-      badge: 'PRIMARY',
-      subtitle: 'programmable usdc settlement engine on the arc network',
-      identity: 'arc multi-chain identity',
-      statusDisc: 'wallet disconnected',
-      statusConn: 'wallet active',
-      boundId: 'bound arc up id',
-      treasuryBal: 'arc native balance',
-      routing: 'arc ecosystem asset routing',
-      testnet: 'arc testnet',
-      nativeUsdc: 'native usdc',
-      cctp: 'circle cctp',
-      crossBridge: 'cross-chain bridge',
-      detEngine: 'deterministic engine',
-      speedBench: 'speed benchmark',
-      paymentUx: 'payment ux',
-      splitSplitter: 'auto-split splitter',
-      feeEngine: 'arc programmable fee engine',
-      feeDesc: 'distribute creator fees, split payments, or send cross-chain royalties natively on arc.',
-      feePlaceholder: 'address 0x...',
-      distributeFee: 'distribute fee',
-      workflow: 'arc builder onboarding workflow',
-      wf1Title: '1. bind arc identity & wallet',
-      wf1Desc: 'deterministically registers identity on arc network',
-      wf1Pending: 'pending',
-      wf1Complete: 'completed',
-      wf2Title: '2. execute arc usdc settlement',
-      wf2Desc: `executed: ${settlementCount} settlement txns`,
-      runSettlement: 'run settlement',
-      wf3Title: '3. claim arc builder stamp',
-      wf3Desc: 'issues arc ecosystem verification badge',
-      claimStamp: builderStamp ? 'stamp claimed' : 'claim stamp',
-      tabTransfer: 'arc usdc transfer',
-      tabPos: 'pos qr invoice',
-      tabTreasury: 'arc yield treasury',
-      sendPlaceholder: 'send to 0x wallet address',
-      scanQr: 'refresh balance',
-      transferRoute: 'transfer route:',
-      gasUsdc: 'native gas usdc',
-      erc20: 'erc-20 contract',
-      payButton: (amt: string) => isTxPending ? 'processing transaction...' : `pay via arc usdc (${amt} usdc)`,
-      infra: 'arc ecosystem infrastructure links',
-      explorer: 'arcscan explorer',
-      faucet: 'circle usdc faucet',
-      docs: 'arc protocol docs',
-      logsTitle: 'arc network activity & verification logs',
-      logsDefault: 'connect wallet to view arc settlement activity.',
-      logsActive: (addr: string) => `connected via wagmi: ${addr}`,
-      clearLogs: 'clear history',
-      footer: 'arc settlement engine · built for decentralized scale'
-    },
-    hi: {
-      title: 'आर्क सेटलमेंट हब',
-      badge: 'प्राथमिक',
-      subtitle: 'आर्क नेटवर्क पर प्रोग्रामेबल यूएसडीसी सेटलमेंट इंजन',
-      identity: 'आर्क मल्टी-चेन पहचान',
-      statusDisc: 'वॉलेट डिस्कनेक्टेड',
-      statusConn: 'वॉलेट सक्रिय',
-      boundId: 'बाउंड आर्क अप आईडी',
-      treasuryBal: 'आर्क नेटिव बैलेंस',
-      routing: 'आर्क इकोसिस्टम एसेट रूटिंग',
-      testnet: 'आर्क टेस्टनेट',
-      nativeUsdc: 'मूल यूएसडीसी',
-      cctp: 'सर्कल सीसीटीपी',
-      crossBridge: 'क्रॉस-चेन ब्रिज',
-      detEngine: 'डिटर्मिनिस्टिक इंजन',
-      speedBench: 'स्पीड बेंचमार्क',
-      paymentUx: 'पेमेंट यूएक्स',
-      splitSplitter: 'ऑटो-स्प्लिट स्पलीटर',
-      feeEngine: 'आर्क प्रोग्रामेबल फीस इंजन',
-      feeDesc: 'रॉयल्टी या क्रिएटर फीस को आर्क पर मूल रूप से वितरित करें।',
-      feePlaceholder: 'पता 0x...',
-      distributeFee: 'फीस वितरित करें',
-      workflow: 'आर्क बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
-      wf1Title: '1. आर्क पहचान और वॉलेट बांधें',
-      wf1Desc: 'आर्क नेटवर्क पर पहचान को निश्चित रूप से पंजीकृत करता है',
-      wf1Pending: 'लंबित',
-      wf1Complete: 'पूर्ण',
-      wf2Title: '2. आर्क यूएसडीसी सेटलमेंट निष्पादित करें',
-      wf2Desc: `निष्पादित: ${settlementCount} सेटलमेंट लेन-देन`,
-      runSettlement: 'सेटलमेंट चलाएं',
-      wf3Title: '3. आर्क बिल्डर स्टाम्प का दावा करें',
-      wf3Desc: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
-      claimStamp: builderStamp ? 'स्टाम्प प्राप्त हुआ' : 'स्टाम्प का दावा करें',
-      tabTransfer: 'आर्क यूएसडीसी ट्रांसफर',
-      tabPos: 'पीओएस क्यूआर इनवॉइस',
-      tabTreasury: 'आर्क यील्ड ट्रेजरी',
-      sendPlaceholder: '0x वॉलेट पते पर भेजें',
-      scanQr: 'बैलेंस रिफ्रेश करें',
-      transferRoute: 'ट्रांसफर रूट:',
-      gasUsdc: 'मूल गैस यूएसडीसी',
-      erc20: 'ईआरसी-20 अनुबंध',
-      payButton: (amt: string) => isTxPending ? 'प्रोसेस हो रहा है...' : `आर्क यूएसडीसी भुगतान करें (${amt} यूएसडीसी)`,
-      infra: 'आर्क इकोसिस्टम इंफ्रास्ट्रक्चर लिंक',
-      explorer: 'आर्कस्केन एक्सप्लोरर',
-      faucet: 'सर्कल यूएसडीसी फॉसेट',
-      docs: 'आर्क प्रोटोकॉल दस्तावेज़',
-      logsTitle: 'आर्क नेटवर्क गतिविधि और सत्यापन लॉग',
-      logsDefault: 'आर्क सेटलमेंट गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
-      logsActive: (addr: string) => `वाग्मी (Wagmi) से कनेक्टेड: ${addr}`,
-      clearLogs: 'हिस्ट्री साफ़ करें',
-      footer: 'आर्क सेटलमेंट इंजन · विकेंद्रीकृत पैमाने के लिए निर्मित'
-    }
-  }[locale]
 
   return (
     <main style={{ minHeight: '100vh', backgroundColor: '#060d19', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
       
-      {/* Header with restored ArcLogo Component */}
+      {/* Header section with active logo handler */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <ArcLogo />
           <div>
             <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 2px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>
-              {t.title}
-              <span style={{ fontSize: '9px', backgroundColor: '#3b0764', color: '#d8b4fe', padding: '2px 6px', borderRadius: '4px', border: '1px solid #6b21a8' }}>{t.badge}</span>
+              ARC SETTLEMENT HUB
+              <span style={{ fontSize: '9px', backgroundColor: '#3b0764', color: '#d8b4fe', padding: '2px 6px', borderRadius: '4px', border: '1px solid #6b21a8' }}>PRIMARY</span>
             </h1>
-            <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>{t.subtitle}</p>
+            <p style={{ fontSize: '11px', color: '#64748b', margin: 0 }}>programmable usdc settlement engine on the arc network</p>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -492,46 +434,46 @@ function DashboardContent() {
       {/* Identity Section */}
       <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <h2 style={{ fontSize: '11px', color: '#a855f7', margin: 0, textTransform: 'uppercase' }}>{t.identity}</h2>
-          <span style={{ fontSize: '10px', color: isConnected ? '#22c55e' : '#ef4444' }}>{isConnected ? t.statusConn : t.statusDisc}</span>
+          <h2 style={{ fontSize: '11px', color: '#a855f7', margin: 0, textTransform: 'uppercase' }}>arc multi-chain identity</h2>
+          <span style={{ fontSize: '10px', color: isConnected ? '#22c55e' : '#ef4444' }}>{isConnected ? 'wallet active' : 'wallet disconnected'}</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
           <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px' }}>
-            <input type="text" placeholder={t.boundId} value={arcId} onChange={(e) => handleSaveArcId(e.target.value)} style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', color: '#f1f5f9', fontSize: '12px' }} />
+            <input type="text" placeholder="bound arc up id" value={arcId} onChange={(e) => handleSaveArcId(e.target.value)} style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', color: '#f1f5f9', fontSize: '12px' }} />
           </div>
           <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#64748b' }}>
-            <span>{t.treasuryBal}</span>
-            <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{displayBalance()}</span>
+            <span>arc native balance</span>
+            <span style={{ color: '#ffffff', fontWeight: 'bold' }}>{getDisplayBalance()}</span>
           </div>
         </div>
       </section>
 
       {/* Asset Routing Section */}
       <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 12px 0', textTransform: 'uppercase' }}>{t.routing}</h2>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 12px 0', textTransform: 'uppercase' }}>arc ecosystem asset routing</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
           
           <div onClick={() => setSelectedRoute('native')} style={{ backgroundColor: '#060d19', border: selectedRoute === 'native' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.testnet}</div>
-            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.nativeUsdc}</div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>arc testnet</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>native usdc</div>
             <div style={{ fontSize: '10px', color: selectedRoute === 'native' ? '#22c55e' : '#475569' }}>✓ active</div>
           </div>
 
           <div onClick={() => setSelectedRoute('cctp')} style={{ backgroundColor: '#060d19', border: selectedRoute === 'cctp' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.cctp}</div>
-            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.crossBridge}</div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>circle cctp</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>cross-chain bridge</div>
             <div style={{ fontSize: '10px', color: '#64748b' }}>click to test cctp</div>
           </div>
 
           <div onClick={() => { setSelectedRoute('speed'); handleRunSettlement() }} style={{ backgroundColor: '#060d19', border: selectedRoute === 'speed' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.detEngine}</div>
-            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.speedBench}</div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>deterministic engine</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>speed benchmark</div>
             <div style={{ fontSize: '10px', color: '#64748b' }}>click to run test</div>
           </div>
 
           <div onClick={() => setSelectedRoute('splitter')} style={{ backgroundColor: '#060d19', border: selectedRoute === 'splitter' ? '1px solid #a855f7' : '1px solid #1e293b', padding: '12px', borderRadius: '6px', cursor: 'pointer' }}>
-            <div style={{ fontSize: '10px', color: '#64748b' }}>{t.paymentUx}</div>
-            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>{t.splitSplitter}</div>
+            <div style={{ fontSize: '10px', color: '#64748b' }}>payment ux</div>
+            <div style={{ fontSize: '12px', color: '#ffffff', fontWeight: 'bold', margin: '4px 0' }}>auto-split splitter</div>
             <div style={{ fontSize: '10px', color: '#64748b' }}>click to configure</div>
           </div>
 
@@ -540,49 +482,49 @@ function DashboardContent() {
 
       {/* Fee Engine Section */}
       <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 6px 0', textTransform: 'uppercase' }}>{t.feeEngine}</h2>
-        <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 12px 0' }}>{t.feeDesc}</p>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 6px 0', textTransform: 'uppercase' }}>arc programmable fee engine</h2>
+        <p style={{ fontSize: '10px', color: '#64748b', margin: '0 0 12px 0' }}>distribute creator fees, split payments, or send cross-chain royalties natively on arc.</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <input type="text" placeholder={t.feePlaceholder} value={feeAddress} onChange={(e) => setFeeAddress(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+          <input type="text" placeholder="address 0x..." value={feeAddress} onChange={(e) => setFeeAddress(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
           <input type="text" value={feeAmount} onChange={(e) => setFeeAmount(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
           <button onClick={handleDistributeFee} disabled={!isConnected || !feeAddress || isTxPending} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#ffffff', padding: '10px', borderRadius: '6px', fontSize: '11px', cursor: isConnected && feeAddress ? 'pointer' : 'not-allowed' }}>
-            {t.distributeFee}
+            distribute fee
           </button>
         </div>
       </section>
 
       {/* Onboarding Workflow Section */}
       <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 12px 0', textTransform: 'uppercase' }}>{t.workflow}</h2>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 12px 0', textTransform: 'uppercase' }}>arc builder onboarding workflow</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           
           <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>{t.wf1Title}</div>
-              <div style={{ fontSize: '10px', color: '#64748b' }}>{t.wf1Desc}</div>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>1. bind arc identity & wallet</div>
+              <div style={{ fontSize: '10px', color: '#64748b' }}>deterministically registers identity on arc network</div>
             </div>
             <span style={{ fontSize: '10px', backgroundColor: isConnected ? '#064e3b' : '#3b0764', color: isConnected ? '#34d399' : '#d8b4fe', padding: '2px 8px', borderRadius: '4px' }}>
-              {isConnected ? t.wf1Complete : t.wf1Pending}
+              {isConnected ? 'completed' : 'pending'}
             </span>
           </div>
 
           <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>{t.wf2Title}</div>
-              <div style={{ fontSize: '10px', color: '#64748b' }}>{t.wf2Desc}</div>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>2. execute arc usdc settlement</div>
+              <div style={{ fontSize: '10px', color: '#64748b' }}>executed: {settlementCount} settlement txns</div>
             </div>
             <button onClick={handleRunSettlement} style={{ fontSize: '10px', backgroundColor: '#3b0764', color: '#d8b4fe', border: '1px solid #6b21a8', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              {t.runSettlement}
+              run settlement
             </button>
           </div>
 
           <div style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '12px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>{t.wf3Title}</div>
-              <div style={{ fontSize: '10px', color: '#64748b' }}>{t.wf3Desc}</div>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff' }}>3. claim arc builder stamp</div>
+              <div style={{ fontSize: '10px', color: '#64748b' }}>issues arc ecosystem verification badge</div>
             </div>
             <button onClick={handleClaimStamp} disabled={builderStamp || !isConnected} style={{ fontSize: '10px', backgroundColor: builderStamp ? '#064e3b' : '#1e293b', color: builderStamp ? '#34d399' : '#cbd5e1', border: 'none', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer' }}>
-              {t.claimStamp}
+              {builderStamp ? 'stamp claimed' : 'claim stamp'}
             </button>
           </div>
 
@@ -593,37 +535,37 @@ function DashboardContent() {
       <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '16px', borderBottom: '1px solid #1e293b', paddingBottom: '10px', marginBottom: '14px' }}>
           <button onClick={() => setActiveTab('transfer')} style={{ background: 'none', border: 'none', color: activeTab === 'transfer' ? '#a855f7' : '#64748b', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
-            {t.tabTransfer}
+            arc usdc transfer
           </button>
           <button onClick={() => setActiveTab('pos')} style={{ background: 'none', border: 'none', color: activeTab === 'pos' ? '#a855f7' : '#64748b', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
-            {t.tabPos}
+            pos qr invoice
           </button>
           <button onClick={() => setActiveTab('treasury')} style={{ background: 'none', border: 'none', color: activeTab === 'treasury' ? '#a855f7' : '#64748b', fontSize: '11px', cursor: 'pointer', fontWeight: 'bold', padding: 0 }}>
-            {t.tabTreasury}
+            arc yield treasury
           </button>
         </div>
 
         {activeTab === 'transfer' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <input type="text" placeholder={t.sendPlaceholder} value={recipient} onChange={(e) => setRecipient(e.target.value)} style={{ flex: 1, backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
+              <input type="text" placeholder="send to 0x wallet address" value={recipient} onChange={(e) => setRecipient(e.target.value)} style={{ flex: 1, backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
               <button onClick={refetchAllBalances} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#94a3b8', padding: '0 12px', borderRadius: '6px', fontSize: '10px', cursor: 'pointer' }}>
-                {t.scanQr}
+                refresh balance
               </button>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '10px', color: '#64748b' }}>
-              <span>{t.transferRoute}</span>
+              <span>transfer route:</span>
               <div style={{ display: 'flex', gap: '6px' }}>
-                <span onClick={() => setTransferRoute('native')} style={{ padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', backgroundColor: transferRoute === 'native' ? '#3b0764' : '#060d19', color: transferRoute === 'native' ? '#d8b4fe' : '#64748b', border: '1px solid #1e293b' }}>{t.gasUsdc}</span>
-                <span onClick={() => setTransferRoute('erc20')} style={{ padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', backgroundColor: transferRoute === 'erc20' ? '#3b0764' : '#060d19', color: transferRoute === 'erc20' ? '#d8b4fe' : '#64748b', border: '1px solid #1e293b' }}>{t.erc20}</span>
+                <span onClick={() => setTransferRoute('native')} style={{ padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', backgroundColor: transferRoute === 'native' ? '#3b0764' : '#060d19', color: transferRoute === 'native' ? '#d8b4fe' : '#64748b', border: '1px solid #1e293b' }}>native gas usdc</span>
+                <span onClick={() => setTransferRoute('erc20')} style={{ padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', backgroundColor: transferRoute === 'erc20' ? '#3b0764' : '#060d19', color: transferRoute === 'erc20' ? '#d8b4fe' : '#64748b', border: '1px solid #1e293b' }}>erc-20 contract</span>
               </div>
             </div>
 
             <input type="text" value={amount} onChange={(e) => setAmount(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
 
             <button onClick={handlePay} disabled={!isConnected || !recipient || isTxPending} style={{ backgroundColor: isConnected && recipient ? '#7e22ce' : '#1e293b', color: '#ffffff', padding: '12px', borderRadius: '6px', border: 'none', fontSize: '12px', cursor: isConnected && recipient ? 'pointer' : 'not-allowed' }}>
-              {t.payButton(amount)}
+              {isTxPending ? 'processing transaction...' : `pay via arc usdc (${amount} usdc)`}
             </button>
           </div>
         )}
@@ -652,7 +594,7 @@ function DashboardContent() {
               <span style={{ color: '#22c55e', fontWeight: 'bold' }}>{treasuryBalance} USDC</span>
             </div>
             <input type="text" placeholder="deposit amount" value={treasuryDeposit} onChange={(e) => setTreasuryDeposit(e.target.value)} style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', borderRadius: '6px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }} />
-            <button onClick={handleTreasuryDeposit} disabled={!isConnected} style={{ backgroundColor: '#0f172a', border: '1px solid #334155', color: '#ffffff', padding: '10px', borderRadius: '6px', fontSize: '11px', cursor: isConnected ? 'pointer' : 'not-allowed' }}>
+            <button onClick={handleTreasuryDeposit} disabled={!isConnected || !treasuryDeposit || isTxPending} style={{ backgroundColor: isConnected ? '#0f172a' : '#1e293b', border: '1px solid #334155', color: '#ffffff', padding: '10px', borderRadius: '6px', fontSize: '11px', cursor: isConnected ? 'pointer' : 'not-allowed' }}>
               deposit to arc yield vault (4.8% APY)
             </button>
           </div>
@@ -661,16 +603,16 @@ function DashboardContent() {
 
       {/* Infrastructure Links */}
       <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 10px 0', textTransform: 'uppercase' }}>{t.infra}</h2>
+        <h2 style={{ fontSize: '11px', color: '#a855f7', margin: '0 0 10px 0', textTransform: 'uppercase' }}>arc ecosystem infrastructure links</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '10px' }}>
           <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '10px', borderRadius: '6px', color: '#94a3b8', fontSize: '11px', textDecoration: 'none', textAlign: 'center' }}>
-            {t.explorer}
+            arcscan explorer
           </a>
           <a href="https://faucet.circle.com" target="_blank" rel="noreferrer" style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '10px', borderRadius: '6px', color: '#94a3b8', fontSize: '11px', textDecoration: 'none', textAlign: 'center' }}>
-            {t.faucet}
+            circle usdc faucet
           </a>
           <a href="https://docs.arcscan.app" target="_blank" rel="noreferrer" style={{ backgroundColor: '#060d19', border: '1px solid #1e293b', padding: '10px', borderRadius: '6px', color: '#94a3b8', fontSize: '11px', textDecoration: 'none', textAlign: 'center' }}>
-            {t.docs}
+            arc protocol docs
           </a>
         </div>
       </section>
@@ -678,16 +620,16 @@ function DashboardContent() {
       {/* Activity Logs & Verification */}
       <section style={{ backgroundColor: '#0b172a', padding: '16px', borderRadius: '10px', border: '1px solid #1e293b' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <h2 style={{ fontSize: '11px', color: '#a855f7', margin: 0, textTransform: 'uppercase' }}>{t.logsTitle}</h2>
+          <h2 style={{ fontSize: '11px', color: '#a855f7', margin: 0, textTransform: 'uppercase' }}>arc network activity & verification logs</h2>
           {txLogs.length > 0 && (
             <button onClick={clearHistory} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '10px', cursor: 'pointer' }}>
-              {t.clearLogs}
+              clear history
             </button>
           )}
         </div>
 
         <div style={{ fontSize: '10px', color: '#38bdf8', marginBottom: '12px' }}>
-          {isConnected && address ? t.logsActive(address) : t.logsDefault}
+          {isConnected && address ? `connected via wagmi: ${address}` : 'connect wallet to view arc settlement activity.'}
         </div>
 
         {txLogs.length === 0 ? (
@@ -718,7 +660,7 @@ function DashboardContent() {
       </section>
 
       <footer style={{ textAlign: 'center', padding: '16px 0 0 0', fontSize: '10px', color: '#475569' }}>
-        <p style={{ margin: 0 }}>{t.footer}</p>
+        <p style={{ margin: 0 }}>arc settlement engine · built for decentralized scale</p>
       </footer>
 
     </main>

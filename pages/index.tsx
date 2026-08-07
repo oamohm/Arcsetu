@@ -90,8 +90,10 @@ function DashboardContent() {
   const [treasuryDeposit, setTreasuryDeposit] = useState('100')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
+  // erc-20 token balance explicitly bound
   const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading, isError: isBalanceError } = useBalance({
     address: address,
+    token: transferRoute === 'erc20' ? (ARC_USDC_ADDRESS as `0x${string}`) : undefined,
     chainId: arcTestnet.id,
     query: {
       refetchInterval: 3000,
@@ -634,7 +636,6 @@ function DashboardContent() {
     <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* LOCKED ORIGINAL LOGO BLOCK */}
           <div style={{ width: '48px', height: '48px', background: 'radial-gradient(circle, #1e3a8a 0%, #0a192f 100%)', borderRadius: '10px', border: '1px solid rgba(250, 204, 21, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '24px' }}>
             🌁
           </div>

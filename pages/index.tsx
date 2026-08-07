@@ -5,10 +5,10 @@ import {
   RainbowKitProvider,
   ConnectButton,
 } from '@rainbow-me/rainbowkit'
-import { WagmiProvider, useAccount, useBalance, useReadContract, useWriteContract, useSendTransaction, useChainId, useSwitchChain } from 'wagmi'
+import { WagmiProvider, useAccount, useBalance, useWriteContract, useSendTransaction, useChainId, useSwitchChain } from 'wagmi'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { defineChain, parseUnits, formatUnits, http } from 'viem'
+import { defineChain, parseUnits } from 'viem'
 
 export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
@@ -23,20 +23,6 @@ export const erc20Abi = [
     ],
     outputs: [{ type: 'bool' }],
   },
-  {
-    type: 'function',
-    name: 'balanceOf',
-    stateMutability: 'view',
-    inputs: [{ name: 'account', type: 'address' }],
-    outputs: [{ name: '', type: 'uint256' }],
-  },
-  {
-    type: 'function',
-    name: 'decimals',
-    stateMutability: 'view',
-    inputs: [],
-    outputs: [{ name: '', type: 'uint8' }],
-  }
 ] as const
 
 export const arcTestnet = defineChain({
@@ -62,9 +48,6 @@ const config = getDefaultConfig({
   appName: 'Arc Settlement Hub',
   projectId: 'YOUR_PROJECT_ID',
   chains: [arcTestnet, mainnet, polygon, optimism, arbitrum, base],
-  transports: {
-    [arcTestnet.id]: http('https://rpc-testnet.arcscan.app'),
-  },
   ssr: true,
 })
 
@@ -80,6 +63,8 @@ interface TxLog {
   hash?: string
 }
 
+type SupportedLocale = 'en' | 'hi' | 'es' | 'zh' | 'fr' | 'ar'
+
 function DashboardContent() {
   const { address, isConnected } = useAccount()
   const currentChainId = useChainId()
@@ -93,36 +78,24 @@ function DashboardContent() {
   const [feeAmount, setFeeAmount] = useState('0.05')
   const [activeTab, setActiveTab] = useState<'transfer' | 'pos' | 'treasury'>('transfer')
   const [transferRoute, setTransferRoute] = useState<'native' | 'erc20'>('native')
-  const [locale, setLocale] = useState<'en' | 'hi'>('en')
+  const [locale, setLocale] = useState<SupportedLocale>('en')
   
   const [selectedRoute, setSelectedRoute] = useState<'native' | 'cctp' | 'speed' | 'splitter'>('native')
   const [settlementCount, setSettlementCount] = useState(0)
   const [builderStamp, setBuilderStamp] = useState(false)
   const [txLogs, setTxLogs] = useState<TxLog[]>([])
-
+  
   const [posAmount, setPosAmount] = useState('5.0')
   const [posQrGenerated, setPosQrGenerated] = useState(false)
   const [treasuryDeposit, setTreasuryDeposit] = useState('100')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
-  const { data: nativeBalance, refetch: refetchNative } = useBalance({
+  const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading, isError: isBalanceError } = useBalance({
     address: address,
     chainId: arcTestnet.id,
     query: {
       refetchInterval: 3000,
-      enabled: !!address,
-    }
-  })
-
-  const { data: erc20Balance, refetch: refetchErc20 } = useReadContract({
-    address: ARC_USDC_ADDRESS as `0x${string}`,
-    abi: erc20Abi,
-    functionName: 'balanceOf',
-    args: address ? [address] : undefined,
-    chainId: arcTestnet.id,
-    query: {
-      refetchInterval: 3000,
-      enabled: !!address,
+      enabled: Boolean(address),
     }
   })
 
@@ -152,11 +125,6 @@ function DashboardContent() {
   }, [])
 
   if (!mounted) return null
-
-  const refetchAllBalances = () => {
-    refetchNative()
-    refetchErc20()
-  }
 
   const saveLog = (newLog: TxLog) => {
     setTxLogs((prev) => {
@@ -219,7 +187,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchAllBalances()
+      refetchBalance()
     } catch (e) {
       console.error('transfer error', e)
       saveLog({
@@ -255,7 +223,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchAllBalances()
+      refetchBalance()
     } catch (e) {
       console.error('fee distribution error', e)
       saveLog({
@@ -425,60 +393,235 @@ function DashboardContent() {
       logsActive: (addr: string) => `वाग्मी (Wagmi) से कनेक्टेड: ${addr}`,
       clearLogs: 'हिस्ट्री साफ़ करें',
       footer: 'आर्क सेटलमेंट इंजन · विकेंद्रीकृत पैमाने के लिए निर्मित'
+    },
+    es: {
+      title: 'CENTRO DE LIQUIDACIÓN ARC',
+      badge: 'PRIMARIO',
+      subtitle: 'motor de liquidación programable de usdc en la red arc',
+      identity: 'identidad multicadena arc',
+      statusDisc: 'billetera desconectada',
+      statusConn: 'billetera activa',
+      boundId: 'id arc vinculada',
+      treasuryBal: 'saldo nativo arc',
+      routing: 'enrutamiento de activos del ecosistema arc',
+      testnet: 'red de prueba arc',
+      nativeUsdc: 'usdc nativo',
+      cctp: 'circle cctp',
+      crossBridge: 'puente entre cadenas',
+      detEngine: 'motor determinista',
+      speedBench: 'prueba de velocidad',
+      paymentUx: 'ux de pago',
+      splitSplitter: 'divisor automático',
+      feeEngine: 'motor de tarifas programable arc',
+      feeDesc: 'distribuya tarifas de creador, divida pagos o envíe regalías de forma nativa.',
+      feePlaceholder: 'dirección 0x...',
+      distributeFee: 'distribuir tarifa',
+      workflow: 'flujo de trabajo para desarrolladores',
+      wf1Title: '1. vincular identidad y billetera arc',
+      wf1Desc: 'registra identidad de forma determinista en la red arc',
+      wf1Pending: 'pendiente',
+      wf1Complete: 'completado',
+      wf2Title: '2. ejecutar liquidación usdc arc',
+      wf2Desc: `ejecutado: ${settlementCount} transacciones`,
+      runSettlement: 'ejecutar liquidación',
+      wf3Title: '3. reclamar sello de desarrollador arc',
+      wf3Desc: 'emite insignia de verificación del ecosistema arc',
+      claimStamp: builderStamp ? 'sello reclamado' : 'reclamar sello',
+      tabTransfer: 'transferencia usdc arc',
+      tabPos: 'factura pos qr',
+      tabTreasury: 'tesorería de rendimiento arc',
+      sendPlaceholder: 'enviar a dirección de billetera 0x',
+      scanQr: 'actualizar saldo',
+      transferRoute: 'ruta de transferencia:',
+      gasUsdc: 'usdc gas nativo',
+      erc20: 'contrato erc-20',
+      payButton: (amt: string) => isTxPending ? 'procesando transacción...' : `pagar vía arc usdc (${amt} usdc)`,
+      infra: 'enlaces de infraestructura del ecosistema arc',
+      explorer: 'explorador arcscan',
+      faucet: 'faucet circle usdc',
+      docs: 'documentación de protocolo arc',
+      logsTitle: 'registros de actividad y verificación de la red arc',
+      logsDefault: 'conecte la billetera para ver la actividad de liquidación.',
+      logsActive: (addr: string) => `conectado vía wagmi: ${addr}`,
+      clearLogs: 'borrar historial',
+      footer: 'motor de liquidación arc · construido para escala descentralizada'
+    },
+    zh: {
+      title: 'ARC 结算中心',
+      badge: '主网',
+      subtitle: 'ARC 网络上的可编程 USDC 结算引擎',
+      identity: 'ARC 多链身份',
+      statusDisc: '钱包未连接',
+      statusConn: '钱包已连接',
+      boundId: '已绑定 ARC 身份 ID',
+      treasuryBal: 'ARC 原生余额',
+      routing: 'ARC 生态系统资产路由',
+      testnet: 'ARC 测试网',
+      nativeUsdc: '原生 USDC',
+      cctp: 'Circle CCTP',
+      crossBridge: '跨链桥',
+      detEngine: '确定性引擎',
+      speedBench: '速度基准',
+      paymentUx: '支付 UX',
+      splitSplitter: '自动分账器',
+      feeEngine: 'ARC 可编程费用引擎',
+      feeDesc: '在 ARC 原生分发放创作者费用、拆分支付或跨链版税。',
+      feePlaceholder: '地址 0x...',
+      distributeFee: '分派费用',
+      workflow: 'ARC 开发者入职流程',
+      wf1Title: '1. 绑定 ARC 身份与钱包',
+      wf1Desc: '在 ARC 网络上确定性注册身份',
+      wf1Pending: '等待中',
+      wf1Complete: '已完成',
+      wf2Title: '2. 执行 ARC USDC 结算',
+      wf2Desc: `已执行: ${settlementCount} 次结算交易`,
+      runSettlement: '运行结算',
+      wf3Title: '3. 申领 ARC 开发者勋章',
+      wf3Desc: '颁发 ARC 生态系统验证徽章',
+      claimStamp: builderStamp ? '勋章已申领' : '申领勋章',
+      tabTransfer: 'ARC USDC 转账',
+      tabPos: 'POS 二维码发票',
+      tabTreasury: 'ARC 收益金库',
+      sendPlaceholder: '发送至 0x 钱包地址',
+      scanQr: '刷新余额',
+      transferRoute: '转账路由:',
+      gasUsdc: '原生 Gas USDC',
+      erc20: 'ERC-20 合约',
+      payButton: (amt: string) => isTxPending ? '正在处理交易...' : `通过 ARC USDC 支付 (${amt} USDC)`,
+      infra: 'ARC 生态基础设施链接',
+      explorer: 'ArcScan 区块浏览器',
+      faucet: 'Circle USDC 水龙头',
+      docs: 'ARC 协议文档',
+      logsTitle: 'ARC 网络活动与验证日志',
+      logsDefault: '连接钱包以查看 ARC 结算活动。',
+      logsActive: (addr: string) => `通过 Wagmi 连接: ${addr}`,
+      clearLogs: '清除历史',
+      footer: 'ARC 结算引擎 · 为去中心化规模打造'
+    },
+    fr: {
+      title: 'CENTRE DE RÈGLEMENT ARC',
+      badge: 'PRIMAIRE',
+      subtitle: 'moteur de règlement usdc programmable sur le réseau arc',
+      identity: 'identité multi-chaîne arc',
+      statusDisc: 'portefeuille déconnecté',
+      statusConn: 'portefeuille actif',
+      boundId: 'id arc lié',
+      treasuryBal: 'solde natif arc',
+      routing: 'routage d\'actifs de l\'écosystème arc',
+      testnet: 'réseau de test arc',
+      nativeUsdc: 'usdc natif',
+      cctp: 'circle cctp',
+      crossBridge: 'pont inter-chaînes',
+      detEngine: 'moteur déterministe',
+      speedBench: 'test de vitesse',
+      paymentUx: 'ux de paiement',
+      splitSplitter: 'répartiteur automatique',
+      feeEngine: 'moteur de frais programmable arc',
+      feeDesc: 'distribuez les frais de créateur, divisez les paiements ou envoyez des redevances nativement.',
+      feePlaceholder: 'adresse 0x...',
+      distributeFee: 'distribuer les frais',
+      workflow: 'flux d\'intégration des développeurs',
+      wf1Title: '1. lier l\'identité et le portefeuille arc',
+      wf1Desc: 'enregistre de manière déterministe l\'identité sur le réseau arc',
+      wf1Pending: 'en attente',
+      wf1Complete: 'terminé',
+      wf2Title: '2. exécuter le règlement usdc arc',
+      wf2Desc: `exécuté: ${settlementCount} transactions`,
+      runSettlement: 'exécuter le règlement',
+      wf3Title: '3. réclamer le badge développeur arc',
+      wf3Desc: 'délivre le badge de vérification de l\'écosystème arc',
+      claimStamp: builderStamp ? 'badge réclamé' : 'réclamer le badge',
+      tabTransfer: 'transfert usdc arc',
+      tabPos: 'facture pos qr',
+      tabTreasury: 'trésorerie de rendement arc',
+      sendPlaceholder: 'envoyer à l\'adresse du portefeuille 0x',
+      scanQr: 'rafraîchir le solde',
+      transferRoute: 'route de transfert:',
+      gasUsdc: 'usdc gas natif',
+      erc20: 'contrat erc-20',
+      payButton: (amt: string) => isTxPending ? 'traitement de la transaction...' : `payer via arc usdc (${amt} usdc)`,
+      infra: 'liens d\'infrastructure de l\'écosystème arc',
+      explorer: 'explorateur arcscan',
+      faucet: 'robinet circle usdc',
+      docs: 'documentation du protocole arc',
+      logsTitle: 'journaux d\'activité et de vérification du réseau arc',
+      logsDefault: 'connectez votre portefeuille pour voir l\'activité de règlement.',
+      logsActive: (addr: string) => `connecté via wagmi: ${addr}`,
+      clearLogs: 'effacer l\'historique',
+      footer: 'moteur de règlement arc · conçu pour l\'échelle décentralisée'
+    },
+    ar: {
+      title: 'مركز تسوية آرك',
+      badge: 'الرئيسي',
+      subtitle: 'محرك تسوية USDC القابل للبرمجة على شبكة آرك',
+      identity: 'هوية آرك متعددة السلاسل',
+      statusDisc: 'المحفظة غير متصلة',
+      statusConn: 'المحفظة نشطة',
+      boundId: 'معرف آرك المرتبط',
+      treasuryBal: 'رصيد آرك الأصلي',
+      routing: 'توجيه أصول منظومة آرك',
+      testnet: 'شبكة اختبار آرك',
+      nativeUsdc: 'USDC الأصلي',
+      cctp: 'Circle CCTP',
+      crossBridge: 'جسر عبر السلاسل',
+      detEngine: 'محرك محدد',
+      speedBench: 'مؤشر السرعة',
+      paymentUx: 'تجربة دفع',
+      splitSplitter: 'موزع تلقائي',
+      feeEngine: 'محرك رسوم آرك القابل للبرمجة',
+      feeDesc: 'توزيع رسوم المبدعين أو تقسيم المدفوعات محليًا على شبكة آرك.',
+      feePlaceholder: 'العنوان 0x...',
+      distributeFee: 'توزيع الرسوم',
+      workflow: 'مسار إعداد مطوري آرك',
+      wf1Title: '1. ربط هوية آرك والمحفظة',
+      wf1Desc: 'تسجيل الهوية بشكل حتمي على شبكة آرك',
+      wf1Pending: 'قيد الانتظار',
+      wf1Complete: 'مكتمل',
+      wf2Title: '2. تنفيذ تسوية آرك USDC',
+      wf2Desc: `تم التنفيذ: ${settlementCount} معاملات تسوية`,
+      runSettlement: 'تشغيل التسوية',
+      wf3Title: '3. المطالبة بختم مطور آرك',
+      wf3Desc: 'إصدار شارة التحقق من منظومة آرك',
+      claimStamp: builderStamp ? 'تم استلام الختم' : 'المطالبة بالختم',
+      tabTransfer: 'تحويل آرك USDC',
+      tabPos: 'فاتورة POS QR',
+      tabTreasury: 'خزانة عوائد آرك',
+      sendPlaceholder: 'إرسال إلى عنوان محفظة 0x',
+      scanQr: 'تحديث الرصيد',
+      transferRoute: 'مسار التحويل:',
+      gasUsdc: 'رسوم USDC الأصلية',
+      erc20: 'عقد ERC-20',
+      payButton: (amt: string) => isTxPending ? 'جاري معالجة المعاملة...' : `الدفع عبر آرك USDC (${amt} USDC)`,
+      infra: 'روابط البنية التحتية لمنظومة آرك',
+      explorer: 'مستكشف ArcScan',
+      faucet: 'صنبور Circle USDC',
+      docs: 'وثائق بروتوكول آرك',
+      logsTitle: 'سجلات نشاط والتحقق لشبكة آرك',
+      logsDefault: 'قم بتوصيل المحفظة لعرض نشاط التسوية.',
+      logsActive: (addr: string) => `متصل عبر Wagmi: ${addr}`,
+      clearLogs: 'مسح السجل',
+      footer: 'محرك تسوية آرك · صُمم للتوسع اللامركزي'
     }
   }[locale]
 
   const displayBalance = () => {
     if (!walletActive) return '--'
-
-    let nativeVal = 0
-    let erc20Val = 0
-
-    if (nativeBalance) {
-      nativeVal = parseFloat(nativeBalance.formatted)
+    if (isBalanceLoading && !balanceData) return 'fetching...'
+    if (isBalanceError) return '0.0000 USDC'
+    if (balanceData) {
+      return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
     }
-
-    if (erc20Balance !== undefined && erc20Balance !== null) {
-      erc20Val = parseFloat(formatUnits(BigInt(erc20Balance.toString()), 6))
-    }
-
-    const total = nativeVal + erc20Val
-
-    if (total > 0) {
-      return `${total.toFixed(4)} USDC`
-    }
-
-    if (nativeBalance || erc20Balance !== undefined) {
-      return `0.0000 USDC`
-    }
-
-    return 'fetching...'
+    return '0.0000 USDC'
   }
 
   return (
     <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          
-          {/* PERMANENT HARD-LOCKED INLINE SVG LOGO (NO BROKEN IMAGE DEPENDENCY) */}
-          <div style={{ 
-            width: '44px', 
-            height: '44px', 
-            borderRadius: '10px', 
-            background: 'linear-gradient(135deg, #2563eb 0%, #a855f7 100%)', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            flexShrink: 0,
-            boxShadow: '0 0 12px rgba(168, 85, 247, 0.3)',
-            border: '1px solid rgba(250, 204, 21, 0.5)' 
-          }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 3L2 21H7.5L12 12.5L16.5 21H22L12 3Z" fill="#ffffff" />
-              <path d="M12 6.5L8 14.5H16L12 6.5Z" fill="#0a192f" opacity="0.6" />
-            </svg>
+          {/* LOCKED ORIGINAL LOGO BLOCK */}
+          <div style={{ width: '48px', height: '48px', background: 'radial-gradient(circle, #1e3a8a 0%, #0a192f 100%)', borderRadius: '10px', border: '1px solid rgba(250, 204, 21, 0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '24px' }}>
+            🌁
           </div>
-
           <div>
             <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>
               {t.title}
@@ -488,12 +631,18 @@ function DashboardContent() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => setLocale(locale === 'en' ? 'hi' : 'en')}
-            style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '8px 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}
+          <select 
+            value={locale}
+            onChange={(e) => setLocale(e.target.value as SupportedLocale)}
+            style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '8px 10px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer', outline: 'none' }}
           >
-            {locale === 'en' ? 'हिन्दी' : 'English'}
-          </button>
+            <option value="en">English (EN)</option>
+            <option value="hi">हिंदी (HI)</option>
+            <option value="es">Español (ES)</option>
+            <option value="zh">中文 (ZH)</option>
+            <option value="fr">Français (FR)</option>
+            <option value="ar">العربية (AR)</option>
+          </select>
           <ConnectButton chainStatus="icon" showBalance={false} />
         </div>
       </header>
@@ -724,7 +873,7 @@ function DashboardContent() {
                 onChange={(e) => setRecipient(e.target.value)}
                 style={{ flex: 1, backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
               />
-              <button onClick={refetchAllBalances} style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>{t.scanQr}</button>
+              <button onClick={() => refetchBalance()} style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>{t.scanQr}</button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0a192f', padding: '8px 12px', borderRadius: '8px', border: '1px solid #1e1b4b', fontSize: '10px', color: '#94a3b8' }}>
               <span>{t.transferRoute}</span>

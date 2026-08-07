@@ -5,10 +5,10 @@ import {
   RainbowKitProvider,
   ConnectButton,
 } from '@rainbow-me/rainbowkit'
-import { WagmiProvider, useAccount, useBalance, useWriteContract, useSendTransaction, useChainId, useSwitchChain } from 'wagmi'
+import { WagmiProvider, useAccount, useBalance, useReadContract, useWriteContract, useSendTransaction, useChainId, useSwitchChain } from 'wagmi'
 import { mainnet, polygon, optimism, arbitrum, base } from 'wagmi/chains'
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query'
-import { defineChain, parseUnits } from 'viem'
+import { defineChain, parseUnits, formatUnits, http } from 'viem'
 
 export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
@@ -23,6 +23,20 @@ export const erc20Abi = [
     ],
     outputs: [{ type: 'bool' }],
   },
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    type: 'function',
+    name: 'decimals',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint8' }],
+  }
 ] as const
 
 export const arcTestnet = defineChain({
@@ -48,6 +62,9 @@ const config = getDefaultConfig({
   appName: 'Arc Settlement Hub',
   projectId: 'YOUR_PROJECT_ID',
   chains: [arcTestnet, mainnet, polygon, optimism, arbitrum, base],
+  transports: {
+    [arcTestnet.id]: http('https://rpc-testnet.arcscan.app'),
+  },
   ssr: true,
 })
 
@@ -82,14 +99,13 @@ function DashboardContent() {
   const [settlementCount, setSettlementCount] = useState(0)
   const [builderStamp, setBuilderStamp] = useState(false)
   const [txLogs, setTxLogs] = useState<TxLog[]>([])
-  const [directBalance, setDirectBalance] = useState<string | null>(null)
-  
+
   const [posAmount, setPosAmount] = useState('5.0')
   const [posQrGenerated, setPosQrGenerated] = useState(false)
   const [treasuryDeposit, setTreasuryDeposit] = useState('100')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
-  const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading, isError: isBalanceError } = useBalance({
+  const { data: nativeBalance, refetch: refetchNative } = useBalance({
     address: address,
     chainId: arcTestnet.id,
     query: {
@@ -98,44 +114,17 @@ function DashboardContent() {
     }
   })
 
-  // direct RPC balance polling for guaranteed display
-  useEffect(() => {
-    if (!address) {
-      setDirectBalance(null)
-      return
+  const { data: erc20Balance, refetch: refetchErc20 } = useReadContract({
+    address: ARC_USDC_ADDRESS as `0x${string}`,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    chainId: arcTestnet.id,
+    query: {
+      refetchInterval: 3000,
+      enabled: !!address,
     }
-
-    let isMounted = true
-    const fetchBalanceFromRpc = async () => {
-      try {
-        const res = await fetch('https://rpc-testnet.arcscan.app', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method: 'eth_getBalance',
-            params: [address, 'latest'],
-            id: 1,
-          }),
-        })
-        const json = await res.json()
-        if (json.result && isMounted) {
-          const val = BigInt(json.result)
-          const formatted = (Number(val) / 1e18).toFixed(4)
-          setDirectBalance(formatted)
-        }
-      } catch (e) {
-        console.error('direct balance fetch error', e)
-      }
-    }
-
-    fetchBalanceFromRpc()
-    const interval = setInterval(fetchBalanceFromRpc, 4000)
-    return () => {
-      isMounted = false
-      clearInterval(interval)
-    }
-  }, [address])
+  })
 
   const { sendTransactionAsync, isPending: isSendPending } = useSendTransaction()
   const { writeContractAsync, isPending: isContractPending } = useWriteContract()
@@ -163,6 +152,11 @@ function DashboardContent() {
   }, [])
 
   if (!mounted) return null
+
+  const refetchAllBalances = () => {
+    refetchNative()
+    refetchErc20()
+  }
 
   const saveLog = (newLog: TxLog) => {
     setTxLogs((prev) => {
@@ -225,7 +219,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchBalance()
+      refetchAllBalances()
     } catch (e) {
       console.error('transfer error', e)
       saveLog({
@@ -261,7 +255,7 @@ function DashboardContent() {
         status: 'completed',
         hash: hash,
       })
-      refetchBalance()
+      refetchAllBalances()
     } catch (e) {
       console.error('fee distribution error', e)
       saveLog({
@@ -436,21 +430,41 @@ function DashboardContent() {
 
   const displayBalance = () => {
     if (!walletActive) return '--'
-    if (directBalance !== null) return `${directBalance} USDC`
-    if (balanceData) return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
-    if (isBalanceError) return '0.0000 USDC'
-    if (isBalanceLoading) return 'fetching...'
-    return '0.0000 USDC'
+
+    let nativeVal = 0
+    let erc20Val = 0
+
+    if (nativeBalance) {
+      nativeVal = parseFloat(nativeBalance.formatted)
+    }
+
+    if (erc20Balance !== undefined && erc20Balance !== null) {
+      erc20Val = parseFloat(formatUnits(BigInt(erc20Balance.toString()), 6))
+    }
+
+    const total = nativeVal + erc20Val
+
+    if (total > 0) {
+      return `${total.toFixed(4)} USDC`
+    }
+
+    if (nativeBalance || erc20Balance !== undefined) {
+      return `0.0000 USDC`
+    }
+
+    return 'fetching...'
   }
 
   return (
     <main style={{ minHeight: '100vh', backgroundColor: '#0a192f', color: '#f1f5f9', padding: '16px', fontFamily: 'monospace', boxSizing: 'border-box' }}>
       <header style={{ display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'space-between', alignItems: 'stretch', backgroundColor: '#112240', padding: '16px', borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.4)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* LOGO KEPT UNTOUCHED */}
+          
+          {/* LOCKED LOGO ELEMENT */}
           <div style={{ width: '48px', height: '48px', borderRadius: '10px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(250, 204, 21, 0.4)' }}>
             <img src="/logo.png" alt="Arc Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           </div>
+
           <div>
             <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 4px 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#ffffff' }}>
               {t.title}
@@ -696,7 +710,7 @@ function DashboardContent() {
                 onChange={(e) => setRecipient(e.target.value)}
                 style={{ flex: 1, backgroundColor: '#0a192f', border: '1px solid #1e1b4b', borderRadius: '8px', padding: '10px', fontSize: '12px', color: '#f1f5f9', outline: 'none' }}
               />
-              <button onClick={() => refetchBalance()} style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>{t.scanQr}</button>
+              <button onClick={refetchAllBalances} style={{ backgroundColor: '#1e293b', color: '#cbd5e1', fontSize: '12px', padding: '0 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}>{t.scanQr}</button>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#0a192f', padding: '8px 12px', borderRadius: '8px', border: '1px solid #1e1b4b', fontSize: '10px', color: '#94a3b8' }}>
               <span>{t.transferRoute}</span>

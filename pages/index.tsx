@@ -100,6 +100,10 @@ function DashboardContent() {
     if (savedStamp) setBuilderStamp(savedStamp === 'true')
   }, [])
 
+  if (!mounted) {
+    return null
+  }
+
   const saveLog = (newLog: TxLog) => {
     setTxLogs((prev) => {
       const updated = [newLog, ...prev]
@@ -113,7 +117,7 @@ function DashboardContent() {
     localStorage.setItem('arc_bound_id', val)
   }
 
-  const walletActive = mounted && isConnected
+  const walletActive = isConnected
 
   const handlePay = () => {
     if (!recipient || !amount) return
@@ -308,6 +312,7 @@ function DashboardContent() {
       docs: 'arc protocol docs',
       logsTitle: 'arc network activity & verification logs',
       logsDefault: 'connect wallet to view arc settlement activity.',
+      logsActive: (addr: string) => `connected via wagmi: ${addr}`,
       clearLogs: 'clear history',
       footer: 'arc settlement engine · built for decentralized scale'
     },
@@ -359,6 +364,7 @@ function DashboardContent() {
       docs: 'आर्क प्रोटोकॉल दस्तावेज़',
       logsTitle: 'आर्क नेटवर्क गतिविधि और सत्यापन लॉग',
       logsDefault: 'आर्क सेटलमेंट गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
+      logsActive: (addr: string) => `वाग्मी (Wagmi) से कनेक्टेड: ${addr}`,
       clearLogs: 'हिस्ट्री साफ़ करें',
       footer: 'आर्क सेटलमेंट इंजन · विकेंद्रीकृत पैमाने के लिए निर्मित'
     }

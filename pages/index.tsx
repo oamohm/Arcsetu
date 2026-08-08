@@ -303,59 +303,8 @@ interface ModalDetails {
 }
 
 const ARC_USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+// Fixed: Valid 42-character EVM address for treasury vault
 const DEFAULT_TREASURY = '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b21A0'
-
-function RotatingArcCoinLogo() {
-  return (
-    <>
-      <style>{`
-        @keyframes spinArcLogo3d {
-          0% { transform: rotateY(0deg); }
-          100% { transform: rotateY(360deg); }
-        }
-        .arc-3d-coin {
-          animation: spinArcLogo3d 5s linear infinite;
-          transform-style: preserve-3d;
-        }
-        .arc-3d-face {
-          backface-visibility: hidden;
-          -webkit-backface-visibility: hidden;
-        }
-        .arc-3d-back {
-          transform: rotateY(180deg);
-        }
-      `}</style>
-      <div className="w-10 h-10 [perspective:1000px] flex items-center justify-center shrink-0">
-        <div className="relative w-full h-full arc-3d-coin cursor-pointer">
-          {/* Front Side: ARC */}
-          <div className="absolute inset-0 w-full h-full rounded-xl bg-gradient-to-tr from-purple-950 via-[#130b24] to-indigo-950 border border-purple-500/60 flex items-center justify-center arc-3d-face shadow-lg shadow-purple-950/80">
-            <span className="text-purple-300 font-bold text-[11px] tracking-wider font-mono">
-              ARC
-            </span>
-          </div>
-
-          {/* Back Side: Bridge Icon */}
-          <div className="absolute inset-0 w-full h-full rounded-xl bg-gradient-to-tr from-purple-950 via-[#130b24] to-indigo-950 border border-purple-500/60 flex items-center justify-center arc-3d-face arc-3d-back shadow-lg shadow-purple-950/80">
-            <svg
-              className="w-5 h-5 text-purple-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M3 17h18" />
-              <path d="M4 17c0-4.418 3.582-8 8-8s8 3.582 8 8" />
-              <path d="M8 17v-3" />
-              <path d="M16 17v-3" />
-            </svg>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
@@ -652,7 +601,7 @@ export default function Home() {
       triggerSuccess('Arc Network Speed Test Passed', '0.00001 USDC', hash, latencyMs)
     } catch (e) {
       console.error(e)
-    } fontinally {
+    } finally {
       setSpeedTestRunning(false)
     }
   }
@@ -771,10 +720,16 @@ export default function Home() {
         
         <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 gap-3">
           <div className="flex items-center gap-3">
-            
-            {/* 3D Rotating Logo Component */}
-            <RotatingArcCoinLogo />
-
+            {/* Custom Glowing Arc Logo */}
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-900 via-[#130b24] to-indigo-900 rounded-xl flex items-center justify-center text-purple-300 border border-purple-500/50 shrink-0 shadow-lg shadow-purple-950/60 relative overflow-hidden">
+              <div className="absolute inset-0 bg-purple-500/10 blur-sm"></div>
+              <svg className="w-6 h-6 text-purple-400 relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 17a9 9 0 0 1 18 0" className="text-purple-400" />
+                <path d="M6 17a6 6 0 0 1 12 0" className="text-indigo-400" />
+                <path d="M9 17a3 3 0 0 1 6 0" className="text-purple-300" />
+                <circle cx="12" cy="17" r="1" fill="currentColor" className="text-emerald-400" />
+              </svg>
+            </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-sm sm:text-base font-bold tracking-tight text-white truncate">{t.title}</h1>

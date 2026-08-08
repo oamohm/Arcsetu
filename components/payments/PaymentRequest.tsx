@@ -1,9 +1,8 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { isAddress } from 'viem'
-import { useAccount } from 'wagmi'
 
 interface PaymentRequestProps {
-  onRequestCreated?: (data: {
+  onRequestCreated?: (request: {
     recipient: string
     amount: string
     memo: string
@@ -13,108 +12,103 @@ interface PaymentRequestProps {
 export default function PaymentRequest({
   onRequestCreated,
 }: PaymentRequestProps) {
-  const { address, isConnected } = useAccount()
-
   const [amount, setAmount] = useState('')
+  const [recipient, setRecipient] = useState('')
   const [memo, setMemo] = useState('')
-  const [status, setStatus] = useState('')
+  const [message, setMessage] = useState('')
 
   const createRequest = () => {
-    setStatus('')
+    setMessage('')
 
-    if (!isConnected || !address) {
-      setStatus('Please connect your wallet first.')
+    if (!recipient) {
+      setMessage('Please enter a wallet address.')
       return
     }
 
-    if (!amount || Number(amount) <= 0) {
-      setStatus('Enter a valid USDC amount.')
+    if (!isAddress(recipient)) {
+      setMessage('Invalid wallet address.')
       return
     }
 
-    if (!isAddress(address)) {
-      setStatus('Connected wallet address is invalid.')
+    const numericAmount = Number(amount)
+
+    if (!amount || !Number.isFinite(numericAmount) || numericAmount <= 0) {
+      setMessage('Enter a valid payment amount.')
       return
     }
 
     const request = {
-      recipient: address,
+      recipient,
       amount,
       memo: memo.trim(),
     }
 
     onRequestCreated?.(request)
 
-    setStatus('Payment request created successfully.')
+    setMessage('Payment request created successfully.')
   }
 
   return (
-    <section className="bg-[#0a0d14] border border-slate-800 rounded-xl p-4 space-y-3">
-      <div>
-        <h2 className="text-sm font-semibold text-purple-400">
-          USDC Payment Request
-        </h2>
-
-        <p className="text-[10px] text-slate-400 mt-1">
-          Create a payment request using your connected Arc wallet.
-        </p>
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-[10px] text-slate-400">
-          Amount (USDC)
-        </label>
-
-        <input
-          type="text"
-          inputMode="decimal"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="0.00"
-          className="w-full bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
-        />
-      </div>
-
-      <div className="space-y-2">
-        <label className="block text-[10px] text-slate-400">
-          Memo
-        </label>
-
-        <input
-          type="text"
-          value={memo}
-          onChange={(e) => setMemo(e.target.value)}
-          placeholder="What is this payment for?"
-          className="w-full bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
-        />
-      </div>
-
-      <div className="bg-[#05070a] border border-slate-800 rounded-lg p-2.5">
-        <p className="text-[9px] text-slate-500">
-          Receiving wallet
-        </p>
-
-        <p className="text-[10px] text-purple-300 break-all mt-1">
-          {address || 'Connect wallet'}
-        </p>
-      </div>
-
-      <button
-        type="button"
-        onClick={createRequest}
-        disabled={!isConnected}
-        className="w-full bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-medium rounded-lg py-2 transition-all"
-      >
-        Create USDC Request
-      </button>
-
-      {status && (
-        <div className="bg-purple-950/40 border border-purple-900/60 rounded-lg p-2">
-          <p className="text-[10px] text-purple-300">
-            {status}
-          </p>
+    <section className="arc-card">
+      <div className="arc-card-header">
+        <div>
+          <p className="arc-label">ARCSETU PAYMENTS</p>
+          <h2>Payment Request</h2>
         </div>
-      )}
+
+        <span className="arc-status online">
+          Ready
+        </span>
+      </div>
+
+      <div className="arc-form">
+        <label>
+          Recipient Wallet
+          <input
+            type="text"
+            value={recipient}
+            onChange={(e) => setRecipient(e.target.value)}
+            placeholder="0x..."
+          />
+        </label>
+
+        <label>
+          Amount
+          <input
+            type="number"
+            min="0"
+            step="0.000001"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+          />
+        </label>
+
+        <label>
+          Memo
+          <input
+            type="text"
+            value={memo}
+            onChange={(e) => setMemo(e.target.value)}
+            placeholder="Optional payment description"
+            maxLength={120}
+          />
+        </label>
+
+        <button
+          type="button"
+          onClick={createRequest}
+          className="arc-primary-button"
+        >
+          Create Payment Request
+        </button>
+
+        {message && (
+          <div className="arc-message">
+            {message}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

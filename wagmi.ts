@@ -1,33 +1,38 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
 import { defineChain } from 'viem'
 
+/**
+ * Arc Testnet
+ * Chain ID: 5042002
+ */
 export const arcTestnet = defineChain({
   id: 5042002,
   name: 'Arc Testnet',
-  nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 18 },
+  nativeCurrency: {
+    name: 'USDC',
+    symbol: 'USDC',
+    decimals: 6,
+  },
   rpcUrls: {
-    default: { http: ['https://rpc.testnet.arc.network'] },
+    default: {
+      http: ['https://rpc.testnet.arc.network'],
+    },
   },
   blockExplorers: {
-    default: { name: 'ArcScan', url: 'https://testnet.arcscan.app' },
+    default: {
+      name: 'Arcscan',
+      url: 'https://testnet.arcscan.app',
+      apiUrl: 'https://testnet.arcscan.app/api',
+    },
   },
-})
-
-export const giwaSepolia = defineChain({
-  id: 910001,
-  name: 'GIWA Sepolia',
-  nativeCurrency: { name: 'Ethereum', symbol: 'ETH', decimals: 18 },
-  rpcUrls: {
-    default: { http: ['https://sepolia-rpc.giwa.io'] },
-  },
-  blockExplorers: {
-    default: { name: 'GIWA Explorer', url: 'https://sepolia-explorer.giwa.io' },
-  },
+  testnet: true,
 })
 
 export const config = getDefaultConfig({
-  appName: 'GIWASETU',
-  projectId: '044601f652123a476740d132b8e83b3e',
-  chains: [arcTestnet, giwaSepolia],
+  appName: 'Arcsetu',
+  projectId:
+    process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
+    'YOUR_WALLETCONNECT_PROJECT_ID',
+  chains: [arcTestnet],
   ssr: true,
 })

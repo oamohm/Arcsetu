@@ -7,7 +7,7 @@ type Lang = 'en' | 'ko' | 'hi' | 'es'
 
 const translations = {
   en: {
-    title: 'Arcsetu',
+    title: 'Setu',
     subtitle: 'programmable usdc settlement engine on arc network',
     identityHeader: 'arc multi-chain identity',
     verified: 'verified arc builder',

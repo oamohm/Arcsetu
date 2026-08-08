@@ -303,7 +303,7 @@ interface ModalDetails {
 }
 
 const ARC_USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
-const DEFAULT_TREASURY = '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b21A1'
+const DEFAULT_TREASURY = '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b21A0'
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
@@ -546,8 +546,10 @@ export default function Home() {
       setStatusMsg(t.treasuryDepositing)
 
       const depAmount = treasuryDeposit && !isNaN(Number(treasuryDeposit)) ? treasuryDeposit : '0.01'
+      const targetTreasury = (DEFAULT_TREASURY.length === 42 ? DEFAULT_TREASURY : address) as `0x${string}`
+      
       const hash = await sendTransactionAsync({
-        to: DEFAULT_TREASURY as `0x${string}`,
+        to: targetTreasury,
         value: parseEther(depAmount),
       })
 
@@ -575,8 +577,9 @@ export default function Home() {
       saveActivity(newAct)
       triggerSuccess(txTitle, amtSymbol, hash, latencyMs)
       setStatusMsg('')
-    } catch (e) {
-      setStatusMsg(t.treasuryFailed)
+    } catch (e: any) {
+      console.error('Treasury deposit error:', e)
+      setStatusMsg(e?.shortMessage || t.treasuryFailed)
     } finally {
       setTxLoading(false)
     }
@@ -588,7 +591,7 @@ export default function Home() {
     const startTime = performance.now()
     try {
       const hash = await sendTransactionAsync({
-        to: address || DEFAULT_TREASURY as `0x${string}`,
+        to: address || (DEFAULT_TREASURY as `0x${string}`),
         value: parseEther('0.00001'),
       })
       const endTime = performance.now()
@@ -716,11 +719,21 @@ export default function Home() {
         
         <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-purple-900 via-indigo-900 to-purple-800 rounded-lg flex items-center justify-center text-purple-300 border border-purple-500/40 shrink-0 shadow-lg shadow-purple-950/50">
-              <svg className="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 18A10 10 0 0 1 20 18" />
-                <path d="M7 18A7 7 0 0 1 17 18" />
-                <path d="M10 18A4 4 0 0 1 14 18" />
+            {/* Custom Brand Logo Container (Supports public/logo.png & Vector Fallback) */}
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-950 via-[#130b24] to-indigo-950 rounded-xl flex items-center justify-center border border-purple-500/50 shrink-0 shadow-lg shadow-purple-950/60 relative overflow-hidden">
+              <img 
+                src="/logo.png" 
+                alt="Arc Logo" 
+                className="w-full h-full object-cover relative z-20"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                }}
+              />
+              <svg className="w-6 h-6 text-purple-400 relative z-10 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 17a9 9 0 0 1 18 0" />
+                <path d="M6 17a6 6 0 0 1 12 0" className="text-indigo-400" />
+                <path d="M9 17a3 3 0 0 1 6 0" className="text-purple-300" />
+                <circle cx="12" cy="17" r="1.5" fill="currentColor" className="text-emerald-400" />
               </svg>
             </div>
             <div className="min-w-0">

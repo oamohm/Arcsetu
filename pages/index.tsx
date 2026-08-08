@@ -65,7 +65,15 @@ const translations = {
     estAnnualYield: 'estimated annual yield',
     depositToVault: 'deposit to vault',
     depositing: 'depositing...',
-    scanned: 'scanned: '
+    scanned: 'scanned: ',
+    taskHeader: 'arc builder incentives & tasks',
+    taskStreakTitle: 'daily settlement streak',
+    taskStreakDesc: 'complete 3 settlements to unlock +0.5% yield boost',
+    taskAgentTitle: 'agentic micro-task ping',
+    taskAgentDesc: 'run automated RPC verification ping for 0.0001 USDC payout',
+    taskAgentBtn: 'run verification ping',
+    taskRebateActive: '5% POS fee rebate active with builder stamp',
+    taskRebateInactive: 'claim builder stamp to unlock POS fee rebate'
   },
   hi: {
     title: 'आर्क सेटलमेंट हब',
@@ -126,7 +134,15 @@ const translations = {
     estAnnualYield: 'अनुमानित वार्षिक ईल्ड',
     depositToVault: 'वॉल्ट में जमा करें',
     depositing: 'जमा हो रहा है...',
-    scanned: 'स्कैन हुआ: '
+    scanned: 'स्कैन हुआ: ',
+    taskHeader: 'आर्क बिल्डर इंसेंटिव और टास्क',
+    taskStreakTitle: 'डेली सेटलमेंट स्ट्रीक',
+    taskStreakDesc: '+0.5% ईल्ड बूस्ट अनलॉक करने के लिए 3 सेटलमेंट करें',
+    taskAgentTitle: 'एजेंटिक माइक्रो-टास्क पिंग',
+    taskAgentDesc: '0.0001 USDC पेआउट के लिए RPC सत्यापन पिंग चलाएं',
+    taskAgentBtn: 'वेरिफिकेशन पिंग चलाएं',
+    taskRebateActive: 'बिल्डर स्टैम्प के साथ 5% POS फ़ीस रीबेट सक्रिय है',
+    taskRebateInactive: 'POS फ़ीस रीबेट अनलॉक करने के लिए बिल्डर स्टैम्प क्लेम करें'
   },
   ko: {
     title: 'ARC SETTLEMENT HUB',
@@ -187,7 +203,15 @@ const translations = {
     estAnnualYield: '예상 연간 수익',
     depositToVault: '금고에 입금',
     depositing: '입금 중...',
-    scanned: '스캔됨: '
+    scanned: '스캔됨: ',
+    taskHeader: 'arc 빌더 인센티브 및 미션',
+    taskStreakTitle: '일일 정산 스트릭',
+    taskStreakDesc: '정산 3회 완료 시 +0.5% 수익률 부스트 해제',
+    taskAgentTitle: '에이전틱 마이크로 태스크 핑',
+    taskAgentDesc: '0.0001 USDC 보상을 위한 RPC 검증 핑 실행',
+    taskAgentBtn: '검증 핑 실행',
+    taskRebateActive: '빌더 스탬프 보유로 5% POS 수수료 환급 활성화됨',
+    taskRebateInactive: 'POS 수수료 환급을 위해 빌더 스탬프를 받으세요'
   },
   es: {
     title: 'ARC SETTLEMENT HUB',
@@ -248,7 +272,15 @@ const translations = {
     estAnnualYield: 'rendimiento anual estimado',
     depositToVault: 'depositar en bóveda',
     depositing: 'depositando...',
-    scanned: 'escaneado: '
+    scanned: 'escaneado: ',
+    taskHeader: 'incentivos y tareas de creador arc',
+    taskStreakTitle: 'racha diaria de liquidación',
+    taskStreakDesc: 'complete 3 liquidaciones para desbloquear +0.5% de rendimiento extra',
+    taskAgentTitle: 'ping de microtarea de agente',
+    taskAgentDesc: 'ejecute ping de verificación RPC para un pago de 0.0001 USDC',
+    taskAgentBtn: 'ejecutar ping de verificación',
+    taskRebateActive: 'reembolso del 5% en tarifas POS activo con sello de creador',
+    taskRebateInactive: 'reclame el sello de creador para desbloquear reembolso en tarifas POS'
   }
 }
 
@@ -271,7 +303,7 @@ interface ModalDetails {
 }
 
 const ARC_USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
-const DEFAULT_TREASURY = '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+const DEFAULT_TREASURY = '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b21A1'
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
@@ -294,7 +326,7 @@ export default function Home() {
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
-  const [treasuryDeposit, setTreasuryDeposit] = useState('1.0')
+  const [treasuryDeposit, setTreasuryDeposit] = useState('0.01')
   const [vaultBalance, setVaultBalance] = useState('0.00')
 
   const [cctpModalOpen, setCctpModalOpen] = useState(false)
@@ -513,7 +545,7 @@ export default function Home() {
       setTxLoading(true)
       setStatusMsg(t.treasuryDepositing)
 
-      const depAmount = treasuryDeposit && !isNaN(Number(treasuryDeposit)) ? treasuryDeposit : '1.0'
+      const depAmount = treasuryDeposit && !isNaN(Number(treasuryDeposit)) ? treasuryDeposit : '0.01'
       const hash = await sendTransactionAsync({
         to: DEFAULT_TREASURY as `0x${string}`,
         value: parseEther(depAmount),
@@ -674,6 +706,8 @@ export default function Home() {
   }
 
   const activeResolvedAddress = recipient ? resolveRecipientAddress(recipient) : null
+  const isStreakUnlocked = practiceCount >= 3
+  const effectiveApy = isStreakUnlocked ? '5.35% apy' : '4.85% apy'
 
   return (
     <main className="min-h-screen bg-[#05070a] text-slate-100 p-3 sm:p-6 font-mono relative overflow-x-hidden">
@@ -682,8 +716,12 @@ export default function Home() {
         
         <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-purple-800 to-indigo-600 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0">
-              ARC
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-900 via-indigo-900 to-purple-800 rounded-lg flex items-center justify-center text-purple-300 border border-purple-500/40 shrink-0 shadow-lg shadow-purple-950/50">
+              <svg className="w-6 h-6 text-purple-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 18A10 10 0 0 1 20 18" />
+                <path d="M7 18A7 7 0 0 1 17 18" />
+                <path d="M10 18A4 4 0 0 1 14 18" />
+              </svg>
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
@@ -814,6 +852,47 @@ export default function Home() {
               </button>
 
             </div>
+          </div>
+        </section>
+
+        <section className="bg-[#0a0d14] p-4 rounded-xl border border-indigo-900/40 space-y-3">
+          <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">{t.taskHeader}</span>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-200 font-bold">{t.taskStreakTitle}</span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded border font-mono ${
+                  isStreakUnlocked 
+                    ? 'bg-emerald-950 text-emerald-400 border-emerald-800' 
+                    : 'bg-slate-900 text-slate-400 border-slate-800'
+                }`}>
+                  {practiceCount}/3 txns
+                </span>
+              </div>
+              <p className="text-[10px] text-slate-400">{t.taskStreakDesc}</p>
+            </div>
+
+            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 space-y-1">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-200 font-bold">{t.taskAgentTitle}</span>
+                <button 
+                  onClick={handlePracticeTx}
+                  disabled={txLoading || !isConnected}
+                  className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white text-[10px] px-2 py-0.5 rounded transition-all font-medium"
+                >
+                  {t.taskAgentBtn}
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-400">{t.taskAgentDesc}</p>
+            </div>
+          </div>
+
+          <div className="bg-[#05070a] p-2.5 rounded-lg border border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+            <span>pos fee status:</span>
+            <span className={stampIssued ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+              {stampIssued ? t.taskRebateActive : t.taskRebateInactive}
+            </span>
           </div>
         </section>
 
@@ -1029,7 +1108,7 @@ export default function Home() {
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] text-slate-400">{t.currentVaultYield}</p>
-                  <p className="text-xs font-bold text-emerald-400">4.85% apy</p>
+                  <p className="text-xs font-bold text-emerald-400">{effectiveApy}</p>
                 </div>
               </div>
 
@@ -1041,7 +1120,7 @@ export default function Home() {
                 <div className="bg-[#0a0d14] p-2.5 rounded-lg border border-slate-800">
                   <p className="text-[10px] text-slate-400">{t.estAnnualYield}</p>
                   <p className="text-xs font-bold text-emerald-400 mt-0.5">
-                    {(parseFloat(vaultBalance) * 0.0485).toFixed(4)} usdc
+                    {(parseFloat(vaultBalance) * (isStreakUnlocked ? 0.0535 : 0.0485)).toFixed(4)} usdc
                   </p>
                 </div>
               </div>

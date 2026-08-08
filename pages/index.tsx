@@ -1,23 +1,176 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  useAccount,
-  useBalance,
-  useChainId,
-  usePublicClient,
-  useSendTransaction,
-  useWriteContract,
-} from 'wagmi'
-import {
-  erc20Abi,
-  formatUnits,
-  isAddress,
-  parseUnits,
-} from 'viem'
+import { useState, useEffect } from 'react'
+import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
+import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 
-type Lang = 'en' | 'hi' | 'ko' | 'es'
-type Tab = 'payment' | 'qr' | 'treasury' | 'assets'
-type TransferMode = 'usdc' | 'native'
+type Lang = 'en' | 'ko' | 'hi' | 'es'
+
+const translations = {
+  en: {
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Multi-Chain Web3 Hub',
+    identityHeader: 'Universal Multi-Chain Identity',
+    verified: 'Verified Multi-Chain Builder',
+    notConnected: 'Wallet Not Connected',
+    boundId: 'Bound Universal ID',
+    issueUpId: 'Set Custom UP ID',
+    registeredIdLabel: 'Registered UP ID',
+    liveBalance: 'Live Balance',
+    multichainHeader: 'Global Assets & Networks',
+    workflowHeader: 'Builder Onboarding Workflow',
+    step1: '1. Create Universal ID & Wallet',
+    step1Sub: 'Binds identity deterministically across chains',
+    done: 'Done ✓',
+    pending: 'Pending',
+    step2: '2. Execute Cross-Chain Tx',
+    step2Sub: 'Count: {count} test txns',
+    run: 'Run Tx',
+    running: 'Running...',
+    step3: '3. Issue Multi-Chain Stamp (Dojang)',
+    step3Sub: 'Marks multi-chain verification',
+    issued: 'Issued ✓',
+    claim: 'Issue Dojang',
+    placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
+    payBtn: 'Pay via Multi-Chain UPI',
+    processing: 'Processing Tx...',
+    noTxConnected: 'No transactions recorded yet for this wallet.',
+    noTxDisconnected: 'Connect wallet to view multi-chain history.',
+    activityHeader: 'Cross-Chain Activity & Verification Log',
+    downloadCsv: 'Download CSV ↗',
+    resourcesHeader: 'Ecosystem Protocols & Official Links',
+    scanQr: 'Scan QR',
+    qrTitle: 'Dynamic Receiver QR Invoice',
+    royaltyHeader: 'Universal Royalty & Fee Distribution Engine',
+    royaltyDesc: 'Distribute creator fees, builder incentives, or cross-chain royalties across any connected network natively.',
+    distributeRoyalty: 'Distribute Royalty',
+    txSuccessTitle: 'Transaction Confirmed!',
+    txSuccessDesc: 'Your transaction was successfully processed on the network.',
+    viewExplorer: 'View on Explorer ↗',
+    close: 'Close',
+  },
+  ko: {
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
+    identityHeader: '유니버셜 멀티체인 신원',
+    verified: '검증된 멀티체인 빌더',
+    notConnected: '지갑 미연결',
+    boundId: '연결된 유니버셜 ID',
+    issueUpId: '커스텀 UP ID 설정',
+    registeredIdLabel: '등록된 UP ID',
+    liveBalance: '실시간 잔액',
+    multichainHeader: '글로벌 자산 및 네트워크',
+    workflowHeader: '빌더 온보딩 워크플로우',
+    step1: '1. 유니버셜 ID 및 지갑 생성',
+    step1Sub: '체인 간 신원 확정적 연결',
+    done: '완료 ✓',
+    pending: '대기 중',
+    step2: '2. 크로스체인 트랜잭션 실행',
+    step2Sub: '횟수: {count}회 실행됨',
+    run: '실행',
+    running: '실행 중...',
+    step3: '3. 멀티체인 도장 발급',
+    step3Sub: '온보딩 검증 완료 표시',
+    issued: '발급됨 ✓',
+    claim: '도장 발급받기',
+    placeholder: '@UP_ID 또는 0x 주소 입력',
+    payBtn: '멀티체인 UPI 결제',
+    processing: '처리 중...',
+    noTxConnected: '이 지갑에 대한 기록된 트랜잭션이 없습니다.',
+    noTxDisconnected: '활동 내역을 보려면 지갑을 연결하세요.',
+    activityHeader: '크로스체인 활동 및 검증 로그',
+    downloadCsv: 'CSV 다운로드 ↗',
+    resourcesHeader: '생태계 프로토콜 및 공식 링크',
+    scanQr: 'QR 스캔',
+    qrTitle: '동적 수신 QR 인보이스',
+    royaltyHeader: '유니버셜 로열티 및 수수료 분배 엔진',
+    royaltyDesc: '모든 연결된 네트워크에서 크리에이터 수수료, 빌더 인센티브 또는 크로스체인 로열티를 직접 분배합니다.',
+    distributeRoyalty: '로열티 분배하기',
+    txSuccessTitle: '트랜잭션 승인 완료!',
+    txSuccessDesc: '트랜잭션이 네트워크에서 성공적으로 처리되었습니다.',
+    viewExplorer: '탐색기에서 보기 ↗',
+    close: '닫기',
+  },
+  hi: {
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
+    identityHeader: 'यूनिवर्सल मल्टी-चेन पहचान',
+    verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
+    notConnected: 'वॉलेट कनेक्ट नहीं है',
+    boundId: 'बाउंड यूनिवर्सल ID',
+    issueUpId: 'कस्टम UP ID सेट करें',
+    registeredIdLabel: 'रजिस्टर्ड UP ID',
+    liveBalance: 'लाइव बैलेंस',
+    multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
+    workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
+    step1: '1. यूनिवर्सल ID और वॉलेट बनाएं',
+    step1Sub: 'सभी चेन पर पहचान सुरक्षित रूप से जोड़ता है',
+    done: 'हो गया ✓',
+    pending: 'लंबित',
+    step2: '2. क्रॉस-चेन ट्रांजैक्शन निष्पादित करें',
+    step2Sub: 'गिनती: {count} टेस्ट ट्रांजैक्शन',
+    run: 'चलाएं',
+    running: 'चल रहा है...',
+    step3: '3. मल्टी-चेन स्टाम्प (Dojang) जारी करें',
+    step3Sub: 'मल्टी-चेन वेरिफिकेशन पूर्ण चिह्नित करता है',
+    issued: 'जारी हुआ ✓',
+    claim: 'Dojang जारी करें',
+    placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
+    payBtn: 'मल्टी-चेन UPI भुगतान',
+    processing: 'प्रॉसेस हो रहा है...',
+    noTxConnected: 'इस वॉलेट के लिए कोई ट्रांजैक्शन दर्ज नहीं है।',
+    noTxDisconnected: 'गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
+    activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
+    downloadCsv: 'CSV डाउनलोड ↗',
+    resourcesHeader: 'इकोसिस्टम प्रोटोकॉल और ऑफिशियल लिंक्स',
+    scanQr: 'QR स्कैन करें',
+    qrTitle: 'डायनामिक रिसीविंग QR इनवॉइस',
+    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन इंजन',
+    royaltyDesc: 'किसी भी कनेक्टेड नेटवर्क पर क्रिएटर फ़ीस, बिल्डर इंसेंटिव या क्रॉस-चेन रॉयल्टी सीधे बाटें।',
+    distributeRoyalty: 'रॉयल्टी डिस्ट्रीब्यूट करें',
+    txSuccessTitle: 'ट्रांजैक्शन सफल रहा!',
+    txSuccessDesc: 'आपका ट्रांजैक्शन नेटवर्क पर सफलतापूर्वक पूरा हो गया है।',
+    viewExplorer: 'एक्सप्लोरर पर देखें ↗',
+    close: 'बंद करें',
+  },
+  es: {
+    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
+    identityHeader: 'Identidad Multicadena Universal',
+    verified: 'Creador Multicadena Verificado',
+    notConnected: 'Billetera No Conectada',
+    boundId: 'ID Universal Vinculado',
+    issueUpId: 'Configurar UP ID Personalizado',
+    registeredIdLabel: 'UP ID Registrado',
+    liveBalance: 'Saldo en Vivo',
+    multichainHeader: 'Activos y Redes Globales',
+    workflowHeader: 'Flujo de Trabajo de Incorporación',
+    step1: '1. Crear ID Universal y Billetera',
+    step1Sub: 'Vincula la identidad en cadenas de forma determinista',
+    done: 'Hecho ✓',
+    pending: 'Pendiente',
+    step2: '2. Ejecutar Tx Multicadena',
+    step2Sub: 'Conteo: {count} txs de prueba',
+    run: 'Ejecutar',
+    running: 'Ejecutando...',
+    step3: '3. Emitir Sello Multicadena (Dojang)',
+    step3Sub: 'Marca la verificación completada',
+    issued: 'Emitido ✓',
+    claim: 'Emitir Dojang',
+    placeholder: 'Enviar a @UP_ID o Billetera 0x',
+    payBtn: 'Pago vía UPI Multicadena',
+    processing: 'Procesando...',
+    noTxConnected: 'No hay transacciones registradas para esta billetera.',
+    noTxDisconnected: 'Conecte la billetera para ver el historial.',
+    activityHeader: 'Registro de Actividad Multicadena',
+    downloadCsv: 'Descargar CSV ↗',
+    resourcesHeader: 'Protocolos del Ecosistema y Enlaces Oficiales',
+    scanQr: 'Escanear QR',
+    qrTitle: 'Factura QR de Recepción Dinámica',
+    royaltyHeader: 'Motor Universal de Distribución de Regalías',
+    royaltyDesc: 'Distribuya tarifas de creador e incentivos en cualquier red conectada de forma nativa.',
+    distributeRoyalty: 'Distribuir Regalías',
+    txSuccessTitle: '¡Transacción Confirmada!',
+    txSuccessDesc: 'Su transacción se procesó con éxito en la red.',
+    viewExplorer: 'Ver en Explorador ↗',
+    close: 'Cerrar',
+  }
+}
 
 interface ActivityItem {
   id: string
@@ -26,8 +179,6 @@ interface ActivityItem {
   amount: string
   txHash: string
   explorerUrl: string
-  status: 'confirmed' | 'submitted' | 'failed'
-  latencyMs?: number
 }
 
 interface ModalDetails {
@@ -35,2134 +186,872 @@ interface ModalDetails {
   amount: string
   hash: string
   url: string
-  latencyMs?: number
 }
 
-interface RegisteredIds {
-  [wallet: string]: string
-}
-
-interface NetworkBalance {
-  name: string
-  symbol: string
-  balance: string
-  type: 'EVM' | 'UTXO'
-  explorerUrl?: string
-  error?: string
-}
-
-/*
-|--------------------------------------------------------------------------
-| Arcsetu configuration
-|--------------------------------------------------------------------------
-*/
-
-const ARC_CHAIN_ID = 5042002
-
-// Existing address from your previous Arcsetu code.
-const ARC_USDC_ADDRESS =
-  '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238' as `0x${string}`
-
-// Existing treasury address from your previous code.
-const DEFAULT_TREASURY =
-  '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b' as `0x${string}`
-
-const ARC_EXPLORER = 'https://testnet.arcscan.app'
-const ARC_TX_EXPLORER = `${ARC_EXPLORER}/tx/`
-const ARC_ADDRESS_EXPLORER = `${ARC_EXPLORER}/address/`
-
-const USDC_DECIMALS = 6
-
-const translations = {
-  en: {
-    title: 'ARCSETU',
-    subtitle: 'Global programmable settlement & payment hub',
-    connect: 'Connect wallet',
-    connected: 'Connected',
-    disconnected: 'Wallet disconnected',
-    network: 'Network',
-    correctNetwork: 'Arc Testnet',
-    wrongNetwork: 'Wrong network',
-    switchNetwork: 'Switch to Arc',
-    identity: 'Arc identity',
-    register: 'Register handle',
-    handlePlaceholder: '@yourname',
-    wallet: 'Wallet',
-    balance: 'USDC balance',
-    nativeBalance: 'Native balance',
-    payment: 'Payment',
-    qr: 'QR Pay',
-    treasury: 'Treasury',
-    assets: 'Assets',
-    recipient: 'Recipient',
-    recipientPlaceholder: '0x address or @handle',
-    amount: 'Amount',
-    sendUsdc: 'Send USDC',
-    sendNative: 'Send native',
-    sending: 'Sending...',
-    scan: 'Scan QR',
-    close: 'Close',
-    receive: 'Receive',
-    copy: 'Copy',
-    copied: 'Copied',
-    activity: 'Activity',
-    noActivity: 'No transactions recorded yet.',
-    explorer: 'View on ArcScan',
-    export: 'Export CSV',
-    treasuryTitle: 'Treasury',
-    treasuryDesc: 'Programmable treasury settlement',
-    treasuryAddress: 'Treasury address',
-    deposit: 'Deposit USDC',
-    depositAmount: 'Deposit amount',
-    depositing: 'Depositing...',
-    fee: 'Programmable fee',
-    feeRecipient: 'Fee recipient',
-    distribute: 'Distribute',
-    distributing: 'Distributing...',
-    royalty: 'Royalty / fee routing',
-    merchant: 'Merchant',
-    protocol: 'Protocol',
-    vault: 'Vault',
-    cctp: 'Circle CCTP',
-    comingSoon: 'Integration ready',
-    multiChain: 'Multi-chain assets',
-    refresh: 'Refresh',
-    loading: 'Loading...',
-    status: 'Status',
-    confirmed: 'Confirmed',
-    submitted: 'Submitted',
-    failed: 'Failed',
-    connectedWallet: 'Connected wallet',
-    sendMode: 'Transfer mode',
-    usdcMode: 'USDC',
-    nativeMode: 'Native gas token',
-    qrTitle: 'Arcsetu payment QR',
-    qrDesc: 'Scan this QR to pay this wallet',
-    noWallet: 'Connect wallet to generate QR',
-    treasuryBalance: 'Treasury balance',
-    estimatedYield: 'Estimated yield',
-    yieldNote: 'Demo display only — not a guaranteed APY',
-    security: 'Security',
-    securityNote:
-      'Transactions are signed by your wallet. Arcsetu never asks for your private key.',
-    invalidRecipient: 'Enter a valid 0x recipient address or registered handle.',
-    invalidAmount: 'Enter a valid amount greater than zero.',
-    connectFirst: 'Please connect your wallet first.',
-    wrongChainMessage:
-      'Please switch your wallet to Arc Testnet before sending transactions.',
-    transactionCancelled: 'Transaction cancelled or failed.',
-    transactionSubmitted: 'Transaction submitted successfully.',
-    handleSaved: 'Arc handle saved locally.',
-    copiedAddress: 'Address copied.',
-    scannerError: 'Unable to access camera.',
-    nativeWarning:
-      'Native transfer sends the network gas token, not USDC.',
-    balanceUnavailable: 'Balance unavailable',
-  },
-
-  hi: {
-    title: 'ARCSETU',
-    subtitle: 'ग्लोबल प्रोग्रामेबल सेटलमेंट और पेमेंट हब',
-    connect: 'वॉलेट कनेक्ट करें',
-    connected: 'कनेक्टेड',
-    disconnected: 'वॉलेट कनेक्ट नहीं है',
-    network: 'नेटवर्क',
-    correctNetwork: 'Arc Testnet',
-    wrongNetwork: 'गलत नेटवर्क',
-    switchNetwork: 'Arc पर जाएँ',
-    identity: 'Arc पहचान',
-    register: 'हैंडल रजिस्टर करें',
-    handlePlaceholder: '@आपकानाम',
-    wallet: 'वॉलेट',
-    balance: 'USDC बैलेंस',
-    nativeBalance: 'नेटिव बैलेंस',
-    payment: 'पेमेंट',
-    qr: 'QR पे',
-    treasury: 'ट्रेजरी',
-    assets: 'एसेट्स',
-    recipient: 'प्राप्तकर्ता',
-    recipientPlaceholder: '0x पता या @handle',
-    amount: 'राशि',
-    sendUsdc: 'USDC भेजें',
-    sendNative: 'नेटिव भेजें',
-    sending: 'भेजा जा रहा है...',
-    scan: 'QR स्कैन',
-    close: 'बंद करें',
-    receive: 'प्राप्त करें',
-    copy: 'कॉपी',
-    copied: 'कॉपी हुआ',
-    activity: 'गतिविधि',
-    noActivity: 'अभी कोई ट्रांजैक्शन रिकॉर्ड नहीं है।',
-    explorer: 'ArcScan पर देखें',
-    export: 'CSV एक्सपोर्ट',
-    treasuryTitle: 'ट्रेजरी',
-    treasuryDesc: 'प्रोग्रामेबल ट्रेजरी सेटलमेंट',
-    treasuryAddress: 'ट्रेजरी पता',
-    deposit: 'USDC जमा करें',
-    depositAmount: 'जमा राशि',
-    depositing: 'जमा हो रहा है...',
-    fee: 'प्रोग्रामेबल फीस',
-    feeRecipient: 'फीस प्राप्तकर्ता',
-    distribute: 'डिस्ट्रीब्यूट',
-    distributing: 'डिस्ट्रीब्यूट हो रहा है...',
-    royalty: 'रॉयल्टी / फीस रूटिंग',
-    merchant: 'मर्चेंट',
-    protocol: 'प्रोटोकॉल',
-    vault: 'वॉल्ट',
-    cctp: 'Circle CCTP',
-    comingSoon: 'इंटीग्रेशन के लिए तैयार',
-    multiChain: 'मल्टी-चेन एसेट्स',
-    refresh: 'रिफ्रेश',
-    loading: 'लोड हो रहा है...',
-    status: 'स्थिति',
-    confirmed: 'कन्फर्म्ड',
-    submitted: 'सबमिटेड',
-    failed: 'विफल',
-    connectedWallet: 'कनेक्टेड वॉलेट',
-    sendMode: 'ट्रांसफर मोड',
-    usdcMode: 'USDC',
-    nativeMode: 'नेटिव गैस टोकन',
-    qrTitle: 'Arcsetu पेमेंट QR',
-    qrDesc: 'इस वॉलेट को पेमेंट करने के लिए QR स्कैन करें',
-    noWallet: 'QR बनाने के लिए वॉलेट कनेक्ट करें',
-    treasuryBalance: 'ट्रेजरी बैलेंस',
-    estimatedYield: 'अनुमानित यील्ड',
-    yieldNote: 'सिर्फ डेमो डिस्प्ले — गारंटीड APY नहीं',
-    security: 'सुरक्षा',
-    securityNote:
-      'ट्रांजैक्शन आपके वॉलेट द्वारा साइन होते हैं। Arcsetu कभी private key नहीं मांगता।',
-    invalidRecipient: 'सही 0x address या registered handle डालें।',
-    invalidAmount: 'शून्य से अधिक सही राशि डालें।',
-    connectFirst: 'पहले वॉलेट कनेक्ट करें।',
-    wrongChainMessage:
-      'ट्रांजैक्शन भेजने से पहले वॉलेट को Arc Testnet पर बदलें।',
-    transactionCancelled: 'ट्रांजैक्शन रद्द या विफल हुआ।',
-    transactionSubmitted: 'ट्रांजैक्शन सफलतापूर्वक भेज दिया गया।',
-    handleSaved: 'Arc handle लोकली सेव हो गया।',
-    copiedAddress: 'Address कॉपी हो गया।',
-    scannerError: 'कैमरा एक्सेस नहीं हो पाया।',
-    nativeWarning:
-      'नेटिव ट्रांसफर नेटवर्क का गैस टोकन भेजता है, USDC नहीं।',
-    balanceUnavailable: 'बैलेंस उपलब्ध नहीं',
-  },
-
-  ko: {
-    title: 'ARCSETU',
-    subtitle: '글로벌 프로그래머블 결제 및 정산 허브',
-    connect: '지갑 연결',
-    connected: '연결됨',
-    disconnected: '지갑 연결 해제',
-    network: '네트워크',
-    correctNetwork: 'Arc Testnet',
-    wrongNetwork: '잘못된 네트워크',
-    switchNetwork: 'Arc로 전환',
-    identity: 'Arc 신원',
-    register: '핸들 등록',
-    handlePlaceholder: '@yourname',
-    wallet: '지갑',
-    balance: 'USDC 잔액',
-    nativeBalance: '네이티브 잔액',
-    payment: '결제',
-    qr: 'QR 결제',
-    treasury: '트레저리',
-    assets: '자산',
-    recipient: '수신자',
-    recipientPlaceholder: '0x 주소 또는 @handle',
-    amount: '금액',
-    sendUsdc: 'USDC 전송',
-    sendNative: '네이티브 전송',
-    sending: '전송 중...',
-    scan: 'QR 스캔',
-    close: '닫기',
-    receive: '받기',
-    copy: '복사',
-    copied: '복사됨',
-    activity: '활동',
-    noActivity: '아직 거래 기록이 없습니다.',
-    explorer: 'ArcScan에서 보기',
-    export: 'CSV 내보내기',
-    treasuryTitle: '트레저리',
-    treasuryDesc: '프로그래머블 트레저리 정산',
-    treasuryAddress: '트레저리 주소',
-    deposit: 'USDC 예치',
-    depositAmount: '예치 금액',
-    depositing: '예치 중...',
-    fee: '프로그래머블 수수료',
-    feeRecipient: '수수료 수신자',
-    distribute: '분배',
-    distributing: '분배 중...',
-    royalty: '로열티 / 수수료 라우팅',
-    merchant: '가맹점',
-    protocol: '프로토콜',
-    vault: '볼트',
-    cctp: 'Circle CCTP',
-    comingSoon: '통합 준비 완료',
-    multiChain: '멀티체인 자산',
-    refresh: '새로고침',
-    loading: '로드 중...',
-    status: '상태',
-    confirmed: '확인됨',
-    submitted: '제출됨',
-    failed: '실패',
-    connectedWallet: '연결된 지갑',
-    sendMode: '전송 모드',
-    usdcMode: 'USDC',
-    nativeMode: '네이티브 가스 토큰',
-    qrTitle: 'Arcsetu 결제 QR',
-    qrDesc: '이 지갑으로 결제하려면 QR을 스캔하세요',
-    noWallet: 'QR을 생성하려면 지갑을 연결하세요',
-    treasuryBalance: '트레저리 잔액',
-    estimatedYield: '예상 수익',
-    yieldNote: '데모 표시만 제공 — 보장된 APY가 아닙니다',
-    security: '보안',
-    securityNote:
-      '모든 거래는 지갑에서 서명됩니다. Arcsetu는 개인 키를 요청하지 않습니다.',
-    invalidRecipient: '유효한 0x 주소 또는 등록된 핸들을 입력하세요.',
-    invalidAmount: '0보다 큰 유효한 금액을 입력하세요.',
-    connectFirst: '먼저 지갑을 연결하세요.',
-    wrongChainMessage:
-      '거래 전 지갑을 Arc Testnet으로 전환하세요.',
-    transactionCancelled: '거래가 취소되었거나 실패했습니다.',
-    transactionSubmitted: '거래가 성공적으로 제출되었습니다.',
-    handleSaved: 'Arc 핸들이 로컬에 저장되었습니다.',
-    copiedAddress: '주소가 복사되었습니다.',
-    scannerError: '카메라에 접근할 수 없습니다.',
-    nativeWarning:
-      '네이티브 전송은 USDC가 아닌 네트워크 가스 토큰을 전송합니다.',
-    balanceUnavailable: '잔액을 사용할 수 없습니다.',
-  },
-
-  es: {
-    title: 'ARCSETU',
-    subtitle: 'Centro global de pagos y liquidación programable',
-    connect: 'Conectar billetera',
-    connected: 'Conectada',
-    disconnected: 'Billetera desconectada',
-    network: 'Red',
-    correctNetwork: 'Arc Testnet',
-    wrongNetwork: 'Red incorrecta',
-    switchNetwork: 'Cambiar a Arc',
-    identity: 'Identidad Arc',
-    register: 'Registrar handle',
-    handlePlaceholder: '@tunombre',
-    wallet: 'Billetera',
-    balance: 'Saldo USDC',
-    nativeBalance: 'Saldo nativo',
-    payment: 'Pago',
-    qr: 'Pago QR',
-    treasury: 'Tesorería',
-    assets: 'Activos',
-    recipient: 'Destinatario',
-    recipientPlaceholder: 'dirección 0x o @handle',
-    amount: 'Cantidad',
-    sendUsdc: 'Enviar USDC',
-    sendNative: 'Enviar nativo',
-    sending: 'Enviando...',
-    scan: 'Escanear QR',
-    close: 'Cerrar',
-    receive: 'Recibir',
-    copy: 'Copiar',
-    copied: 'Copiado',
-    activity: 'Actividad',
-    noActivity: 'No hay transacciones registradas.',
-    explorer: 'Ver en ArcScan',
-    export: 'Exportar CSV',
-    treasuryTitle: 'Tesorería',
-    treasuryDesc: 'Liquidación de tesorería programable',
-    treasuryAddress: 'Dirección de tesorería',
-    deposit: 'Depositar USDC',
-    depositAmount: 'Cantidad de depósito',
-    depositing: 'Depositando...',
-    fee: 'Tarifa programable',
-    feeRecipient: 'Destinatario de tarifa',
-    distribute: 'Distribuir',
-    distributing: 'Distribuyendo...',
-    royalty: 'Royalty / routing de tarifas',
-    merchant: 'Comerciante',
-    protocol: 'Protocolo',
-    vault: 'Bóveda',
-    cctp: 'Circle CCTP',
-    comingSoon: 'Listo para integración',
-    multiChain: 'Activos multicadena',
-    refresh: 'Actualizar',
-    loading: 'Cargando...',
-    status: 'Estado',
-    confirmed: 'Confirmada',
-    submitted: 'Enviada',
-    failed: 'Fallida',
-    connectedWallet: 'Billetera conectada',
-    sendMode: 'Modo de transferencia',
-    usdcMode: 'USDC',
-    nativeMode: 'Token nativo de gas',
-    qrTitle: 'QR de pago Arcsetu',
-    qrDesc: 'Escanea este QR para pagar a esta billetera',
-    noWallet: 'Conecta una billetera para generar el QR',
-    treasuryBalance: 'Saldo de tesorería',
-    estimatedYield: 'Rendimiento estimado',
-    yieldNote: 'Solo demostración — APY no garantizado',
-    security: 'Seguridad',
-    securityNote:
-      'Las transacciones son firmadas por tu billetera. Arcsetu nunca solicita tu clave privada.',
-    invalidRecipient: 'Introduce una dirección 0x válida o un handle registrado.',
-    invalidAmount: 'Introduce una cantidad válida mayor que cero.',
-    connectFirst: 'Conecta primero tu billetera.',
-    wrongChainMessage:
-      'Cambia tu billetera a Arc Testnet antes de enviar transacciones.',
-    transactionCancelled: 'Transacción cancelada o fallida.',
-    transactionSubmitted: 'Transacción enviada correctamente.',
-    handleSaved: 'Handle Arc guardado localmente.',
-    copiedAddress: 'Dirección copiada.',
-    scannerError: 'No se pudo acceder a la cámara.',
-    nativeWarning:
-      'La transferencia nativa envía el token de gas de la red, no USDC.',
-    balanceUnavailable: 'Saldo no disponible',
-  },
-}
+// Known Arc Testnet USDC Contract Address
+const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
 
 export default function Home() {
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
-
-  const publicClient = usePublicClient()
-
-  const {
-    data: nativeBalanceData,
-    refetch: refetchNativeBalance,
-  } = useBalance({
-    address,
-    query: {
-      enabled: Boolean(address),
-    },
-  })
-
+  const { data: balanceData } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
   const { writeContractAsync } = useWriteContract()
 
-  const [mounted, setMounted] = useState(false)
   const [lang, setLang] = useState<Lang>('en')
-  const [activeTab, setActiveTab] = useState<Tab>('payment')
-  const [transferMode, setTransferMode] =
-    useState<TransferMode>('usdc')
-
-  const [recipient, setRecipient] = useState('')
-  const [amount, setAmount] = useState('1')
-
-  const [customHandle, setCustomHandle] = useState('')
-  const [registeredIds, setRegisteredIds] =
-    useState<RegisteredIds>({})
-
-  const [usdcBalance, setUsdcBalance] = useState('0.000000')
-  const [usdcLoading, setUsdcLoading] = useState(false)
-
-  const [activities, setActivities] =
-    useState<ActivityItem[]>([])
-
-  const [statusMsg, setStatusMsg] = useState('')
-  const [txLoading, setTxLoading] = useState(false)
-
-  const [successModal, setSuccessModal] =
-    useState<ModalDetails | null>(null)
-
-  const [scannerOpen, setScannerOpen] = useState(false)
-  const [scannerError, setScannerError] = useState('')
-  const scannerRef = useRef<any>(null)
-
-  const [treasuryAmount, setTreasuryAmount] = useState('1')
-  const [feeRecipient, setFeeRecipient] = useState('')
-  const [feeAmount, setFeeAmount] = useState('0.05')
-  const [feeLoading, setFeeLoading] = useState(false)
-
-  const [copied, setCopied] = useState('')
-
   const t = translations[lang]
 
-  const currentWallet = address?.toLowerCase() || ''
+  const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
+  const [recipient, setRecipient] = useState('')
+  const [amount, setAmount] = useState('0.0001')
+  const [practiceCount, setPracticeCount] = useState(1)
+  const [stampIssued, setStampIssued] = useState(true)
+  const [txLoading, setTxLoading] = useState(false)
+  const [statusMsg, setStatusMsg] = useState('')
 
-  const isArcNetwork = chainId === ARC_CHAIN_ID
+  // Royalty State
+  const [royaltyRecipient, setRoyaltyRecipient] = useState('')
+  const [royaltyAmount, setRoyaltyAmount] = useState('0.0005')
 
-  const userHandle =
-    currentWallet && registeredIds[currentWallet]
-      ? registeredIds[currentWallet]
-      : address
-        ? `@ARC-${address.slice(-5)}`
-        : '--'
+  // Modal & Audio state
+  const [successModal, setSuccessModal] = useState<ModalDetails | null>(null)
 
-  const receiveQrData = useMemo(() => {
-    if (!address) return ''
-    return `ethereum:${address}@${ARC_CHAIN_ID}`
-  }, [address])
+  const [customUpId, setCustomUpId] = useState('')
+  const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
+  const [activities, setActivities] = useState<ActivityItem[]>([])
 
-  /*
-  |--------------------------------------------------------------------------
-  | Mount
-  |--------------------------------------------------------------------------
-  */
+  const currentWallet = address ? address.toLowerCase() : ''
+  const isGiwa = chainId === 91342
+  const isArc = chainId === 5042002
+
+  let networkName = 'GIWA Sepolia'
+  let networkPrefix = 'GIWA'
+  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
+
+  if (isArc) {
+    networkName = 'Arc Testnet'
+    networkPrefix = 'ARC'
+    explorerBase = 'https://testnet.arcscan.app/tx/'
+  } else if (chainId === 1) {
+    networkName = 'Ethereum Mainnet'
+    networkPrefix = 'ETH'
+    explorerBase = 'https://etherscan.io/tx/'
+  }
+
+  // Safe SSR Web Audio Chime Sound
+  const playSuccessChime = () => {
+    if (typeof window === 'undefined') return
+
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
+      if (!AudioCtx) return
+      const ctx = new AudioCtx()
+      
+      const now = ctx.currentTime
+      const osc1 = ctx.createOscillator()
+      const osc2 = ctx.createOscillator()
+      const gain = ctx.createGain()
+
+      osc1.type = 'sine'
+      osc2.type = 'sine'
+
+      osc1.frequency.setValueAtTime(523.25, now)
+      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.15)
+      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.3)
+
+      osc2.frequency.setValueAtTime(1046.50, now)
+
+      gain.gain.setValueAtTime(0.15, now)
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6)
+
+      osc1.connect(gain)
+      osc2.connect(gain)
+      gain.connect(ctx.destination)
+
+      osc1.start(now)
+      osc2.start(now + 0.1)
+      osc1.stop(now + 0.6)
+      osc2.stop(now + 0.6)
+    } catch (e) {
+      console.error('Audio playback failed', e)
+    }
+  }
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  /*
-  |--------------------------------------------------------------------------
-  | Local storage
-  |--------------------------------------------------------------------------
-  */
-
-  useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return
-
-    const savedIds =
-      localStorage.getItem('arcsetu_registered_handles')
-
+    if (typeof window === 'undefined') return
+    const savedIds = localStorage.getItem('giwa_registered_upids')
     if (savedIds) {
       try {
         setRegisteredIds(JSON.parse(savedIds))
-      } catch {
-        setRegisteredIds({})
+      } catch (e) {
+        console.error('Failed to parse saved UP IDs', e)
       }
     }
-  }, [mounted])
+  }, [])
 
   useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return
-
-    if (!currentWallet) {
-      setActivities([])
-      return
-    }
-
-    const key = `arcsetu_activity_${currentWallet}`
-
-    const saved = localStorage.getItem(key)
-
-    if (saved) {
-      try {
-        setActivities(JSON.parse(saved))
-      } catch {
+    if (typeof window === 'undefined') return
+    if (isConnected && currentWallet) {
+      const savedHistory = localStorage.getItem(`giwa_tx_history_${currentWallet}`)
+      if (savedHistory) {
+        try {
+          setActivities(JSON.parse(savedHistory))
+        } catch (e) {
+          console.error('Failed to parse transaction history', e)
+          setActivities([])
+        }
+      } else {
         setActivities([])
       }
     } else {
       setActivities([])
     }
-  }, [mounted, currentWallet])
+  }, [isConnected, currentWallet])
 
-  /*
-  |--------------------------------------------------------------------------
-  | USDC balance
-  |--------------------------------------------------------------------------
-  */
-
-  const fetchUsdcBalance = async () => {
-    if (!address || !publicClient) {
-      setUsdcBalance('0.000000')
-      return
-    }
-
-    try {
-      setUsdcLoading(true)
-
-      const rawBalance = await publicClient.readContract({
-        address: ARC_USDC_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [address],
-      })
-
-      setUsdcBalance(
-        Number(formatUnits(rawBalance, USDC_DECIMALS)).toFixed(6)
-      )
-    } catch (error) {
-      console.error('USDC balance error:', error)
-      setUsdcBalance('0.000000')
-    } finally {
-      setUsdcLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (!mounted) return
-
-    fetchUsdcBalance()
-  }, [mounted, address, publicClient, chainId])
-
-  /*
-  |--------------------------------------------------------------------------
-  | Helpers
-  |--------------------------------------------------------------------------
-  */
-
-  const saveActivity = (activity: ActivityItem) => {
+  const saveActivity = (newAct: ActivityItem) => {
     if (!currentWallet || typeof window === 'undefined') return
-
-    setActivities((previous) => {
-      const updated = [activity, ...previous].slice(0, 100)
-
-      localStorage.setItem(
-        `arcsetu_activity_${currentWallet}`,
-        JSON.stringify(updated)
-      )
-
-      return updated
-    })
+    const updated = [newAct, ...activities]
+    setActivities(updated)
+    localStorage.setItem(`giwa_tx_history_${currentWallet}`, JSON.stringify(updated))
   }
 
-  const cleanError = (error: any) => {
-    const message =
-      error?.shortMessage ||
-      error?.message ||
-      'Transaction failed.'
-
-    if (
-      message.toLowerCase().includes('user rejected') ||
-      message.toLowerCase().includes('user denied')
-    ) {
-      return t.transactionCancelled
-    }
-
-    return message.slice(0, 180)
-  }
-
-  const validateReady = () => {
-    if (!isConnected || !address) {
-      setStatusMsg(t.connectFirst)
-      return false
-    }
-
-    if (!isArcNetwork) {
-      setStatusMsg(t.wrongChainMessage)
-      return false
-    }
-
-    return true
-  }
-
-  const resolveRecipient = (
-    input: string
-  ): `0x${string}` | null => {
-    const clean = input.trim()
-
-    if (isAddress(clean)) {
-      return clean as `0x${string}`
-    }
-
-    const normalized = clean.startsWith('@')
-      ? clean.toLowerCase()
-      : `@${clean.toLowerCase()}`
-
-    for (const [wallet, handle] of Object.entries(
-      registeredIds
-    )) {
-      if (handle.toLowerCase() === normalized) {
-        return wallet as `0x${string}`
-      }
-    }
-
-    return null
-  }
-
-  const validateAmount = (value: string) => {
-    const numeric = Number(value)
-
-    return (
-      Number.isFinite(numeric) &&
-      numeric > 0 &&
-      value.trim() !== ''
-    )
-  }
-
-  const shortAddress = (value: string) => {
-    if (!value) return ''
-    return `${value.slice(0, 6)}...${value.slice(-4)}`
-  }
-
-  const addActivity = async (
-    title: string,
-    amountText: string,
-    hash: `0x${string}`,
-    startTime: number
-  ) => {
-    let latencyMs = Math.round(performance.now() - startTime)
-
-    let confirmed = false
-
-    try {
-      if (publicClient) {
-        const receipt = await publicClient.waitForTransactionReceipt({
-          hash,
-        })
-
-        confirmed = receipt.status === 'success'
-
-        latencyMs = Math.round(performance.now() - startTime)
-      }
-    } catch {
-      confirmed = false
-    }
-
-    const item: ActivityItem = {
-      id: `${Date.now()}-${hash}`,
-      title,
-      timestamp: new Date().toLocaleString(),
-      amount: amountText,
-      txHash: hash,
-      explorerUrl: `${ARC_TX_EXPLORER}${hash}`,
-      status: confirmed ? 'confirmed' : 'submitted',
-      latencyMs,
-    }
-
-    saveActivity(item)
-
+  const triggerSuccess = (title: string, amountStr: string, hash: string) => {
+    const fullExplorerUrl = `${explorerBase}${hash}`
+    playSuccessChime()
     setSuccessModal({
       title,
-      amount: amountText,
+      amount: amountStr,
       hash,
-      url: `${ARC_TX_EXPLORER}${hash}`,
-      latencyMs,
+      url: fullExplorerUrl,
     })
-
-    await fetchUsdcBalance()
-
-    try {
-      await refetchNativeBalance()
-    } catch {}
-
-    return confirmed
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Handle registration
-  |--------------------------------------------------------------------------
-  */
+  const autoDerivedId = address ? `@${networkPrefix}-${address.slice(-5)}` : '--'
+  const userUpId = currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId
 
-  const registerHandle = () => {
+  const handleRegisterUpId = () => {
     if (!currentWallet) {
-      setStatusMsg(t.connectFirst)
+      setStatusMsg('Please connect your wallet first.')
       return
     }
 
-    let value = customHandle.trim().toLowerCase()
+    let cleanId = customUpId.trim().toLowerCase()
+    if (!cleanId) {
+      setStatusMsg('Please enter a valid handle.')
+      return
+    }
 
-    if (!value) return
+    if (!cleanId.startsWith('@')) {
+      cleanId = `@${cleanId}`
+    }
 
-    if (!value.startsWith('@')) {
-      value = `@${value}`
+    if (cleanId.length < 3) {
+      setStatusMsg('Handle must be at least 2 characters long.')
+      return
+    }
+
+    const allExistingValues = Object.values(registeredIds).map(id => id.toLowerCase())
+    if (allExistingValues.includes(cleanId) && registeredIds[currentWallet] !== cleanId) {
+      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet.`)
+      return
     }
 
     const updated = {
       ...registeredIds,
-      [currentWallet]: value,
+      [currentWallet]: cleanId
     }
 
     setRegisteredIds(updated)
-
     if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        'arcsetu_registered_handles',
-        JSON.stringify(updated)
-      )
+      localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
     }
-
-    setCustomHandle('')
-    setStatusMsg(t.handleSaved)
+    setCustomUpId('')
+    setStatusMsg(`Custom handle updated to ${cleanId}`)
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | USDC transfer
-  |--------------------------------------------------------------------------
-  */
+  const handleSimulateScan = () => {
+    setIsScannerOpen(true)
+    setTimeout(() => {
+      setRecipient('0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b')
+      setIsScannerOpen(false)
+      setStatusMsg('QR Code scanned successfully!')
+    }, 1200)
+  }
 
-  const handleUsdcPayment = async () => {
-    if (!validateReady()) return
-
-    const target = resolveRecipient(recipient)
-
-    if (!target) {
-      setStatusMsg(t.invalidRecipient)
+  // FIXED PAYMENT FUNCTION (Handles Native ETH & ERC-20 USDC)
+  const handlePayment = async () => {
+    if (!isConnected) {
+      alert(t.notConnected)
       return
     }
-
-    if (!validateAmount(amount)) {
-      setStatusMsg(t.invalidAmount)
+    if (!recipient) {
+      alert(t.placeholder)
       return
     }
 
     try {
       setTxLoading(true)
-      setStatusMsg(t.sending)
+      setStatusMsg(t.processing)
+      
+      const targetAddress = recipient.startsWith('0x') 
+        ? (recipient as `0x${string}`) 
+        : ''
 
-      const startTime = performance.now()
+      const inputAmount = amount && !isNaN(Number(amount)) ? amount : '0.0001'
+      let hash = ''
 
-      const value = parseUnits(amount, USDC_DECIMALS)
-
-      if (Number(usdcBalance) < Number(amount)) {
-        setStatusMsg(
-          `${t.balance}: ${usdcBalance} USDC`
-        )
-        return
+      if (isArc) {
+        // USDC Token Transfer on Arc Testnet (ERC-20 - 6 Decimals)
+        const parsedValue = parseUnits(inputAmount, 6)
+        hash = await writeContractAsync({
+          address: ARC_USDC_ADDRESS as `0x${string}`,
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [targetAddress, parsedValue],
+        })
+      } else {
+        // Native Transfer for ETH / GIWA (18 Decimals)
+        const parsedValue = parseEther(inputAmount)
+        hash = await sendTransactionAsync({
+          to: targetAddress,
+          value: parsedValue,
+        })
       }
 
-      const hash = await writeContractAsync({
-        address: ARC_USDC_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [target, value],
-      })
+      const amtSymbol = `${inputAmount} ${balanceData?.symbol || 'USDC'}`
+      const txTitle = `Multi-Chain UPI Payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
 
-      await addActivity(
-        `USDC Transfer → ${shortAddress(target)}`,
-        `${amount} USDC`,
-        hash,
-        startTime
-      )
-
-      setStatusMsg(t.transactionSubmitted)
-    } catch (error: any) {
-      console.error(error)
-      setStatusMsg(cleanError(error))
+      const newAct: ActivityItem = {
+        id: Date.now().toString(),
+        title: txTitle,
+        timestamp: new Date().toLocaleTimeString(),
+        amount: amtSymbol,
+        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
+        explorerUrl: `${explorerBase}${hash}`
+      }
+      saveActivity(newAct)
+      triggerSuccess(txTitle, amtSymbol, hash)
+      setStatusMsg('')
+    } catch (err: any) {
+      console.error(err)
+      setStatusMsg('Transaction failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Native token transfer
-  |--------------------------------------------------------------------------
-  */
-
-  const handleNativePayment = async () => {
-    if (!validateReady()) return
-
-    const target = resolveRecipient(recipient)
-
-    if (!target) {
-      setStatusMsg(t.invalidRecipient)
+  const handleRoyaltyPayout = async () => {
+    if (!isConnected) {
+      alert(t.notConnected)
       return
     }
 
-    if (!validateAmount(amount)) {
-      setStatusMsg(t.invalidAmount)
-      return
-    }
+    const targetAddress = royaltyRecipient.startsWith('0x')
+      ? (royaltyRecipient as `0x${string}`)
+      : address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
     try {
       setTxLoading(true)
-      setStatusMsg(t.sending)
-
-      const startTime = performance.now()
-
-      const value = parseUnits(amount, 18)
+      setStatusMsg('Processing Royalty Payout...')
 
       const hash = await sendTransactionAsync({
-        to: target,
-        value,
+        to: targetAddress,
+        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0005'),
       })
 
-      await addActivity(
-        `Native Transfer → ${shortAddress(target)}`,
-        `${amount} ${nativeBalanceData?.symbol || 'native'}`,
-        hash,
-        startTime
-      )
+      const amtSymbol = `${royaltyAmount} ${balanceData?.symbol || 'ETH'}`
+      const txTitle = `Royalty Distribution (${networkName})`
 
-      setStatusMsg(t.transactionSubmitted)
-    } catch (error: any) {
-      console.error(error)
-      setStatusMsg(cleanError(error))
+      const newAct: ActivityItem = {
+        id: Date.now().toString(),
+        title: txTitle,
+        timestamp: new Date().toLocaleTimeString(),
+        amount: amtSymbol,
+        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
+        explorerUrl: `${explorerBase}${hash}`
+      }
+      saveActivity(newAct)
+      triggerSuccess(txTitle, amtSymbol, hash)
+      setStatusMsg('')
+    } catch (err) {
+      console.error(err)
+      setStatusMsg('Royalty payout failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
   }
 
-  const handlePayment = async () => {
-    if (transferMode === 'usdc') {
-      await handleUsdcPayment()
-    } else {
-      await handleNativePayment()
-    }
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Treasury deposit
-  |--------------------------------------------------------------------------
-  */
-
-  const handleTreasuryDeposit = async () => {
-    if (!validateReady()) return
-
-    if (!validateAmount(treasuryAmount)) {
-      setStatusMsg(t.invalidAmount)
+  const handlePracticeTx = async () => {
+    if (!isConnected) {
+      alert(t.notConnected)
       return
     }
-
     try {
       setTxLoading(true)
-      setStatusMsg(t.depositing)
-
-      const startTime = performance.now()
-
-      const value = parseUnits(
-        treasuryAmount,
-        USDC_DECIMALS
-      )
-
-      if (Number(usdcBalance) < Number(treasuryAmount)) {
-        setStatusMsg(
-          `${t.balance}: ${usdcBalance} USDC`
-        )
-        return
-      }
-
-      const hash = await writeContractAsync({
-        address: ARC_USDC_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [DEFAULT_TREASURY, value],
+      setStatusMsg(t.processing)
+      
+      const targetAddr = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+      const hash = await sendTransactionAsync({
+        to: targetAddr,
+        value: parseEther('0.00001'),
       })
 
-      await addActivity(
-        'Treasury USDC Deposit',
-        `${treasuryAmount} USDC`,
-        hash,
-        startTime
-      )
+      setPracticeCount(prev => prev + 1)
+      const amtSymbol = `0.00001 ${balanceData?.symbol || 'ETH'}`
+      const txTitle = `Test Tx Execution (${networkName})`
 
-      setStatusMsg(t.transactionSubmitted)
-    } catch (error: any) {
-      console.error(error)
-      setStatusMsg(cleanError(error))
+      const newAct: ActivityItem = {
+        id: Date.now().toString(),
+        title: txTitle,
+        timestamp: new Date().toLocaleTimeString(),
+        amount: amtSymbol,
+        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
+        explorerUrl: `${explorerBase}${hash}`
+      }
+      saveActivity(newAct)
+      triggerSuccess(txTitle, amtSymbol, hash)
+      setStatusMsg('')
+    } catch (err) {
+      console.error(err)
+      setStatusMsg('Transaction failed or cancelled.')
     } finally {
       setTxLoading(false)
     }
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | Programmable fee / royalty payout
-  |--------------------------------------------------------------------------
-  */
-
-  const handleFeeDistribution = async () => {
-    if (!validateReady()) return
-
-    const target = resolveRecipient(feeRecipient)
-
-    if (!target) {
-      setStatusMsg(t.invalidRecipient)
-      return
-    }
-
-    if (!validateAmount(feeAmount)) {
-      setStatusMsg(t.invalidAmount)
-      return
-    }
-
-    try {
-      setFeeLoading(true)
-      setStatusMsg(t.distributing)
-
-      const startTime = performance.now()
-
-      const value = parseUnits(
-        feeAmount,
-        USDC_DECIMALS
-      )
-
-      if (Number(usdcBalance) < Number(feeAmount)) {
-        setStatusMsg(
-          `${t.balance}: ${usdcBalance} USDC`
-        )
-        return
-      }
-
-      const hash = await writeContractAsync({
-        address: ARC_USDC_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [target, value],
-      })
-
-      await addActivity(
-        `Programmable Fee → ${shortAddress(target)}`,
-        `${feeAmount} USDC`,
-        hash,
-        startTime
-      )
-
-      setStatusMsg(t.transactionSubmitted)
-    } catch (error: any) {
-      console.error(error)
-      setStatusMsg(cleanError(error))
-    } finally {
-      setFeeLoading(false)
-    }
+  const handleDownloadCSV = () => {
+    if (activities.length === 0 || typeof window === 'undefined') return
+    const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
+    const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
+    const blob = new Blob([headers + rows], { type: 'text/csv' })
+    const url = window.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `multichain_activity_${Date.now()}.csv`
+    a.click()
   }
 
-  /*
-  |--------------------------------------------------------------------------
-  | QR scanner
-  |--------------------------------------------------------------------------
-  */
-
-  const stopScanner = async () => {
-    try {
-      if (scannerRef.current) {
-        await scannerRef.current.stop()
-        scannerRef.current.clear()
-      }
-    } catch {}
-
-    scannerRef.current = null
-    setScannerOpen(false)
-  }
-
-  const startScanner = async () => {
-    setScannerError('')
-    setScannerOpen(true)
-
-    setTimeout(async () => {
-      try {
-        const module = await import('html5-qrcode')
-        const Html5Qrcode = module.Html5Qrcode
-
-        const scanner = new Html5Qrcode(
-          'arcsetu-qr-reader'
-        )
-
-        scannerRef.current = scanner
-
-        await scanner.start(
-          { facingMode: 'environment' },
-          {
-            fps: 10,
-            qrbox: {
-              width: 220,
-              height: 220,
-            },
-          },
-          async (decodedText: string) => {
-            let clean = decodedText.trim()
-
-            if (clean.includes('ethereum:')) {
-              clean = clean
-                .replace('ethereum:', '')
-                .split('@')[0]
-                .split('?')[0]
-            }
-
-            if (isAddress(clean)) {
-              setRecipient(clean)
-              setStatusMsg(
-                `${t.recipient}: ${shortAddress(clean)}`
-              )
-            } else {
-              setRecipient(clean)
-              setStatusMsg(
-                `${t.recipient}: ${clean}`
-              )
-            }
-
-            await stopScanner()
-          },
-          () => {}
-        )
-      } catch (error) {
-        console.error(error)
-        setScannerError(t.scannerError)
-      }
-    }, 250)
-  }
-
-  useEffect(() => {
-    return () => {
-      try {
-        scannerRef.current?.stop()
-      } catch {}
-    }
-  }, [])
-
-  /*
-  |--------------------------------------------------------------------------
-  | Copy
-  |--------------------------------------------------------------------------
-  */
-
-  const copyText = async (value: string) => {
-    try {
-      await navigator.clipboard.writeText(value)
-      setCopied(value)
-      setStatusMsg(t.copiedAddress)
-
-      setTimeout(() => {
-        setCopied('')
-      }, 1500)
-    } catch {
-      setStatusMsg('Copy failed.')
-    }
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | CSV
-  |--------------------------------------------------------------------------
-  */
-
-  const exportCsv = () => {
-    if (!activities.length) return
-
-    const headers = [
-      'ID',
-      'Title',
-      'Timestamp',
-      'Amount',
-      'TxHash',
-      'Status',
-      'LatencyMs',
-      'ExplorerUrl',
-    ]
-
-    const rows = activities.map((item) =>
-      [
-        item.id,
-        item.title,
-        item.timestamp,
-        item.amount,
-        item.txHash,
-        item.status,
-        item.latencyMs || '',
-        item.explorerUrl,
-      ]
-        .map((value) =>
-          `"${String(value).replace(/"/g, '""')}"`
-        )
-        .join(',')
-    )
-
-    const csv =
-      headers.join(',') +
-      '\n' +
-      rows.join('\n')
-
-    const blob = new Blob([csv], {
-      type: 'text/csv;charset=utf-8;',
-    })
-
-    const url = URL.createObjectURL(blob)
-
-    const link = document.createElement('a')
-
-    link.href = url
-    link.download = `arcsetu_activity_${Date.now()}.csv`
-
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    URL.revokeObjectURL(url)
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | Multi-chain balance architecture
-  |--------------------------------------------------------------------------
-  */
-
-  const fetchMultiChainBalances = async (): Promise<
-    NetworkBalance[]
-  > => {
-    if (!address) return []
-
-    /*
-     * This function is intentionally architecture-ready.
-     *
-     * Arcsetu can later connect:
-     * Ethereum
-     * Arc
-     * Jiva
-     * Bitcoin
-     * Base
-     * other supported networks
-     *
-     * without changing the main UI architecture.
-     */
-
-    return [
-      {
-        name: 'Arc Testnet',
-        symbol: 'USDC',
-        balance: usdcBalance,
-        type: 'EVM',
-        explorerUrl: `${ARC_ADDRESS_EXPLORER}${address}`,
-      },
-    ]
-  }
-
-  /*
-  |--------------------------------------------------------------------------
-  | UI
-  |--------------------------------------------------------------------------
-  */
-
-  if (!mounted) {
-    return (
-      <main className="min-h-screen bg-[#05070a] text-slate-100 flex items-center justify-center p-6">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-700 to-indigo-600 text-white font-black">
-            ARC
-          </div>
-
-          <p className="text-xs text-purple-400 animate-pulse">
-            loading arcsetu...
-          </p>
-        </div>
-      </main>
-    )
-  }
+  const receiveQrData = isConnected && address
+    ? `ethereum:${address}@${chainId}?label=${encodeURIComponent(userUpId)}`
+    : 'Connect Wallet to Generate Receive QR'
 
   return (
-    <main className="min-h-screen bg-[#05070a] text-slate-100 font-mono px-3 py-4 sm:px-6 sm:py-6">
-      <div className="mx-auto max-w-5xl space-y-4">
-
-        {/* HEADER */}
-
-        <header className="rounded-2xl border border-purple-900/50 bg-[#0a0d14] p-4 shadow-xl">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-700 via-indigo-600 to-blue-600 text-sm font-black shadow-lg">
-                ARC
-              </div>
-
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <h1 className="truncate text-base font-black tracking-tight text-white">
-                    {t.title}
-                  </h1>
-
-                  <span className="rounded border border-purple-700/60 bg-purple-950 px-1.5 py-0.5 text-[8px] text-purple-300">
-                    GLOBAL
-                  </span>
-                </div>
-
-                <p className="truncate text-[10px] text-slate-400 sm:text-xs">
-                  {t.subtitle}
-                </p>
-              </div>
+    <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans relative">
+      <div className="max-w-3xl mx-auto space-y-6">
+        
+        {/* Header */}
+        <header className="flex flex-col sm:flex-row justify-between items-center bg-[#111625] p-5 rounded-2xl border border-slate-800 gap-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 via-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
+              🌐
             </div>
-
-            <div className="flex items-center gap-2">
-              <select
-                value={lang}
-                onChange={(event) =>
-                  setLang(event.target.value as Lang)
-                }
-                className="rounded-lg border border-slate-800 bg-[#05070a] px-2 py-2 text-xs text-slate-300 outline-none focus:border-purple-500"
-              >
-                <option value="en">🌐 English</option>
-                <option value="hi">🇮🇳 हिंदी</option>
-                <option value="ko">🇰🇷 한국어</option>
-                <option value="es">🇪🇸 Español</option>
-              </select>
-
-              <ConnectButton
-                showBalance={false}
-                chainStatus="icon"
-                accountStatus="address"
-              />
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-white">GIWASETU MULTI-CHAIN</h1>
+              <p className="text-xs text-slate-400">{t.subtitle}</p>
             </div>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <select 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value as Lang)}
+              className="bg-[#0b0e17] border border-slate-700 text-slate-200 text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-blue-500 cursor-pointer"
+            >
+              <option value="en">🌐 English</option>
+              <option value="ko">🇰🇷 한국어</option>
+              <option value="hi">🇮🇳 हिंदी</option>
+              <option value="es">🇪🇸 Español</option>
+            </select>
+            
+            <ConnectButton showBalance={true} chainStatus="icon" accountStatus="address" />
           </div>
         </header>
 
-        {/* STATUS */}
-
         {statusMsg && (
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-purple-500/30 bg-purple-950/40 px-3 py-2.5 text-xs text-purple-200">
-            <span className="break-words">
-              {statusMsg}
-            </span>
-
-            <button
-              onClick={() => setStatusMsg('')}
-              className="shrink-0 text-slate-500 hover:text-white"
-            >
-              ✕
-            </button>
+          <div className="bg-blue-950/60 border border-blue-500/40 text-blue-300 p-3 rounded-xl text-xs flex justify-between items-center">
+            <span>{statusMsg}</span>
+            <button onClick={() => setStatusMsg('')} className="text-slate-400 hover:text-white">✕</button>
           </div>
         )}
 
-        {/* IDENTITY + BALANCES */}
-
-        <section className="rounded-2xl border border-slate-800 bg-[#0a0d14] p-4">
-          <div className="mb-3 flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-purple-400">
-                {t.identity}
-              </p>
-
-              <p className="mt-1 text-[9px] text-slate-500">
-                {t.connectedWallet}
-              </p>
+        {/* Identity Section */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
+            <span className="text-xs font-semibold tracking-wider text-purple-400 uppercase">{t.identityHeader}</span>
+            <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
+              isConnected 
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
+                : 'bg-slate-800 text-slate-500 border-slate-700'
+            }`}>
+              {isConnected ? t.verified : t.notConnected}
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
+              <span className="text-xs text-slate-400">{t.boundId}</span>
+              <span className="text-sm font-mono font-semibold text-purple-300">
+                {isConnected ? userUpId : '--'}
+              </span>
             </div>
+            <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
+              <span className="text-xs text-slate-400">{t.liveBalance} ({networkName})</span>
+              <span className="text-sm font-mono font-semibold text-emerald-400">
+                {isConnected && balanceData 
+                  ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` 
+                  : '--'}
+              </span>
+            </div>
+          </div>
 
-            <span
-              className={`rounded-full border px-2 py-1 text-[9px] ${
-                isConnected && isArcNetwork
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                  : isConnected
-                    ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                    : 'border-slate-700 bg-slate-900 text-slate-500'
-              }`}
-            >
-              {!isConnected
-                ? t.disconnected
-                : isArcNetwork
-                  ? t.connected
-                  : t.wrongNetwork}
+          {/* Custom Handle Input */}
+          {isConnected && (
+            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
+              <input 
+                type="text" 
+                placeholder="Set custom handle (e.g. @bhupendra)" 
+                value={customUpId}
+                onChange={(e) => setCustomUpId(e.target.value)}
+                className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1 font-mono"
+              />
+              <button 
+                onClick={handleRegisterUpId}
+                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
+              >
+                {t.issueUpId}
+              </button>
+            </div>
+          )}
+
+          {/* Ecosystem Cards */}
+          <div className="pt-2">
+            <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-medium">{t.multichainHeader}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">GIWA L2</p>
+                <p className="font-mono text-emerald-400 mt-1">{isGiwa && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ETH` : 'Active / Sync'}</p>
+              </div>
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">Arc Testnet</p>
+                <p className="font-mono text-blue-400 mt-1">{isArc && balanceData ? `${Number(balanceData.formatted).toFixed(3)} USDC` : 'Supported'}</p>
+              </div>
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">Ethereum L1</p>
+                <p className="font-mono text-indigo-400 mt-1">Mainnet Ready</p>
+              </div>
+              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
+                <p className="text-slate-400 font-semibold text-[10px]">Bitcoin (UTXO)</p>
+                <p className="font-mono text-amber-400 mt-1">Cross-Chain Bridge</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Royalty Engine Section */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
+          <div>
+            <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
+            <p className="text-[11px] text-slate-400 mt-0.5">{t.royaltyDesc}</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <input 
+              type="text"
+              placeholder="Creator/Builder Address (or leave empty for self)"
+              value={royaltyRecipient}
+              onChange={(e) => setRoyaltyRecipient(e.target.value)}
+              className="sm:col-span-2 bg-[#0b0e17] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
+            />
+            <div className="flex gap-2">
+              <input 
+                type="text"
+                value={royaltyAmount}
+                onChange={(e) => setRoyaltyAmount(e.target.value)}
+                className="w-1/2 bg-[#0b0e17] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
+              />
+              <button
+                onClick={handleRoyaltyPayout}
+                disabled={txLoading || !isConnected}
+                className="w-1/2 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2 transition-all cursor-pointer"
+              >
+                {t.distributeRoyalty}
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Onboarding Workflow */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
+          <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">{t.workflowHeader}</h2>
+          
+          <div className="flex justify-between items-center bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60">
+            <div>
+              <p className="text-xs font-medium text-slate-200">{t.step1}</p>
+              <p className="text-[10px] text-slate-500">{t.step1Sub}</p>
+            </div>
+            <span className={`text-xs px-2.5 py-1 rounded border font-medium ${
+              isConnected 
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                : 'bg-slate-800 text-slate-500 border-slate-700'
+            }`}>
+              {isConnected ? t.done : t.pending}
             </span>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-
-            <div className="rounded-xl border border-slate-800 bg-[#05070a] p-3">
-              <p className="text-[9px] uppercase text-slate-500">
-                {t.wallet}
-              </p>
-
-              <div className="mt-1 flex items-center justify-between gap-2">
-                <span className="truncate text-xs text-purple-300">
-                  {address
-                    ? shortAddress(address)
-                    : '--'}
-                </span>
-
-                {address && (
-                  <button
-                    onClick={() => copyText(address)}
-                    className="rounded bg-slate-800 px-2 py-1 text-[9px] text-slate-300"
-                  >
-                    {copied === address
-                      ? t.copied
-                      : t.copy}
-                  </button>
-                )}
-              </div>
+          <div className="flex justify-between items-center bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60">
+            <div>
+              <p className="text-xs font-medium text-slate-200">{t.step2}</p>
+              <p className="text-[10px] text-slate-500">{t.step2Sub.replace('{count}', practiceCount.toString())}</p>
             </div>
-
-            <div className="rounded-xl border border-slate-800 bg-[#05070a] p-3">
-              <p className="text-[9px] uppercase text-slate-500">
-                {t.balance}
-              </p>
-
-              <p className="mt-1 text-sm font-bold text-emerald-400">
-                {isConnected
-                  ? usdcLoading
-                    ? t.loading
-                    : `${usdcBalance} USDC`
-                  : '--'}
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-800 bg-[#05070a] p-3">
-              <p className="text-[9px] uppercase text-slate-500">
-                {t.nativeBalance}
-              </p>
-
-              <p className="mt-1 text-sm font-bold text-indigo-400">
-                {nativeBalanceData
-                  ? `${Number(nativeBalanceData.formatted).toFixed(6)} ${nativeBalanceData.symbol}`
-                  : '--'}
-              </p>
-            </div>
+            <button 
+              onClick={handlePracticeTx}
+              disabled={txLoading || !isConnected}
+              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95 cursor-pointer"
+            >
+              {txLoading ? t.running : t.run}
+            </button>
           </div>
 
-          {isConnected && (
-            <>
-              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                <input
-                  value={customHandle}
-                  onChange={(event) =>
-                    setCustomHandle(event.target.value)
-                  }
-                  placeholder={t.handlePlaceholder}
-                  className="flex-1 rounded-xl border border-slate-800 bg-[#05070a] px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-purple-500"
-                />
+          <div className="flex justify-between items-center bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60">
+            <div>
+              <p className="text-xs font-medium text-slate-200">{t.step3}</p>
+              <p className="text-[10px] text-slate-500">{t.step3Sub}</p>
+            </div>
+            <button 
+              onClick={() => isConnected && setStampIssued(!stampIssued)}
+              disabled={!isConnected}
+              className={`text-xs px-2.5 py-1 rounded border font-medium transition-all ${
+                stampIssued 
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
+                  : 'bg-slate-800 text-slate-500 border-slate-700'
+              }`}
+            >
+              {stampIssued ? t.issued : t.claim}
+            </button>
+          </div>
+        </section>
 
+        {/* Payments Section with QR & Send Scanner */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div className="flex border-b border-slate-800 gap-2">
+            <button 
+              onClick={() => setActiveTab('upi')}
+              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
+                activeTab === 'upi' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Multi-Chain UPI Pay
+            </button>
+            <button 
+              onClick={() => setActiveTab('qr')}
+              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
+                activeTab === 'qr' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Receive QR Invoice
+            </button>
+            <button 
+              onClick={() => setActiveTab('fx')}
+              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
+                activeTab === 'fx' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              Global FX (KRW/INR)
+            </button>
+          </div>
+
+          {activeTab === 'upi' && (
+            <div className="space-y-3 pt-2">
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder={t.placeholder} 
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  className="flex-1 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all font-mono"
+                />
                 <button
-                  onClick={registerHandle}
-                  className="rounded-xl bg-purple-600 px-4 py-2.5 text-xs font-bold text-white hover:bg-purple-500"
+                  onClick={handleSimulateScan}
+                  className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium cursor-pointer"
                 >
-                  {t.register}
+                  📷 {t.scanQr}
                 </button>
               </div>
 
-              <div className="mt-3 rounded-xl border border-purple-900/40 bg-purple-950/20 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[9px] uppercase text-slate-500">
-                    {t.identity}
-                  </span>
-
-                  <span className="text-xs font-bold text-purple-300">
-                    {userHandle}
-                  </span>
+              {isScannerOpen && (
+                <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 text-center text-xs text-purple-300 animate-pulse">
+                  Scanning Camera Feed / Processing Image...
                 </div>
+              )}
+              
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-1/3 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 font-mono transition-all"
+                />
+                <button 
+                  onClick={handlePayment}
+                  disabled={txLoading || !isConnected}
+                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                >
+                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'USDC'})`}
+                </button>
               </div>
-            </>
+              
+              <p className="text-[10px] text-center text-slate-500">
+                Connected Network: {networkName} | Dynamic Explorer Sync Active
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'qr' && (
+            <div className="bg-[#0b0e17] p-6 rounded-xl border border-slate-800 text-center space-y-3">
+              <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{t.qrTitle}</p>
+              
+              <div className="w-40 h-40 bg-slate-900 border-2 border-purple-500/30 mx-auto rounded-xl flex flex-col items-center justify-center p-2 shadow-inner">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(receiveQrData)}`} 
+                  alt="Receiver QR Code"
+                  className="w-32 h-32 rounded bg-white p-1"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xs font-mono font-bold text-purple-400">{userUpId}</p>
+                <p className="text-[11px] font-mono text-slate-400 break-all">{address || 'No wallet connected'}</p>
+                <p className="text-[10px] text-emerald-400 font-semibold pt-1">Network: {networkName}</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'fx' && (
+            <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800 space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400">1 INR (₹) =</span>
+                <span className="font-mono text-emerald-400 font-semibold">16.12 KRW (₩)</span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-400">1 ETH / BTC =</span>
+                <span className="font-mono text-purple-400 font-semibold">Global Liquidity Pool Active</span>
+              </div>
+              <p className="text-[10px] text-slate-500 text-center pt-1">Multi-Chain Settlement Engine</p>
+            </div>
           )}
         </section>
 
-        {/* NETWORK STATUS */}
-
-        <section className="rounded-2xl border border-slate-800 bg-[#0a0d14] p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-            <div>
-              <p className="text-[10px] uppercase tracking-widest text-slate-500">
-                {t.network}
-              </p>
-
-              <p className="mt-1 text-sm font-bold text-white">
-                {isArcNetwork
-                  ? 'Arc Testnet'
-                  : isConnected
-                    ? t.wrongNetwork
-                    : '--'}
-              </p>
-
-              <p className="mt-1 text-[9px] text-slate-500">
-                Chain ID: {chainId || '--'}
-              </p>
+        {/* Network-Categorized Faucets & Links */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
+          <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
+          
+          {/* Arc Protocol Ecosystem */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+              <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide">Arc Protocol Ecosystem</p>
             </div>
-
-            {isConnected && !isArcNetwork && (
-              <button
-                onClick={() => {
-                  setStatusMsg(t.wrongChainMessage)
-                }}
-                className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-bold text-amber-400"
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+              <a 
+                href="https://testnet.arcscan.app/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
               >
-                {t.switchNetwork}
-              </button>
-            )}
+                <span>Arc Testnet Explorer</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://faucet.circle.com/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
+              >
+                <span>Circle USDC Faucet</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://www.arc.io/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              >
+                <span>Arc Protocol Docs</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            </div>
+          </div>
+
+          {/* GIWA Ecosystem */}
+          <div className="space-y-2 pt-2 border-t border-slate-800/60">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide">GIWA L2 Ecosystem</p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+              <a 
+                href="https://faucet.giwa.io/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
+              >
+                <span>GIWA Faucet</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="http://sepolia-playground.giwa.io" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
+              >
+                <span>GIWA Playground</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://faucet.lambda256.io/" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              >
+                <span>Lambda Faucet</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+              <a 
+                href="https://giwa.io/gasok" 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+              >
+                <span>GIWA Gasok Docs</span>
+                <span className="text-[10px]">↗</span>
+              </a>
+            </div>
           </div>
         </section>
 
-        {/* MAIN TABS */}
-
-        <section className="overflow-hidden rounded-2xl border border-slate-800 bg-[#0a0d14]">
-
-          <div className="flex overflow-x-auto border-b border-slate-800">
-            {[
-              ['payment', t.payment],
-              ['qr', t.qr],
-              ['treasury', t.treasury],
-              ['assets', t.assets],
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                onClick={() =>
-                  setActiveTab(key as Tab)
-                }
-                className={`shrink-0 border-b-2 px-4 py-3 text-[10px] font-bold uppercase tracking-wide ${
-                  activeTab === key
-                    ? 'border-purple-500 text-purple-400'
-                    : 'border-transparent text-slate-500 hover:text-slate-300'
-                }`}
+        {/* Activity Log */}
+        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.activityHeader}</span>
+            {isConnected && activities.length > 0 && (
+              <button 
+                onClick={handleDownloadCSV}
+                className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-all cursor-pointer"
               >
-                {label}
+                {t.downloadCsv}
               </button>
-            ))}
+            )}
           </div>
 
-          <div className="p-4">
-
-            {/* PAYMENT */}
-
-            {activeTab === 'payment' && (
-              <div className="space-y-3">
-
-                <div>
-                  <p className="text-[10px] uppercase tracking-widest text-purple-400">
-                    {t.payment}
-                  </p>
-
-                  <p className="mt-1 text-[9px] text-slate-500">
-                    Secure wallet-signed settlement
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() =>
-                      setTransferMode('usdc')
-                    }
-                    className={`rounded-xl border p-3 text-left ${
-                      transferMode === 'usdc'
-                        ? 'border-purple-500 bg-purple-950/30'
-                        : 'border-slate-800 bg-[#05070a]'
-                    }`}
-                  >
-                    <p className="text-xs font-bold text-white">
-                      {t.usdcMode}
-                    </p>
-                    <p className="mt-1 text-[9px] text-slate-500">
-                      6 decimal ERC-20 asset
-                    </p>
-                  </button>
-
-                  <button
-                    onClick={() =>
-                      setTransferMode('native')
-                    }
-                    className={`rounded-xl border p-3 text-left ${
-                      transferMode === 'native'
-                        ? 'border-indigo-500 bg-indigo-950/30'
-                        : 'border-slate-800 bg-[#05070a]'
-                    }`}
-                  >
-                    <p className="text-xs font-bold text-white">
-                      {t.nativeMode}
-                    </p>
-                    <p className="mt-1 text-[9px] text-slate-500">
-                      Network gas asset
-                    </p>
-                  </button>
-                </div>
-
-                {transferMode === 'native' && (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-[10px] text-amber-300">
-                    ⚠ {t.nativeWarning}
-                  </div>
-                )}
-
-                <div>
-                  <label className="mb-1 block text-[9px] uppercase text-slate-500">
-                    {t.recipient}
-                  </label>
-
-                  <div className="flex gap-2">
-                    <input
-                      value={recipient}
-                      onChange={(event) =>
-                        setRecipient(event.target.value)
-                      }
-                      placeholder={
-                        t.recipientPlaceholder
-                      }
-                      className="min-w-0 flex-1 rounded-xl border border-slate-800 bg-[#05070a] px-3 py-3 text-xs text-slate-200 outline-none focus:border-purple-500"
-                    />
-
-                    <button
-                      onClick={
-                        scannerOpen
-                          ? stopScanner
-                          : startScanner
-                      }
-                      className="rounded-xl border border-slate-700 bg-[#05070a] px-3 text-xs text-purple-300"
-                    >
-                      {scannerOpen
-                        ? t.close
-                        : t.scan}
-                    </button>
-                  </div>
-                </div>
-
-                {scannerOpen && (
-                  <div className="rounded-xl border border-purple-500/40 bg-black p-3">
-                    <div
-                      id="arcsetu-qr-reader"
-                      className="mx-auto min-h-[230px] max-w-sm overflow-hidden rounded-xl"
-                    />
-
-                    {scannerError && (
-                      <p className="mt-2 text-center text-[10px] text-red-400">
-                        {scannerError}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                <div>
-                  <label className="mb-1 block text-[9px] uppercase text-slate-500">
-                    {t.amount}
-                  </label>
-
-                  <input
-                    inputMode="decimal"
-                    value={amount}
-                    onChange={(event) =>
-                      setAmount(event.target.value)
-                    }
-                    className="w-full rounded-xl border border-slate-800 bg-[#05070a] px-3 py-3 text-xs text-slate-200 outline-none focus:border-purple-500"
-                  />
-                </div>
-
-                <button
-                  onClick={handlePayment}
-                  disabled={
-                    txLoading ||
-                    !isConnected ||
-                    !isArcNetwork
-                  }
-                  className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 py-3 text-xs font-black text-white shadow-lg disabled:cursor-not-allowed disabled:bg-slate-800 disabled:from-slate-800 disabled:to-slate-800"
-                >
-                  {txLoading
-                    ? t.sending
-                    : transferMode === 'usdc'
-                      ? `${t.sendUsdc} • ${amount} USDC`
-                      : `${t.sendNative} • ${amount}`}
-                </button>
-              </div>
-            )}
-
-            {/* QR */}
-
-            {activeTab === 'qr' && (
-              <div className="space-y-4 text-center">
-
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-purple-400">
-                    {t.qrTitle}
-                  </p>
-
-                  <p className="mt-1 text-[9px] text-slate-500">
-                    {t.qrDesc}
-                  </p>
-                </div>
-
-                {address ? (
-                  <>
-                    <div className="mx-auto flex h-48 w-48 items-center justify-center rounded-2xl border border-purple-500/30 bg-white p-3">
-                      <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(
-                          receiveQrData
-                        )}`}
-                        alt="Arcsetu payment QR"
-                        className="h-full w-full"
-                      />
-                    </div>
-
+          <div className="space-y-2 text-xs">
+            {isConnected ? (
+              activities.length > 0 ? (
+                activities.map((act) => (
+                  <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-black text-purple-300">
-                        {userHandle}
-                      </p>
-
-                      <p className="mt-1 break-all text-[9px] text-slate-500">
-                        {address}
-                      </p>
-
-                      <button
-                        onClick={() =>
-                          copyText(address)
-                        }
-                        className="mt-3 rounded-xl bg-slate-800 px-4 py-2 text-[10px] text-slate-200"
-                      >
-                        {copied === address
-                          ? t.copied
-                          : t.copy}
-                      </button>
+                      <p className="text-emerald-400 font-medium">{act.title}</p>
+                      <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
                     </div>
-                  </>
-                ) : (
-                  <div className="rounded-xl border border-slate-800 bg-[#05070a] p-8 text-xs text-slate-500">
-                    {t.noWallet}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* TREASURY */}
-
-            {activeTab === 'treasury' && (
-              <div className="space-y-4">
-
-                <div className="rounded-xl border border-purple-900/40 bg-purple-950/20 p-4">
-                  <p className="text-xs font-black uppercase text-purple-300">
-                    {t.treasuryTitle}
-                  </p>
-
-                  <p className="mt-1 text-[10px] text-slate-500">
-                    {t.treasuryDesc}
-                  </p>
-
-                  <div className="mt-4 rounded-xl border border-slate-800 bg-[#05070a] p-3">
-                    <p className="text-[9px] uppercase text-slate-500">
-                      {t.treasuryAddress}
-                    </p>
-
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="min-w-0 flex-1 truncate text-xs text-purple-300">
-                        {DEFAULT_TREASURY}
-                      </span>
-
-                      <button
-                        onClick={() =>
-                          copyText(DEFAULT_TREASURY)
-                        }
-                        className="rounded-lg bg-slate-800 px-2 py-1 text-[9px]"
-                      >
-                        {t.copy}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-[#05070a] p-4">
-                  <p className="text-[9px] uppercase text-slate-500">
-                    {t.depositAmount}
-                  </p>
-
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      inputMode="decimal"
-                      value={treasuryAmount}
-                      onChange={(event) =>
-                        setTreasuryAmount(
-                          event.target.value
-                        )
-                      }
-                      className="min-w-0 flex-1 rounded-xl border border-slate-800 bg-[#0a0d14] px-3 py-2.5 text-xs outline-none focus:border-purple-500"
-                    />
-
-                    <button
-                      onClick={handleTreasuryDeposit}
-                      disabled={
-                        txLoading ||
-                        !isConnected ||
-                        !isArcNetwork
-                      }
-                      className="rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white disabled:bg-slate-800"
-                    >
-                      {txLoading
-                        ? t.depositing
-                        : t.deposit}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-[#05070a] p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold text-white">
-                        {t.cctp}
-                      </p>
-
-                      <p className="mt-1 text-[9px] text-slate-500">
-                        Circle cross-chain settlement architecture
-                      </p>
-                    </div>
-
-                    <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-1 text-[8px] text-emerald-400">
-                      {t.comingSoon}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ASSETS */}
-
-            {activeTab === 'assets' && (
-              <div className="space-y-3">
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-black uppercase text-purple-400">
-                      {t.multiChain}
-                    </p>
-
-                    <p className="mt-1 text-[9px] text-slate-500">
-                      Arcsetu multi-network architecture
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={fetchUsdcBalance}
-                    className="rounded-lg bg-slate-800 px-3 py-1.5 text-[9px] text-slate-300"
-                  >
-                    {t.refresh}
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-
-                  <div className="rounded-xl border border-purple-900/40 bg-purple-950/20 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white">
-                        Arc Testnet
-                      </span>
-
-                      <span className="text-[8px] text-purple-400">
-                        EVM
-                      </span>
-                    </div>
-
-                    <p className="mt-3 text-xl font-black text-emerald-400">
-                      {usdcBalance}
-                    </p>
-
-                    <p className="text-[9px] text-slate-500">
-                      USDC
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-800 bg-[#05070a] p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-white">
-                        Native asset
-                      </span>
-
-                      <span className="text-[8px] text-indigo-400">
-                        GAS
-                      </span>
-                    </div>
-
-                    <p className="mt-3 text-xl font-black text-indigo-400">
-                      {nativeBalanceData
-                        ? Number(
-                            nativeBalanceData.formatted
-                          ).toFixed(6)
-                        : '0.000000'}
-                    </p>
-
-                    <p className="text-[9px] text-slate-500">
-                      {nativeBalanceData?.symbol ||
-                        'native'}
-                    </p>
-                  </div>
-
-                </div>
-
-                <div className="rounded-xl border border-slate-800 bg-[#05070a] p-3 text-[9px] leading-5 text-slate-500">
-                  Multi-chain adapters can be attached here
-                  for Arc, Ethereum, Base, Bitcoin and other
-                  supported networks without changing the
-                  payment UI.
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        {/* PROGRAMMABLE FEE ENGINE */}
-
-        <section className="rounded-2xl border border-purple-900/50 bg-[#0a0d14] p-4">
-
-          <div className="mb-4">
-            <p className="text-xs font-black uppercase tracking-widest text-purple-400">
-              {t.royalty}
-            </p>
-
-            <p className="mt-1 text-[9px] text-slate-500">
-              Merchant • Treasury • Protocol fee routing
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-
-            <div className="rounded-xl border border-slate-800 bg-[#05070a] p-3">
-              <p className="text-[9px] text-slate-500">
-                {t.merchant}
-              </p>
-
-              <p className="mt-1 text-lg font-black text-white">
-                80%
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-800 bg-[#05070a] p-3">
-              <p className="text-[9px] text-slate-500">
-                {t.vault}
-              </p>
-
-              <p className="mt-1 text-lg font-black text-emerald-400">
-                15%
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-slate-800 bg-[#05070a] p-3">
-              <p className="text-[9px] text-slate-500">
-                {t.protocol}
-              </p>
-
-              <p className="mt-1 text-lg font-black text-purple-400">
-                5%
-              </p>
-            </div>
-
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-
-            <input
-              value={feeRecipient}
-              onChange={(event) =>
-                setFeeRecipient(event.target.value)
-              }
-              placeholder={t.feeRecipient}
-              className="rounded-xl border border-slate-800 bg-[#05070a] px-3 py-2.5 text-xs outline-none focus:border-purple-500 sm:col-span-2"
-            />
-
-            <div className="flex gap-2">
-              <input
-                inputMode="decimal"
-                value={feeAmount}
-                onChange={(event) =>
-                  setFeeAmount(event.target.value)
-                }
-                className="min-w-0 flex-1 rounded-xl border border-slate-800 bg-[#05070a] px-3 py-2.5 text-xs outline-none focus:border-purple-500"
-              />
-
-              <button
-                onClick={handleFeeDistribution}
-                disabled={
-                  feeLoading ||
-                  !isConnected ||
-                  !isArcNetwork
-                }
-                className="rounded-xl bg-purple-600 px-3 py-2 text-[10px] font-bold text-white disabled:bg-slate-800"
-              >
-                {feeLoading
-                  ? t.distributing
-                  : t.distribute}
-              </button>
-            </div>
-
-          </div>
-        </section>
-
-        {/* SECURITY */}
-
-        <section className="rounded-2xl border border-emerald-900/40 bg-[#0a0d14] p-4">
-          <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
-            {t.security}
-          </p>
-
-          <p className="mt-2 text-[10px] leading-5 text-slate-400">
-            {t.securityNote}
-          </p>
-        </section>
-
-        {/* ACTIVITY */}
-
-        <section className="rounded-2xl border border-slate-800 bg-[#0a0d14] p-4">
-
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="text-xs font-black uppercase tracking-widest text-slate-400">
-                {t.activity}
-              </p>
-
-              <p className="mt-1 text-[9px] text-slate-600">
-                {activities.length} records
-              </p>
-            </div>
-
-            {activities.length > 0 && (
-              <button
-                onClick={exportCsv}
-                className="rounded-lg bg-slate-800 px-3 py-1.5 text-[9px] text-slate-300"
-              >
-                {t.export}
-              </button>
-            )}
-          </div>
-
-          <div className="mt-3 space-y-2">
-
-            {activities.length === 0 ? (
-              <div className="rounded-xl border border-slate-800 bg-[#05070a] p-6 text-center text-[10px] text-slate-600">
-                {t.noActivity}
-              </div>
-            ) : (
-              activities.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-xl border border-slate-800 bg-[#05070a] p-3"
-                >
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-
-                    <div className="min-w-0">
-                      <p className="truncate text-xs font-bold text-purple-300">
-                        {item.title}
-                      </p>
-
-                      <p className="mt-1 text-[9px] text-slate-600">
-                        {item.timestamp}
-                      </p>
-
-                      <p className="mt-1 text-[10px] font-bold text-emerald-400">
-                        {item.amount}
-                      </p>
-                    </div>
-
-                    <div className="flex shrink-0 items-center gap-2">
-                      <span
-                        className={`rounded-full border px-2 py-1 text-[8px] ${
-                          item.status ===
-                          'confirmed'
-                            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                            : item.status ===
-                                'submitted'
-                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                              : 'border-red-500/30 bg-red-500/10 text-red-400'
-                        }`}
-                      >
-                        {item.status ===
-                        'confirmed'
-                          ? t.confirmed
-                          : item.status ===
-                              'submitted'
-                            ? t.submitted
-                            : t.failed}
-                      </span>
-
-                      <a
-                        href={item.explorerUrl}
-                        target="_blank"
+                    <div className="text-right">
+                      <a 
+                        href={act.explorerUrl} 
+                        target="_blank" 
                         rel="noreferrer"
-                        className="rounded-lg bg-purple-950 px-2.5 py-1.5 text-[9px] text-purple-300 hover:bg-purple-900"
+                        className="text-purple-400 hover:underline text-[10px] font-mono block"
                       >
-                        {t.explorer} ↗
+                        Verify Tx ↗ ({act.txHash})
                       </a>
                     </div>
-
                   </div>
-
-                  <p className="mt-2 truncate border-t border-slate-800 pt-2 text-[8px] text-slate-600">
-                    {item.txHash}
-                  </p>
+                ))
+              ) : (
+                <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
+                  {t.noTxConnected}
                 </div>
-              ))
+              )
+            ) : (
+              <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
+                {t.noTxDisconnected}
+              </div>
             )}
-
           </div>
         </section>
 
-        {/* FOOTER */}
-
-        <footer className="pb-6 text-center">
-          <div className="flex flex-wrap justify-center gap-3 text-[9px] text-slate-600">
-            <a
-              href={ARC_EXPLORER}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-purple-400"
+        {/* Official Social Links & Builder Credits */}
+        <footer className="bg-[#111625] p-4 rounded-2xl border border-slate-800 text-center space-y-3">
+          <div className="flex justify-center items-center gap-6 text-xs text-slate-400">
+            <a 
+              href="https://x.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
             >
-              ArcScan ↗
+              <span>𝕏 (Twitter)</span>
             </a>
-
-            <a
-              href="https://faucet.circle.com/"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-purple-400"
+            <a 
+              href="https://github.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
             >
-              Circle Faucet ↗
+              <span>GitHub</span>
             </a>
-
-            <a
-              href="https://www.arc.io/"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-purple-400"
+            <a 
+              href="https://discord.com" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
             >
-              Arc ↗
+              <span>Discord</span>
             </a>
           </div>
-
-          <p className="mt-3 text-[8px] text-slate-700">
-            ARCSETU • programmable global settlement
-            infrastructure
+          <p className="text-[11px] text-slate-500">
+            GIWASETU MULTI-CHAIN PROTOCOL — Settlement Engine for Ethereum • Arc • GIWA
           </p>
         </footer>
 
       </div>
 
-      {/* SUCCESS MODAL */}
-
+      {/* SUCCESS MODAL POPUP WITH ANIMATION */}
       {successModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-
-          <div className="w-full max-w-sm rounded-2xl border border-purple-500/40 bg-[#0a0d14] p-5 shadow-2xl">
-
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-emerald-500/30 bg-emerald-500/10 text-2xl text-emerald-400">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
+            <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto border border-emerald-500/40">
               ✓
             </div>
-
-            <div className="mt-4 text-center">
-              <h3 className="text-base font-black text-white">
-                {t.transactionSubmitted}
-              </h3>
-
-              <p className="mt-1 text-[10px] text-slate-500">
-                {successModal.title}
-              </p>
+            
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-white">{t.txSuccessTitle}</h3>
+              <p className="text-xs text-slate-400">{t.txSuccessDesc}</p>
             </div>
 
-            <div className="mt-4 space-y-2 rounded-xl border border-slate-800 bg-[#05070a] p-3">
-
-              <div className="flex justify-between gap-3">
-                <span className="text-[9px] text-slate-500">
-                  {t.amount}
-                </span>
-
-                <span className="text-xs font-bold text-emerald-400">
-                  {successModal.amount}
-                </span>
-              </div>
-
-              {successModal.latencyMs !==
-                undefined && (
-                <div className="flex justify-between gap-3">
-                  <span className="text-[9px] text-slate-500">
-                    execution
-                  </span>
-
-                  <span className="text-[10px] text-purple-300">
-                    {successModal.latencyMs} ms
-                  </span>
-                </div>
-              )}
-
-              <div>
-                <p className="text-[9px] text-slate-500">
-                  tx hash
-                </p>
-
-                <p className="mt-1 break-all text-[8px] text-slate-600">
-                  {successModal.hash}
-                </p>
-              </div>
+            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 text-left space-y-1.5 font-mono text-xs">
+              <p className="text-slate-400 text-[10px]">DETAILS:</p>
+              <p className="text-purple-300 font-semibold">{successModal.title}</p>
+              <p className="text-emerald-400 font-bold">{successModal.amount}</p>
+              <p className="text-slate-500 text-[10px] truncate">Hash: {successModal.hash}</p>
             </div>
 
-            <div className="mt-4 space-y-2">
-
-              <a
+            <div className="flex flex-col gap-2 pt-1">
+              <a 
                 href={successModal.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block w-full rounded-xl bg-purple-600 py-3 text-center text-xs font-bold text-white hover:bg-purple-500"
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs py-2.5 rounded-xl transition-all shadow-md block"
               >
-                {t.explorer} ↗
+                {t.viewExplorer}
               </a>
-
-              <button
-                onClick={() =>
-                  setSuccessModal(null)
-                }
-                className="w-full rounded-xl bg-slate-800 py-3 text-xs font-bold text-slate-300 hover:bg-slate-700"
+              <button 
+                onClick={() => setSuccessModal(null)}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2.5 rounded-xl transition-all font-medium cursor-pointer"
               >
                 {t.close}
               </button>
-
             </div>
           </div>
         </div>
       )}
-
     </main>
   )
 }

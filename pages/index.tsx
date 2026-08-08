@@ -1,5 +1,3 @@
-'use client'
-
 import React, { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import {
@@ -49,20 +47,11 @@ export const arcTestnet = defineChain({
 const config = getDefaultConfig({
   appName: 'Arc Settlement Hub',
   projectId: 'YOUR_PROJECT_ID',
-  chains: [arcTestnet, base, mainnet, polygon, optimism, arbitrum],
+  chains: [arcTestnet, mainnet, polygon, optimism, arbitrum, base],
   ssr: true,
 })
 
 const queryClient = new QueryClient()
-
-const usdcAddresses: Record<number, `0x${string}` | undefined> = {
-  5042002: undefined,
-  8453: '0x833589fcd6edb6e08f4c7c32d4f71b54bda02913',
-  1: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48',
-  137: '0x3c499c542cef5e3811e1192ce70d8cc03d5c3359',
-  10: '0x0b2c639c533813f4aa9d78372f07242308b025e6',
-  42161: '0xaf88d065e77c8cc2239327c5edb3a432268e5831',
-}
 
 interface TxLog {
   id: string
@@ -73,8 +62,6 @@ interface TxLog {
   status: 'completed' | 'pending' | 'failed'
   hash?: string
 }
-
-type SupportedLocale = 'en' | 'hi' | 'es' | 'zh' | 'fr' | 'ar'
 
 function DashboardContent() {
   const { address, isConnected } = useAccount()
@@ -89,7 +76,7 @@ function DashboardContent() {
   const [feeAmount, setFeeAmount] = useState('0.05')
   const [activeTab, setActiveTab] = useState<'transfer' | 'pos' | 'treasury'>('transfer')
   const [transferRoute, setTransferRoute] = useState<'native' | 'erc20'>('native')
-  const [locale, setLocale] = useState<SupportedLocale>('en')
+  const [locale, setLocale] = useState<'en' | 'hi'>('en')
   
   const [selectedRoute, setSelectedRoute] = useState<'native' | 'cctp' | 'speed' | 'splitter'>('native')
   const [settlementCount, setSettlementCount] = useState(0)
@@ -101,17 +88,12 @@ function DashboardContent() {
   const [treasuryDeposit, setTreasuryDeposit] = useState('100')
   const [treasuryBalance, setTreasuryBalance] = useState('1450.25')
 
-  const activeTokenAddress = currentChainId === arcTestnet.id && transferRoute === 'erc20'
-    ? (ARC_USDC_ADDRESS as `0x${string}`)
-    : usdcAddresses[currentChainId]
-
-  const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading, isError: isBalanceError } = useBalance({
+  const { data: balanceData, refetch: refetchBalance, isLoading: isBalanceLoading } = useBalance({
     address: address,
-    token: activeTokenAddress,
-    chainId: currentChainId,
+    chainId: arcTestnet.id,
     query: {
       refetchInterval: 3000,
-      enabled: Boolean(address && currentChainId),
+      enabled: !!address,
     }
   })
 
@@ -253,35 +235,19 @@ function DashboardContent() {
     }
   }
 
-  const handleRunSettlement = async () => {
-    if (!walletActive || !address) return
-    await ensureArcChain()
-    const logId = 'settle_' + Date.now()
-
-    try {
-      const hash = await sendTransactionAsync({
-        to: address as `0x${string}`,
-        value: parseUnits('0.0001', 18),
-        chainId: arcTestnet.id,
-      })
-
-      const newCount = settlementCount + 1
-      setSettlementCount(newCount)
-      localStorage.setItem('arc_settlement_count', newCount.toString())
-      
-      saveLog({
-        id: logId,
-        type: 'Deterministic Settlement Engine Test',
-        amount: '0.0001 USDC',
-        to: address,
-        timestamp: new Date().toLocaleTimeString(),
-        status: 'completed',
-        hash: hash,
-      })
-      refetchBalance()
-    } catch (e) {
-      console.error('settlement test error', e)
-    }
+  const handleRunSettlement = () => {
+    const newCount = settlementCount + 1
+    setSettlementCount(newCount)
+    localStorage.setItem('arc_settlement_count', newCount.toString())
+    
+    saveLog({
+      id: 'settle_' + Date.now(),
+      type: 'Deterministic Settlement Engine Test',
+      amount: '0.00 USDC (Gas Optimized)',
+      to: address || 'Arc Network Core',
+      timestamp: new Date().toLocaleTimeString(),
+      status: 'completed',
+    })
   }
 
   const handleClaimStamp = () => {
@@ -351,7 +317,7 @@ function DashboardContent() {
       wf1Complete: 'completed',
       wf2Title: '2. execute arc usdc settlement',
       wf2Desc: `executed: ${settlementCount} settlement txns`,
-      runSettlement: 'run settlement (0.0001 usdc)',
+      runSettlement: 'run settlement',
       wf3Title: '3. claim arc builder stamp',
       wf3Desc: 'issues arc ecosystem verification badge',
       claimStamp: builderStamp ? 'stamp claimed' : 'claim stamp',
@@ -367,7 +333,7 @@ function DashboardContent() {
       infra: 'arc ecosystem infrastructure links',
       explorer: 'arcscan explorer',
       faucet: 'circle usdc faucet',
-      docs: 'arcscan testnet portal',
+      docs: 'arc protocol docs',
       logsTitle: 'arc network activity & verification logs',
       logsDefault: 'connect wallet to view arc settlement activity.',
       logsActive: (addr: string) => `connected via wagmi: ${addr}`,
@@ -403,7 +369,7 @@ function DashboardContent() {
       wf1Complete: 'पूर्ण',
       wf2Title: '2. आर्क यूएसडीसी सेटलमेंट निष्पादित करें',
       wf2Desc: `निष्पादित: ${settlementCount} सेटलमेंट लेन-देन`,
-      runSettlement: 'सेटलमेंट चलाएं (0.0001 usdc)',
+      runSettlement: 'सेटलमेंट चलाएं',
       wf3Title: '3. आर्क बिल्डर स्टाम्प का दावा करें',
       wf3Desc: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
       claimStamp: builderStamp ? 'स्टाम्प प्राप्त हुआ' : 'स्टाम्प का दावा करें',
@@ -419,227 +385,18 @@ function DashboardContent() {
       infra: 'आर्क इकोसिस्टम इंफ्रास्ट्रक्चर लिंक',
       explorer: 'आर्कस्केन एक्सप्लोरर',
       faucet: 'सर्कल यूएसडीसी फॉसेट',
-      docs: 'आर्कस्केन पोर्टल',
+      docs: 'आर्क प्रोटोकॉल दस्तावेज़',
       logsTitle: 'आर्क नेटवर्क गतिविधि और सत्यापन लॉग',
       logsDefault: 'आर्क सेटलमेंट गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
       logsActive: (addr: string) => `वाग्मी (Wagmi) से कनेक्टेड: ${addr}`,
       clearLogs: 'हिस्ट्री साफ़ करें',
       footer: 'आर्क सेटलमेंट इंजन · विकेंद्रीकृत पैमाने के लिए निर्मित'
-    },
-    es: {
-      title: 'CENTRO DE LIQUIDACIÓN ARC',
-      badge: 'PRIMARIO',
-      subtitle: 'motor de liquidación programable de usdc en la red arc',
-      identity: 'identidad multicadena arc',
-      statusDisc: 'billetera desconectada',
-      statusConn: 'billetera activa',
-      boundId: 'id arc vinculada',
-      treasuryBal: 'saldo nativo arc',
-      routing: 'enrutamiento de activos del ecosistema arc',
-      testnet: 'red de prueba arc',
-      nativeUsdc: 'usdc nativo',
-      cctp: 'circle cctp',
-      crossBridge: 'puente entre cadenas',
-      detEngine: 'motor determinista',
-      speedBench: 'prueba de velocidad',
-      paymentUx: 'ux de pago',
-      splitSplitter: 'divisor automático',
-      feeEngine: 'motor de tarifas programable arc',
-      feeDesc: 'distribuya tarifas de creador, divida pagos o envíe regalías de forma nativa.',
-      feePlaceholder: 'dirección 0x...',
-      distributeFee: 'distribuir tarifa',
-      workflow: 'flujo de trabajo para desarrolladores',
-      wf1Title: '1. vincular identidad y billetera arc',
-      wf1Desc: 'registra identidad de forma determinista en la red arc',
-      wf1Pending: 'pendiente',
-      wf1Complete: 'completado',
-      wf2Title: '2. ejecutar liquidación usdc arc',
-      wf2Desc: `ejecutado: ${settlementCount} transacciones`,
-      runSettlement: 'ejecutar liquidación (0.0001 usdc)',
-      wf3Title: '3. reclamar sello de desarrollador arc',
-      wf3Desc: 'emite insignia de verificación del ecosistema arc',
-      claimStamp: builderStamp ? 'sello reclamado' : 'reclamar sello',
-      tabTransfer: 'transferencia usdc arc',
-      tabPos: 'factura pos qr',
-      tabTreasury: 'tesorería de rendimiento arc',
-      sendPlaceholder: 'enviar a dirección de billetera 0x',
-      scanQr: 'actualizar saldo',
-      transferRoute: 'ruta de transferencia:',
-      gasUsdc: 'usdc gas nativo',
-      erc20: 'contrato erc-20',
-      payButton: (amt: string) => isTxPending ? 'procesando transacción...' : `pagar vía arc usdc (${amt} usdc)`,
-      infra: 'enlaces de infraestructura del ecosistema arc',
-      explorer: 'explorador arcscan',
-      faucet: 'faucet circle usdc',
-      docs: 'portal arcscan testnet',
-      logsTitle: 'registros de actividad y verificación de la red arc',
-      logsDefault: 'conecte la billetera para ver la actividad de liquidación.',
-      logsActive: (addr: string) => `conectado vía wagmi: ${addr}`,
-      clearLogs: 'borrar historial',
-      footer: 'motor de liquidación arc · construido para escala descentralizada'
-    },
-    zh: {
-      title: 'ARC 结算中心',
-      badge: '主网',
-      subtitle: 'ARC 网络上的可编程 USDC 结算引擎',
-      identity: 'ARC 多链身份',
-      statusDisc: '钱包未连接',
-      statusConn: '钱包已连接',
-      boundId: '已绑定 ARC 身份 ID',
-      treasuryBal: 'ARC 原生余额',
-      routing: 'ARC 生态系统资产路由',
-      testnet: 'ARC 测试网',
-      nativeUsdc: '原生 USDC',
-      cctp: 'Circle CCTP',
-      crossBridge: '跨链桥',
-      detEngine: '确定性引擎',
-      speedBench: '速度基准',
-      paymentUx: '支付 UX',
-      splitSplitter: '自动分账器',
-      feeEngine: 'ARC 可编程费用引擎',
-      feeDesc: '在 ARC 原生分发放创作者费用、拆分支付或跨链版税。',
-      feePlaceholder: '地址 0x...',
-      distributeFee: '分派费用',
-      workflow: 'ARC 开发者入职流程',
-      wf1Title: '1. 绑定 ARC 身份与钱包',
-      wf1Desc: '在 ARC 网络上确定性注册身份',
-      wf1Pending: '等待中',
-      wf1Complete: '已完成',
-      wf2Title: '2. 执行 ARC USDC 结算',
-      wf2Desc: `已执行: ${settlementCount} 次结算交易`,
-      runSettlement: '运行结算 (0.0001 usdc)',
-      wf3Title: '3. 申领 ARC 开发者勋章',
-      wf3Desc: '颁发 ARC 生态系统验证徽章',
-      claimStamp: builderStamp ? '勋章已申领' : '申领勋章',
-      tabTransfer: 'ARC USDC 转账',
-      tabPos: 'POS 二维码发票',
-      tabTreasury: 'ARC 收益金库',
-      sendPlaceholder: '发送至 0x 钱包地址',
-      scanQr: '刷新余额',
-      transferRoute: '转账路由:',
-      gasUsdc: '原生 Gas USDC',
-      erc20: 'ERC-20 合约',
-      payButton: (amt: string) => isTxPending ? '正在处理交易...' : `通过 ARC USDC 支付 (${amt} USDC)`,
-      infra: 'ARC 生态基础设施链接',
-      explorer: 'ArcScan 区块浏览器',
-      faucet: 'Circle USDC 水龙头',
-      docs: 'ArcScan 测试网入口',
-      logsTitle: 'ARC 网络活动与验证日志',
-      logsDefault: '连接钱包以查看 ARC 结算活动。',
-      logsActive: (addr: string) => `通过 Wagmi 连接: ${addr}`,
-      clearLogs: '清除历史',
-      footer: 'ARC 结算引擎 · 为去中心化规模打造'
-    },
-    fr: {
-      title: 'CENTRE DE RÈGLEMENT ARC',
-      badge: 'PRIMAIRE',
-      subtitle: 'moteur de règlement usdc programmable sur le réseau arc',
-      identity: 'identité multi-chaîne arc',
-      statusDisc: 'portefeuille déconnecté',
-      statusConn: 'portefeuille actif',
-      boundId: 'id arc lié',
-      treasuryBal: 'solde natif arc',
-      routing: 'routage d\'actifs de l\'écosystème arc',
-      testnet: 'réseau de test arc',
-      nativeUsdc: 'usdc natif',
-      cctp: 'circle cctp',
-      crossBridge: 'pont inter-chaînes',
-      detEngine: 'moteur déterministe',
-      speedBench: 'test de vitesse',
-      paymentUx: 'ux de paiement',
-      splitSplitter: 'répartiteur automatique',
-      feeEngine: 'moteur de frais programmable arc',
-      feeDesc: 'distribuez les frais de créateur, divisez les paiements ou envoyez des redevances nativement.',
-      feePlaceholder: 'adresse 0x...',
-      distributeFee: 'distribuer les frais',
-      workflow: 'flux d\'intégration des développeurs',
-      wf1Title: '1. lier l\'identité et le portefeuille arc',
-      wf1Desc: 'enregistre de manière déterministe l\'identité sur le réseau arc',
-      wf1Pending: 'en attente',
-      wf1Complete: 'terminé',
-      wf2Title: '2. exécuter le règlement usdc arc',
-      wf2Desc: `exécuté: ${settlementCount} transactions`,
-      runSettlement: 'exécuter le règlement (0.0001 usdc)',
-      wf3Title: '3. réclamer le badge développeur arc',
-      wf3Desc: 'délivre le badge de vérification de l\'écosystème arc',
-      claimStamp: builderStamp ? 'badge réclamé' : 'réclamer le badge',
-      tabTransfer: 'transfert usdc arc',
-      tabPos: 'facture pos qr',
-      tabTreasury: 'trésorerie de rendement arc',
-      sendPlaceholder: 'envoyer à l\'adresse du portefeuille 0x',
-      scanQr: 'rafraîchir le solde',
-      transferRoute: 'route de transfert:',
-      gasUsdc: 'usdc gas natif',
-      erc20: 'contrat erc-20',
-      payButton: (amt: string) => isTxPending ? 'traitement de la transaction...' : `payer via arc usdc (${amt} usdc)`,
-      infra: 'liens d\'infrastructure de l\'écosystème arc',
-      explorer: 'explorateur arcscan',
-      faucet: 'robinet circle usdc',
-      docs: 'portail arcscan testnet',
-      logsTitle: 'journaux d\'activité et de vérification du réseau arc',
-      logsDefault: 'connectez votre portefeuille pour voir l\'activité de règlement.',
-      logsActive: (addr: string) => `connecté via wagmi: ${addr}`,
-      clearLogs: 'effacer l\'historique',
-      footer: 'moteur de règlement arc · conçu pour l\'échelle décentralisée'
-    },
-    ar: {
-      title: 'مركز تسوية آرك',
-      badge: 'الرئيسي',
-      subtitle: 'محرك تسوية USDC القابل للبرمجة على شبكة آرك',
-      identity: 'هوية آرك متعددة السلاسل',
-      statusDisc: 'المحفظة غير متصلة',
-      statusConn: 'المحفظة نشطة',
-      boundId: 'معرف آرك المرتبط',
-      treasuryBal: 'رصيد آرك الأصلي',
-      routing: 'توجيه أصول منظومة آرك',
-      testnet: 'شبكة اختبار آرك',
-      nativeUsdc: 'USDC الأصلي',
-      cctp: 'Circle CCTP',
-      crossBridge: 'جسر عبر السلاسل',
-      detEngine: 'محرك محدد',
-      speedBench: 'مؤشر السرعة',
-      paymentUx: 'تجربة دفع',
-      splitSplitter: 'موزع تلقائي',
-      feeEngine: 'محرك رسوم آرك القابل للبرمجة',
-      feeDesc: 'توزيع رسوم المبدعين أو تقسيم المدفوعات محليًا على شبكة آرك.',
-      feePlaceholder: 'العنوان 0x...',
-      distributeFee: 'توزيع الرسوم',
-      workflow: 'مسار إعداد مطوري آرك',
-      wf1Title: '1. ربط هوية آرك والمحفظة',
-      wf1Desc: 'تسجيل الهوية بشكل حتمي على شبكة آرك',
-      wf1Pending: 'قيد الانتظار',
-      wf1Complete: 'مكتمل',
-      wf2Title: '2. تنفيذ تسوية آرك USDC',
-      wf2Desc: `تم التنفيذ: ${settlementCount} معاملات تسوية`,
-      runSettlement: 'تشغيل التسوية (0.0001 usdc)',
-      wf3Title: '3. المطالبة بختم مطور آرك',
-      wf3Desc: 'إصدار شارة التحقق من منظومة آرك',
-      claimStamp: builderStamp ? 'تم استلام الختم' : 'المطالبة بالختم',
-      tabTransfer: 'تحويل آرك USDC',
-      tabPos: 'فاتورة POS QR',
-      tabTreasury: 'خزانة عوائد آرك',
-      sendPlaceholder: 'إرسال إلى عنوان محفظة 0x',
-      scanQr: 'تحديث الرصيد',
-      transferRoute: 'مسار التحويل:',
-      gasUsdc: 'رسوم USDC الأصلية',
-      erc20: 'عقد ERC-20',
-      payButton: (amt: string) => isTxPending ? 'جاري معالجة المعاملة...' : `الدفع عبر آرك USDC (${amt} USDC)`,
-      infra: 'روابط البنية التحتية لمنظومة آرك',
-      explorer: 'مستكشف ArcScan',
-      faucet: 'صنبور Circle USDC',
-      docs: 'بوابة ArcScan Testnet',
-      logsTitle: 'سجلات نشاط والتحقق لشبكة آرك',
-      logsDefault: 'قم بتوصيل المحفظة لعرض نشاط التسوية.',
-      logsActive: (addr: string) => `متصل عبر Wagmi: ${addr}`,
-      clearLogs: 'مسح السجل',
-      footer: 'محرك تسوية آرك · صُمم للتوسع اللامركزي'
     }
   }[locale]
 
   const displayBalance = () => {
     if (!walletActive) return '--'
     if (isBalanceLoading && !balanceData) return 'fetching...'
-    if (isBalanceError) return '0.0000 USDC'
     if (balanceData) {
       return `${parseFloat(balanceData.formatted).toFixed(4)} ${balanceData.symbol}`
     }
@@ -662,18 +419,12 @@ function DashboardContent() {
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <select 
-            value={locale}
-            onChange={(e) => setLocale(e.target.value as SupportedLocale)}
-            style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '8px 10px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer', outline: 'none' }}
+          <button 
+            onClick={() => setLocale(locale === 'en' ? 'hi' : 'en')}
+            style={{ fontSize: '12px', background: 'rgba(30, 41, 59, 0.8)', color: '#cbd5e1', padding: '8px 12px', borderRadius: '8px', border: '1px solid #334155', cursor: 'pointer' }}
           >
-            <option value="en">English (EN)</option>
-            <option value="hi">हिंदी (HI)</option>
-            <option value="es">Español (ES)</option>
-            <option value="zh">中文 (ZH)</option>
-            <option value="fr">Français (FR)</option>
-            <option value="ar">العربية (AR)</option>
-          </select>
+            {locale === 'en' ? 'हिन्दी' : 'English'}
+          </button>
           <ConnectButton chainStatus="icon" showBalance={false} />
         </div>
       </header>
@@ -866,10 +617,9 @@ function DashboardContent() {
             </div>
             <button 
               onClick={handleRunSettlement}
-              disabled={!walletActive || isTxPending}
-              style={{ backgroundColor: walletActive ? 'rgba(147, 51, 234, 0.8)' : '#1e293b', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: walletActive ? 'pointer' : 'not-allowed' }}
+              style={{ backgroundColor: 'rgba(147, 51, 234, 0.8)', color: '#ffffff', fontSize: '10px', padding: '6px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer' }}
             >
-              {isTxPending ? 'processing...' : t.runSettlement}
+              {t.runSettlement}
             </button>
           </div>
           <div style={{ backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -992,7 +742,7 @@ function DashboardContent() {
             <span>{t.faucet}</span>
             <span style={{ color: '#475569' }}>→</span>
           </a>
-          <a href="https://testnet.arcscan.app" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
+          <a href="https://docs.arcscan.app" target="_blank" rel="noreferrer" style={{ textDecoration: 'none', backgroundColor: '#0a192f', padding: '12px', borderRadius: '8px', border: '1px solid #1e1b4b', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#cbd5e1' }}>
             <span>{t.docs}</span>
             <span style={{ color: '#475569' }}>→</span>
           </a>

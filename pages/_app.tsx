@@ -30,7 +30,7 @@ export const arcTestnet = defineChain({
 
   rpcUrls: {
     default: {
-      http: ['https://rpc-testnet.arcscan.app'],
+      http: ['https://rpc.testnet.arc.network'],
     },
   },
 
@@ -46,13 +46,10 @@ export const arcTestnet = defineChain({
 
 /**
  * RainbowKit + Wagmi configuration
- *
- * IMPORTANT:
- * Add NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
- * to Vercel Environment Variables.
  */
 const config = getDefaultConfig({
   appName: 'ArcSetu',
+
   projectId:
     process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
     '0000000000000000000000000000000000000000000000000000000000000000',
@@ -60,7 +57,7 @@ const config = getDefaultConfig({
   chains: [arcTestnet],
 
   transports: {
-    [arcTestnet.id]: http('https://rpc-testnet.arcscan.app'),
+    [arcTestnet.id]: http('https://rpc.testnet.arc.network'),
   },
 
   ssr: true,

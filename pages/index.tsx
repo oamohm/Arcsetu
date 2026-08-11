@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAccount, useSendTransaction, useBalance, useChainId, useWriteContract } from 'wagmi'
 import { parseEther, parseUnits, erc20Abi } from 'viem'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
@@ -7,168 +7,248 @@ type Lang = 'en' | 'ko' | 'hi' | 'es'
 
 const translations = {
   en: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Multi-Chain Web3 Hub',
-    identityHeader: 'Universal Multi-Chain Identity',
-    verified: 'Verified Multi-Chain Builder',
-    notConnected: 'Wallet Not Connected',
-    boundId: 'Bound Universal ID',
-    issueUpId: 'Set Custom UP ID',
-    registeredIdLabel: 'Registered UP ID',
-    liveBalance: 'Live Balance',
-    multichainHeader: 'Global Assets & Networks',
-    workflowHeader: 'Builder Onboarding Workflow',
-    step1: '1. Create Universal ID & Wallet',
-    step1Sub: 'Binds identity deterministically across chains',
-    done: 'Done ✓',
-    pending: 'Pending',
-    step2: '2. Execute Cross-Chain Tx',
-    step2Sub: 'Count: {count} test txns',
-    run: 'Run Tx',
-    running: 'Running...',
-    step3: '3. Issue Multi-Chain Stamp (Dojang)',
-    step3Sub: 'Marks multi-chain verification',
-    issued: 'Issued ✓',
-    claim: 'Issue Dojang',
-    placeholder: 'Send to @UP_ID or 0x Wallet / BTC Address',
-    payBtn: 'Pay via Multi-Chain UPI',
-    processing: 'Processing Tx...',
-    noTxConnected: 'No transactions recorded yet for this wallet.',
-    noTxDisconnected: 'Connect wallet to view multi-chain history.',
-    activityHeader: 'Cross-Chain Activity & Verification Log',
-    downloadCsv: 'Download CSV ↗',
-    resourcesHeader: 'Ecosystem Protocols & Official Links',
-    scanQr: 'Scan QR',
-    qrTitle: 'Dynamic Receiver QR Invoice',
-    royaltyHeader: 'Universal Royalty & Fee Distribution Engine',
-    royaltyDesc: 'Distribute creator fees, builder incentives, or cross-chain royalties across any connected network natively.',
-    distributeRoyalty: 'Distribute Royalty',
-    txSuccessTitle: 'Transaction Confirmed!',
-    txSuccessDesc: 'Your transaction was successfully processed on the network.',
-    viewExplorer: 'View on Explorer ↗',
-    close: 'Close',
-  },
-  ko: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN 멀티체인 Web3 허브',
-    identityHeader: '유니버셜 멀티체인 신원',
-    verified: '검증된 멀티체인 빌더',
-    notConnected: '지갑 미연결',
-    boundId: '연결된 유니버셜 ID',
-    issueUpId: '커스텀 UP ID 설정',
-    registeredIdLabel: '등록된 UP ID',
-    liveBalance: '실시간 잔액',
-    multichainHeader: '글로벌 자산 및 네트워크',
-    workflowHeader: '빌더 온보딩 워크플로우',
-    step1: '1. 유니버셜 ID 및 지갑 생성',
-    step1Sub: '체인 간 신원 확정적 연결',
-    done: '완료 ✓',
-    pending: '대기 중',
-    step2: '2. 크로스체인 트랜잭션 실행',
-    step2Sub: '횟수: {count}회 실행됨',
-    run: '실행',
-    running: '실행 중...',
-    step3: '3. 멀티체인 도장 발급',
-    step3Sub: '온보딩 검증 완료 표시',
-    issued: '발급됨 ✓',
-    claim: '도장 발급받기',
-    placeholder: '@UP_ID 또는 0x 주소 입력',
-    payBtn: '멀티체인 UPI 결제',
-    processing: '처리 중...',
-    noTxConnected: '이 지갑에 대한 기록된 트랜잭션이 없습니다.',
-    noTxDisconnected: '활동 내역을 보려면 지갑을 연결하세요.',
-    activityHeader: '크로스체인 활동 및 검증 로그',
-    downloadCsv: 'CSV 다운로드 ↗',
-    resourcesHeader: '생태계 프로토콜 및 공식 링크',
-    scanQr: 'QR 스캔',
-    qrTitle: '동적 수신 QR 인보이스',
-    royaltyHeader: '유니버셜 로열티 및 수수료 분배 엔진',
-    royaltyDesc: '모든 연결된 네트워크에서 크리에이터 수수료, 빌더 인센티브 또는 크로스체인 로열티를 직접 분배합니다.',
-    distributeRoyalty: '로열티 분배하기',
-    txSuccessTitle: '트랜잭션 승인 완료!',
-    txSuccessDesc: '트랜잭션이 네트워크에서 성공적으로 처리되었습니다.',
-    viewExplorer: '탐색기에서 보기 ↗',
-    close: '닫기',
+    title: 'ARC SETTLEMENT HUB',
+    subtitle: 'programmable usdc settlement engine on arc network',
+    identityHeader: 'arc multi-chain identity',
+    verified: 'verified arc builder',
+    notConnected: 'wallet disconnected',
+    boundId: 'bound arc up id',
+    issueUpId: 'register handle',
+    liveBalance: 'arc treasury balance',
+    multichainHeader: 'arc ecosystem asset routing',
+    workflowHeader: 'arc builder onboarding workflow',
+    step1: '1. bind arc identity & wallet',
+    step1Sub: 'deterministically registers identity on arc network',
+    done: 'done ✓',
+    pending: 'pending',
+    step2: '2. execute arc usdc settlement',
+    step2Sub: 'executed: {count} settlement txns',
+    run: 'run settlement',
+    running: 'executing...',
+    step3: '3. claim arc builder stamp',
+    step3Sub: 'issues arc ecosystem verification badge',
+    issued: 'issued ✓',
+    claim: 'claim stamp',
+    placeholder: 'send to @arc_id or 0x wallet address',
+    payBtn: 'pay via arc usdc',
+    processing: 'processing arc settlement...',
+    noTxConnected: 'no arc settlement logs recorded for this wallet.',
+    noTxDisconnected: 'connect wallet to view arc settlement activity.',
+    activityHeader: 'arc network activity & verification logs',
+    downloadCsv: 'export csv ↗',
+    resourcesHeader: 'arc ecosystem infrastructure links',
+    scanQr: 'scan qr',
+    closeQr: 'close camera',
+    qrTitle: 'arc dynamic pos qr invoice',
+    royaltyHeader: 'arc programmable fee engine',
+    royaltyDesc: 'distribute creator fees, split payments, or send cross-chain royalties natively on arc.',
+    distributeRoyalty: 'distribute fee',
+    txSuccessTitle: 'arc settlement confirmed',
+    txSuccessDesc: 'your transaction was settled with sub-second finality on arc testnet.',
+    viewExplorer: 'view on arcscan ↗',
+    close: 'close',
+    connectWalletFirst: 'please connect your wallet first',
+    treasuryDepositing: 'depositing on-chain to treasury vault...',
+    treasuryFailed: 'treasury deposit failed',
+    feeDistributing: 'distributing arc fee...',
+    feeFailed: 'fee distribution failed',
+    handleRegistered: 'arc handle registered: ',
+    txCancelled: 'transaction cancelled',
+    nativeModeSelected: 'mode: native usdc selected',
+    autoSplitActivated: 'auto-split routing configured',
+    cameraDenied: 'camera permission denied',
+    pointCamera: 'point camera at qr code',
+    treasuryVaultTitle: 'arc yield vault',
+    treasuryVaultDesc: 'programmable yield protocol on arc network',
+    currentVaultYield: 'current vault yield',
+    depositedBalance: 'your deposited balance',
+    estAnnualYield: 'estimated annual yield',
+    depositToVault: 'deposit to vault',
+    depositing: 'depositing...',
+    scanned: 'scanned: '
   },
   hi: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN मल्टी-चेन Web3 हब',
-    identityHeader: 'यूनिवर्सल मल्टी-चेन पहचान',
-    verified: 'वेरिफाइड मल्टी-चेन बिल्डर',
+    title: 'आर्क सेटलमेंट हब',
+    subtitle: 'आर्क नेटवर्क पर प्रोग्रामेबल usdc सेटलमेंट इंजन',
+    identityHeader: 'आर्क मल्टी-चैन पहचान',
+    verified: 'वेरिफाइड आर्क बिल्डर',
     notConnected: 'वॉलेट कनेक्ट नहीं है',
-    boundId: 'बाउंड यूनिवर्सल ID',
-    issueUpId: 'कस्टम UP ID सेट करें',
-    registeredIdLabel: 'रजिस्टर्ड UP ID',
-    liveBalance: 'लाइव बैलेंस',
-    multichainHeader: 'ग्लोबल एसेट्स और नेटवर्क्स',
-    workflowHeader: 'बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
-    step1: '1. यूनिवर्सल ID और वॉलेट बनाएं',
-    step1Sub: 'सभी चेन पर पहचान सुरक्षित रूप से जोड़ता है',
-    done: 'हो गया ✓',
+    boundId: 'बाउंड आर्क up id',
+    issueUpId: 'हैंडल रजिस्टर करें',
+    liveBalance: 'आर्क ट्रेजरी बैलेंस',
+    multichainHeader: 'आर्क इकोसिस्टम एसेट रूटिंग',
+    workflowHeader: 'आर्क बिल्डर ऑनबोर्डिंग वर्कफ़्लो',
+    step1: '1. आर्क पहचान और वॉलेट बाइंड करें',
+    step1Sub: 'आर्क नेटवर्क पर पहचान दर्ज करता है',
+    done: 'पूर्ण ✓',
     pending: 'लंबित',
-    step2: '2. क्रॉस-चेन ट्रांजैक्शन निष्पादित करें',
-    step2Sub: 'गिनती: {count} टेस्ट ट्रांजैक्शन',
-    run: 'चलाएं',
-    running: 'चल रहा है...',
-    step3: '3. मल्टी-चेन स्टाम्प (Dojang) जारी करें',
-    step3Sub: 'मल्टी-चेन वेरिफिकेशन पूर्ण चिह्नित करता है',
+    step2: '2. आर्क usdc सेटलमेंट निष्पादित करें',
+    step2Sub: 'निष्पादित: {count} सेटलमेंट',
+    run: 'सेटलमेंट चलाएं',
+    running: 'निष्पादित हो रहा है...',
+    step3: '3. आर्क बिल्डर स्टैम्प क्लेम करें',
+    step3Sub: 'आर्क इकोसिस्टम सत्यापन बैज जारी करता है',
     issued: 'जारी हुआ ✓',
-    claim: 'Dojang जारी करें',
-    placeholder: '@UP_ID या 0x वॉलेट / BTC पता दर्ज करें',
-    payBtn: 'मल्टी-चेन UPI भुगतान',
-    processing: 'प्रॉसेस हो रहा है...',
-    noTxConnected: 'इस वॉलेट के लिए कोई ट्रांजैक्शन दर्ज नहीं है।',
+    claim: 'स्टैम्प क्लेम करें',
+    placeholder: '@arc_id या 0x वॉलेट पता दर्ज करें',
+    payBtn: 'आर्क usdc द्वारा भुगतान करें',
+    processing: 'आर्क सेटलमेंट प्रॉसेस हो रहा है...',
+    noTxConnected: 'इस वॉलेट के लिए कोई आर्क सेटलमेंट दर्ज नहीं है।',
     noTxDisconnected: 'गतिविधि देखने के लिए वॉलेट कनेक्ट करें।',
-    activityHeader: 'क्रॉस-चेन एक्टिविटी और वेरिफिकेशन लॉग',
-    downloadCsv: 'CSV डाउनलोड ↗',
-    resourcesHeader: 'इकोसिस्टम प्रोटोकॉल और ऑफिशियल लिंक्स',
-    scanQr: 'QR स्कैन करें',
-    qrTitle: 'डायनामिक रिसीविंग QR इनवॉइस',
-    royaltyHeader: 'यूनिवर्सल रॉयल्टी व फ़ीस डिस्ट्रीब्यूशन इंजन',
-    royaltyDesc: 'किसी भी कनेक्टेड नेटवर्क पर क्रिएटर फ़ीस, बिल्डर इंसेंटिव या क्रॉस-चेन रॉयल्टी सीधे बाटें।',
-    distributeRoyalty: 'रॉयल्टी डिस्ट्रीब्यूट करें',
-    txSuccessTitle: 'ट्रांजैक्शन सफल रहा!',
-    txSuccessDesc: 'आपका ट्रांजैक्शन नेटवर्क पर सफलतापूर्वक पूरा हो गया है।',
-    viewExplorer: 'एक्सप्लोरर पर देखें ↗',
+    activityHeader: 'आर्क नेटवर्क गतिविधि और सत्यापन लॉग',
+    downloadCsv: 'csv एक्सपोर्ट ↗',
+    resourcesHeader: 'आर्क इकोसिस्टम इंफ्रास्ट्रक्चर लिंक्स',
+    scanQr: 'qr स्कैन करें',
+    closeQr: 'कैमरा बंद करें',
+    qrTitle: 'आर्क डायनामिक pos qr इनवॉइस',
+    royaltyHeader: 'आर्क प्रोग्रामेबल फ़ीस इंजन',
+    royaltyDesc: 'क्रिएटर फ़ीस या पेमेंट स्प्लिट आर्क नेटवर्क पर सीधे भेजें।',
+    distributeRoyalty: 'फ़ीस डिस्ट्रीब्यूट करें',
+    txSuccessTitle: 'आर्क सेटलमेंट सफल',
+    txSuccessDesc: 'आर्क टेस्टनेट पर आपका ट्रांजैक्शन तेजी से सेटल हो गया है।',
+    viewExplorer: 'arcscan पर देखें ↗',
     close: 'बंद करें',
+    connectWalletFirst: 'कृपया पहले अपना वॉलेट कनेक्ट करें',
+    treasuryDepositing: 'ट्रेजरी वॉल्ट में ऑन-चेन जमा हो रहा है...',
+    treasuryFailed: 'ट्रेजरी डिपॉजिट विफल रहा',
+    feeDistributing: 'आर्क फ़ीस डिस्ट्रीब्यूट हो रही है...',
+    feeFailed: 'फ़ीस डिस्ट्रीब्यूशन विफल रहा',
+    handleRegistered: 'आर्क हैंडल रजिस्टर हो गया: ',
+    txCancelled: 'ट्रांजैक्शन रद्द हुआ',
+    nativeModeSelected: 'मोड: नेटिव usdc चयनित',
+    autoSplitActivated: 'ऑटो-स्प्लिट नियम सक्रिय',
+    cameraDenied: 'कैमरा अनुमति नहीं मिली',
+    pointCamera: 'क्यूआर कोड पर कैमरा रखें',
+    treasuryVaultTitle: 'आर्क ईल्ड वॉल्ट',
+    treasuryVaultDesc: 'आर्क नेटवर्क पर प्रोग्रामेबल ईल्ड प्रोटोकॉल',
+    currentVaultYield: 'वर्तमान वॉल्ट ईल्ड',
+    depositedBalance: 'आपका जमा बैलेंस',
+    estAnnualYield: 'अनुमानित वार्षिक ईल्ड',
+    depositToVault: 'वॉल्ट में जमा करें',
+    depositing: 'जमा हो रहा है...',
+    scanned: 'स्कैन हुआ: '
+  },
+  ko: {
+    title: 'ARC SETTLEMENT HUB',
+    subtitle: 'arc 네트워크 기반 프로그래머블 usdc 정산 엔진',
+    identityHeader: 'arc 멀티체인 신원',
+    verified: '검증된 arc 빌더',
+    notConnected: '지갑 연결해제됨',
+    boundId: '연결된 arc up id',
+    issueUpId: '핸들 등록',
+    liveBalance: 'arc 실시간 잔액',
+    multichainHeader: 'arc 생태계 자산 라우팅',
+    workflowHeader: 'arc 빌더 온보딩 워크플로우',
+    step1: '1. arc 신원 및 지갑 연결',
+    step1Sub: 'arc 네트워크에서 확정적 신원 등록',
+    done: '완료 ✓',
+    pending: '대기 중',
+    step2: '2. arc usdc 정산 실행',
+    step2Sub: '실행 횟수: {count}회',
+    run: '정산 실행',
+    running: '실행 중...',
+    step3: '3. arc 빌더 스탬프 발급',
+    step3Sub: 'arc 생태계 검증 배지 발급',
+    issued: '발급됨 ✓',
+    claim: '스탬프 받기',
+    placeholder: '@arc_id 또는 0x 지갑 주소 입력',
+    payBtn: 'arc usdc 결제',
+    processing: 'arc 정산 처리 중...',
+    noTxConnected: '기록된 arc 정산 내역이 없습니다.',
+    noTxDisconnected: '지갑을 연결하여 arc 내역을 확인하세요.',
+    activityHeader: 'arc 네트워크 활동 및 검증 로그',
+    downloadCsv: 'csv 내보내기 ↗',
+    resourcesHeader: 'arc 생태계 인프라 링크',
+    scanQr: 'qr 스캔',
+    closeQr: '카메라 닫기',
+    qrTitle: 'arc 동적 pos qr 인보이스',
+    royaltyHeader: 'arc 프로그래머블 수수료 엔진',
+    royaltyDesc: '크리에이터 수수료 또는 결제 분배를 arc에서 직접 실행합니다.',
+    distributeRoyalty: '수수료 분배',
+    txSuccessTitle: 'arc 정산 승인 완료',
+    txSuccessDesc: 'arc testnet에서 초고속 확정성으로 트랜잭션이 완료되었습니다.',
+    viewExplorer: 'arcscan에서 보기 ↗',
+    close: '닫기',
+    connectWalletFirst: '먼저 지갑을 연결해 주세요',
+    treasuryDepositing: '트레저리 금고에 온체인 입금 중...',
+    treasuryFailed: '트레저리 입금 실패',
+    feeDistributing: 'arc 수수료 분배 중...',
+    feeFailed: '수수료 분배 실패',
+    handleRegistered: 'arc 핸들 등록 완료: ',
+    txCancelled: '트랜잭션 취소됨',
+    nativeModeSelected: '모드: 네이티브 usdc 선택됨',
+    autoSplitActivated: '자동 분할 규칙 활성화됨',
+    cameraDenied: '카메라 권한 거부됨',
+    pointCamera: 'qr 코드에 카메라는 비춰주세요',
+    treasuryVaultTitle: 'arc 수익 금고',
+    treasuryVaultDesc: 'arc 네트워크 기반 프로그래머블 수익 프로토콜',
+    currentVaultYield: '현재 금고 수익률',
+    depositedBalance: '예치된 잔액',
+    estAnnualYield: '예상 연간 수익',
+    depositToVault: '금고에 입금',
+    depositing: '입금 중...',
+    scanned: '스캔됨: '
   },
   es: {
-    subtitle: 'KR 🇰🇷 ⇄ 🇮🇳 IN Hub Web3 Multicadena',
-    identityHeader: 'Identidad Multicadena Universal',
-    verified: 'Creador Multicadena Verificado',
-    notConnected: 'Billetera No Conectada',
-    boundId: 'ID Universal Vinculado',
-    issueUpId: 'Configurar UP ID Personalizado',
-    registeredIdLabel: 'UP ID Registrado',
-    liveBalance: 'Saldo en Vivo',
-    multichainHeader: 'Activos y Redes Globales',
-    workflowHeader: 'Flujo de Trabajo de Incorporación',
-    step1: '1. Crear ID Universal y Billetera',
-    step1Sub: 'Vincula la identidad en cadenas de forma determinista',
-    done: 'Hecho ✓',
-    pending: 'Pendiente',
-    step2: '2. Ejecutar Tx Multicadena',
-    step2Sub: 'Conteo: {count} txs de prueba',
-    run: 'Ejecutar',
-    running: 'Ejecutando...',
-    step3: '3. Emitir Sello Multicadena (Dojang)',
-    step3Sub: 'Marca la verificación completada',
-    issued: 'Emitido ✓',
-    claim: 'Emitir Dojang',
-    placeholder: 'Enviar a @UP_ID o Billetera 0x',
-    payBtn: 'Pago vía UPI Multicadena',
-    processing: 'Procesando...',
-    noTxConnected: 'No hay transacciones registradas para esta billetera.',
-    noTxDisconnected: 'Conecte la billetera para ver el historial.',
-    activityHeader: 'Registro de Actividad Multicadena',
-    downloadCsv: 'Descargar CSV ↗',
-    resourcesHeader: 'Protocolos del Ecosistema y Enlaces Oficiales',
-    scanQr: 'Escanear QR',
-    qrTitle: 'Factura QR de Recepción Dinámica',
-    royaltyHeader: 'Motor Universal de Distribución de Regalías',
-    royaltyDesc: 'Distribuya tarifas de creador e incentivos en cualquier red conectada de forma nativa.',
-    distributeRoyalty: 'Distribuir Regalías',
-    txSuccessTitle: '¡Transacción Confirmada!',
-    txSuccessDesc: 'Su transacción se procesó con éxito en la red.',
-    viewExplorer: 'Ver en Explorador ↗',
-    close: 'Cerrar',
+    title: 'ARC SETTLEMENT HUB',
+    subtitle: 'motor de liquidación usdc programable en red arc',
+    identityHeader: 'identidad arc multi-cadena',
+    verified: 'creador arc verificado',
+    notConnected: 'billetera desconectada',
+    boundId: 'id arc up vinculado',
+    issueUpId: 'registrar nombre',
+    liveBalance: 'saldo de tesorería arc',
+    multichainHeader: 'enrutamiento de activos en red arc',
+    workflowHeader: 'flujo de trabajo para creadores arc',
+    step1: '1. vincular identidad arc y billetera',
+    step1Sub: 'registra identidad de forma determinista en arc',
+    done: 'hecho ✓',
+    pending: 'pendiente',
+    step2: '2. ejecutar liquidación usdc en arc',
+    step2Sub: 'ejecutado: {count} liquidaciones',
+    run: 'ejecutar',
+    running: 'ejecutando...',
+    step3: '3. reclamar sello de creador arc',
+    step3Sub: 'emite insignia de verificación arc',
+    issued: 'emitido ✓',
+    claim: 'reclamar sello',
+    placeholder: 'enviar a @arc_id o billetera 0x',
+    payBtn: 'pagar con arc usdc',
+    processing: 'procesando en red arc...',
+    noTxConnected: 'no hay registros de liquidación en arc.',
+    noTxDisconnected: 'conecte billetera para ver historial de arc.',
+    activityHeader: 'registro de actividad y verificación arc',
+    downloadCsv: 'exportar csv ↗',
+    resourcesHeader: 'enlaces de infraestructura arc',
+    scanQr: 'escanear qr',
+    closeQr: 'cerrar cámara',
+    qrTitle: 'factura qr pos dinámica arc',
+    royaltyHeader: 'motor de tarifas programables arc',
+    royaltyDesc: 'distribuya tarifas de creador o pagos divididos directamente en arc.',
+    distributeRoyalty: 'distribuir tarifa',
+    txSuccessTitle: 'liquidación arc confirmada',
+    txSuccessDesc: 'su transacción se procesó con finalización sub-segundo en arc testnet.',
+    viewExplorer: 'ver en arcscan ↗',
+    close: 'cerrar',
+    connectWalletFirst: 'por favor conecte su billetera primero',
+    treasuryDepositing: 'depositando en bóveda de tesorería en cadena...',
+    treasuryFailed: 'depósito de tesorería fallido',
+    feeDistributing: 'distribuyendo tarifa arc...',
+    feeFailed: 'distribución de tarifa fallida',
+    handleRegistered: 'nombre de usuario arc registrado: ',
+    txCancelled: 'transacción cancelada',
+    nativeModeSelected: 'modo: usdc nativo seleccionado',
+    autoSplitActivated: 'reglas de división automática configuradas',
+    cameraDenied: 'permiso de cámara denegado',
+    pointCamera: 'apunte la cámara al código qr',
+    treasuryVaultTitle: 'bóveda de rendimiento arc',
+    treasuryVaultDesc: 'protocolo de rendimiento programable en red arc',
+    currentVaultYield: 'rendimiento actual de la bóveda',
+    depositedBalance: 'su saldo depositado',
+    estAnnualYield: 'rendimiento anual estimado',
+    depositToVault: 'depositar en bóveda',
+    depositing: 'depositando...',
+    scanned: 'escaneado: '
   }
 }
 
@@ -179,6 +259,7 @@ interface ActivityItem {
   amount: string
   txHash: string
   explorerUrl: string
+  latencyMs?: number
 }
 
 interface ModalDetails {
@@ -186,223 +267,204 @@ interface ModalDetails {
   amount: string
   hash: string
   url: string
+  latencyMs: number
 }
 
-// Known Arc Testnet USDC Contract Address
-const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000'
+const ARC_USDC_ADDRESS = '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'
+const DEFAULT_TREASURY = '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false)
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
-  const { data: balanceData } = useBalance({ address })
+  const { data: balanceData, refetch: refetchBalance } = useBalance({ address })
   const { sendTransactionAsync } = useSendTransaction()
   const { writeContractAsync } = useWriteContract()
 
   const [lang, setLang] = useState<Lang>('en')
-  const t = translations[lang]
+  const t = translations[lang] || translations.en
 
-  const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'fx'>('upi')
+  const [activeTab, setActiveTab] = useState<'upi' | 'qr' | 'treasury'>('upi')
   const [recipient, setRecipient] = useState('')
-  const [amount, setAmount] = useState('0.0001')
+  const [amount, setAmount] = useState('0.1')
+  const [transferMode, setTransferMode] = useState<'native' | 'erc20'>('native')
+  
   const [practiceCount, setPracticeCount] = useState(1)
-  const [stampIssued, setStampIssued] = useState(true)
+  const [stampIssued, setStampIssued] = useState(false)
   const [txLoading, setTxLoading] = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
 
-  // Royalty State
+  const [treasuryDeposit, setTreasuryDeposit] = useState('1.0')
+  const [vaultBalance, setVaultBalance] = useState('0.00')
+
+  const [cctpModalOpen, setCctpModalOpen] = useState(false)
+  const [cctpAmount, setCctpAmount] = useState('10')
+  const [splitModalOpen, setSplitModalOpen] = useState(false)
+  const [speedTestRunning, setSpeedTestRunning] = useState(false)
+
   const [royaltyRecipient, setRoyaltyRecipient] = useState('')
-  const [royaltyAmount, setRoyaltyAmount] = useState('0.0005')
+  const [royaltyAmount, setRoyaltyAmount] = useState('0.05')
 
-  // Modal & Audio state
   const [successModal, setSuccessModal] = useState<ModalDetails | null>(null)
-
   const [customUpId, setCustomUpId] = useState('')
   const [registeredIds, setRegisteredIds] = useState<Record<string, string>>({})
+  
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [activities, setActivities] = useState<ActivityItem[]>([])
 
-  const currentWallet = address ? address.toLowerCase() : ''
-  const isGiwa = chainId === 91342
-  const isArc = chainId === 5042002
-
-  let networkName = 'GIWA Sepolia'
-  let networkPrefix = 'GIWA'
-  let explorerBase = 'https://sepolia-explorer.giwa.io/tx/'
-
-  if (isArc) {
-    networkName = 'Arc Testnet'
-    networkPrefix = 'ARC'
-    explorerBase = 'https://testnet.arcscan.app/tx/'
-  } else if (chainId === 1) {
-    networkName = 'Ethereum Mainnet'
-    networkPrefix = 'ETH'
-    explorerBase = 'https://etherscan.io/tx/'
-  }
-
-  // Safe SSR Web Audio Chime Sound
-  const playSuccessChime = () => {
-    if (typeof window === 'undefined') return
-
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext
-      if (!AudioCtx) return
-      const ctx = new AudioCtx()
-      
-      const now = ctx.currentTime
-      const osc1 = ctx.createOscillator()
-      const osc2 = ctx.createOscillator()
-      const gain = ctx.createGain()
-
-      osc1.type = 'sine'
-      osc2.type = 'sine'
-
-      osc1.frequency.setValueAtTime(523.25, now)
-      osc1.frequency.exponentialRampToValueAtTime(659.25, now + 0.15)
-      osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.3)
-
-      osc2.frequency.setValueAtTime(1046.50, now)
-
-      gain.gain.setValueAtTime(0.15, now)
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6)
-
-      osc1.connect(gain)
-      osc2.connect(gain)
-      gain.connect(ctx.destination)
-
-      osc1.start(now)
-      osc2.start(now + 0.1)
-      osc1.stop(now + 0.6)
-      osc2.stop(now + 0.6)
-    } catch (e) {
-      console.error('Audio playback failed', e)
-    }
-  }
+  const html5QrCodeRef = useRef<any>(null)
 
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    const savedIds = localStorage.getItem('giwa_registered_upids')
-    if (savedIds) {
-      try {
-        setRegisteredIds(JSON.parse(savedIds))
-      } catch (e) {
-        console.error('Failed to parse saved UP IDs', e)
-      }
-    }
+    setMounted(true)
   }, [])
 
+  const currentWallet = address ? address.toLowerCase() : ''
+  const explorerBase = 'https://testnet.arcscan.app/tx/'
+
   useEffect(() => {
     if (typeof window === 'undefined') return
+    
+    const savedIds = localStorage.getItem('arc_registered_upids')
+    if (savedIds) {
+      try { setRegisteredIds(JSON.parse(savedIds)) } catch (e) {}
+    }
+
     if (isConnected && currentWallet) {
-      const savedHistory = localStorage.getItem(`giwa_tx_history_${currentWallet}`)
+      const historyKey = `arc_history_${currentWallet}`
+      const savedHistory = localStorage.getItem(historyKey)
       if (savedHistory) {
-        try {
-          setActivities(JSON.parse(savedHistory))
-        } catch (e) {
-          console.error('Failed to parse transaction history', e)
-          setActivities([])
-        }
+        try { setActivities(JSON.parse(savedHistory)) } catch (e) { setActivities([]) }
       } else {
         setActivities([])
       }
+
+      const vaultKey = `arc_vault_${currentWallet}`
+      const savedVault = localStorage.getItem(vaultKey)
+      if (savedVault) {
+        setVaultBalance(savedVault)
+      } else {
+        setVaultBalance('0.00')
+      }
     } else {
       setActivities([])
+      setVaultBalance('0.00')
     }
   }, [isConnected, currentWallet])
 
-  const saveActivity = (newAct: ActivityItem) => {
-    if (!currentWallet || typeof window === 'undefined') return
-    const updated = [newAct, ...activities]
-    setActivities(updated)
-    localStorage.setItem(`giwa_tx_history_${currentWallet}`, JSON.stringify(updated))
+  const startCamera = async () => {
+    setIsScannerOpen(true)
+    setTimeout(async () => {
+      try {
+        const { Html5Qrcode } = await import('html5-qrcode')
+        if (html5QrCodeRef.current) {
+          try { await html5QrCodeRef.current.stop() } catch (e) {}
+        }
+        const scanner = new Html5Qrcode('qr-reader-container')
+        html5QrCodeRef.current = scanner
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 200, height: 200 } },
+          (decodedText) => {
+            let cleanAddr = decodedText
+            if (decodedText.includes('ethereum:')) {
+              cleanAddr = decodedText.split('ethereum:')[1].split('@')[0].split('?')[0]
+            }
+            setRecipient(cleanAddr)
+            setStatusMsg(`${t.scanned}${cleanAddr.slice(0, 10)}...`)
+            stopCamera()
+          },
+          () => {}
+        )
+      } catch (err) {
+        console.error('Camera access error', err)
+        setStatusMsg(t.cameraDenied)
+      }
+    }, 200)
   }
 
-  const triggerSuccess = (title: string, amountStr: string, hash: string) => {
+  const stopCamera = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        await html5QrCodeRef.current.stop()
+        html5QrCodeRef.current.clear()
+      } catch (e) {}
+      html5QrCodeRef.current = null
+    }
+    setIsScannerOpen(false)
+  }
+
+  const resolveRecipientAddress = (input: string): `0x${string}` => {
+    const clean = input.trim()
+    if (clean.startsWith('0x') && clean.length === 42) {
+      return clean as `0x${string}`
+    }
+    const cleanHandle = clean.toLowerCase().startsWith('@') ? clean.toLowerCase() : `@${clean.toLowerCase()}`
+    for (const [wAddress, hName] of Object.entries(registeredIds)) {
+      if (hName.toLowerCase() === cleanHandle) {
+        return wAddress as `0x${string}`
+      }
+    }
+    return DEFAULT_TREASURY as `0x${string}`
+  }
+
+  const saveActivity = (newAct: ActivityItem) => {
+    if (!currentWallet || typeof window === 'undefined') return
+    const historyKey = `arc_history_${currentWallet}`
+    setActivities(prev => {
+      const updated = [newAct, ...prev]
+      localStorage.setItem(historyKey, JSON.stringify(updated))
+      return updated
+    })
+  }
+
+  const triggerSuccess = (title: string, amountStr: string, hash: string, latencyMs: number) => {
     const fullExplorerUrl = `${explorerBase}${hash}`
-    playSuccessChime()
+    if (refetchBalance) refetchBalance()
     setSuccessModal({
       title,
       amount: amountStr,
       hash,
       url: fullExplorerUrl,
+      latencyMs,
     })
   }
 
-  const autoDerivedId = address ? `@${networkPrefix}-${address.slice(-5)}` : '--'
+  const autoDerivedId = address ? `@ARC-${address.slice(-5)}` : '--'
   const userUpId = currentWallet && registeredIds[currentWallet] ? registeredIds[currentWallet] : autoDerivedId
 
   const handleRegisterUpId = () => {
     if (!currentWallet) {
-      setStatusMsg('Please connect your wallet first.')
+      setStatusMsg(t.connectWalletFirst)
       return
     }
-
     let cleanId = customUpId.trim().toLowerCase()
-    if (!cleanId) {
-      setStatusMsg('Please enter a valid handle.')
-      return
-    }
+    if (!cleanId) return
+    if (!cleanId.startsWith('@')) cleanId = `@${cleanId}`
 
-    if (!cleanId.startsWith('@')) {
-      cleanId = `@${cleanId}`
-    }
-
-    if (cleanId.length < 3) {
-      setStatusMsg('Handle must be at least 2 characters long.')
-      return
-    }
-
-    const allExistingValues = Object.values(registeredIds).map(id => id.toLowerCase())
-    if (allExistingValues.includes(cleanId) && registeredIds[currentWallet] !== cleanId) {
-      setStatusMsg(`Error: ID "${cleanId}" is already taken by another wallet.`)
-      return
-    }
-
-    const updated = {
-      ...registeredIds,
-      [currentWallet]: cleanId
-    }
-
+    const updated = { ...registeredIds, [currentWallet]: cleanId }
     setRegisteredIds(updated)
     if (typeof window !== 'undefined') {
-      localStorage.setItem('giwa_registered_upids', JSON.stringify(updated))
+      localStorage.setItem('arc_registered_upids', JSON.stringify(updated))
     }
     setCustomUpId('')
-    setStatusMsg(`Custom handle updated to ${cleanId}`)
+    setStatusMsg(`${t.handleRegistered}${cleanId}`)
   }
 
-  const handleSimulateScan = () => {
-    setIsScannerOpen(true)
-    setTimeout(() => {
-      setRecipient('0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b')
-      setIsScannerOpen(false)
-      setStatusMsg('QR Code scanned successfully!')
-    }, 1200)
-  }
-
-  // FIXED PAYMENT FUNCTION (Handles Native ETH & ERC-20 USDC)
   const handlePayment = async () => {
-    if (!isConnected) {
-      alert(t.notConnected)
-      return
-    }
-    if (!recipient) {
-      alert(t.placeholder)
-      return
-    }
+    if (!isConnected) return alert(t.notConnected)
+    if (!recipient) return alert(t.placeholder)
+
+    const targetAddress = resolveRecipientAddress(recipient)
+    const startTime = performance.now()
 
     try {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const targetAddress = recipient.startsWith('0x') 
-        ? (recipient as `0x${string}`) 
-        : '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
-
-      const inputAmount = amount && !isNaN(Number(amount)) ? amount : '0.0001'
+      const inputAmount = amount && !isNaN(Number(amount)) ? amount : '0.1'
       let hash = ''
 
-      if (isArc) {
-        // USDC Token Transfer on Arc Testnet (ERC-20 - 6 Decimals)
+      if (transferMode === 'erc20') {
         const parsedValue = parseUnits(inputAmount, 6)
         hash = await writeContractAsync({
           address: ARC_USDC_ADDRESS as `0x${string}`,
@@ -411,7 +473,6 @@ export default function Home() {
           args: [targetAddress, parsedValue],
         })
       } else {
-        // Native Transfer for ETH / GIWA (18 Decimals)
         const parsedValue = parseEther(inputAmount)
         hash = await sendTransactionAsync({
           to: targetAddress,
@@ -419,8 +480,12 @@ export default function Home() {
         })
       }
 
-      const amtSymbol = `${inputAmount} ${balanceData?.symbol || 'USDC'}`
-      const txTitle = `Multi-Chain UPI Payment (${recipient.slice(0, 6)}...${recipient.slice(-4)})`
+      const endTime = performance.now()
+      const latencyMs = Math.round(endTime - startTime)
+
+      const amtSymbol = `${inputAmount} USDC`
+      const targetShort = `${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)}`
+      const txTitle = `Arc USDC Transfer → ${targetShort}`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -428,40 +493,43 @@ export default function Home() {
         timestamp: new Date().toLocaleTimeString(),
         amount: amtSymbol,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
-        explorerUrl: `${explorerBase}${hash}`
+        explorerUrl: `${explorerBase}${hash}`,
+        latencyMs
       }
       saveActivity(newAct)
-      triggerSuccess(txTitle, amtSymbol, hash)
+      triggerSuccess(txTitle, amtSymbol, hash, latencyMs)
       setStatusMsg('')
     } catch (err: any) {
-      console.error(err)
-      setStatusMsg('Transaction failed or cancelled.')
+      setStatusMsg(t.txCancelled)
     } finally {
       setTxLoading(false)
     }
   }
 
-  const handleRoyaltyPayout = async () => {
-    if (!isConnected) {
-      alert(t.notConnected)
-      return
-    }
-
-    const targetAddress = royaltyRecipient.startsWith('0x')
-      ? (royaltyRecipient as `0x${string}`)
-      : address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
-
+  const handleTreasuryDeposit = async () => {
+    if (!isConnected) return alert(t.notConnected)
+    const startTime = performance.now()
     try {
       setTxLoading(true)
-      setStatusMsg('Processing Royalty Payout...')
+      setStatusMsg(t.treasuryDepositing)
 
+      const depAmount = treasuryDeposit && !isNaN(Number(treasuryDeposit)) ? treasuryDeposit : '1.0'
       const hash = await sendTransactionAsync({
-        to: targetAddress,
-        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.0005'),
+        to: DEFAULT_TREASURY as `0x${string}`,
+        value: parseEther(depAmount),
       })
 
-      const amtSymbol = `${royaltyAmount} ${balanceData?.symbol || 'ETH'}`
-      const txTitle = `Royalty Distribution (${networkName})`
+      const endTime = performance.now()
+      const latencyMs = Math.round(endTime - startTime)
+
+      const newBal = (parseFloat(vaultBalance) + parseFloat(depAmount)).toFixed(2)
+      setVaultBalance(newBal)
+      if (currentWallet && typeof window !== 'undefined') {
+        localStorage.setItem(`arc_vault_${currentWallet}`, newBal)
+      }
+      
+      const amtSymbol = `${depAmount} USDC`
+      const txTitle = `Treasury Vault On-Chain Deposit`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -469,37 +537,98 @@ export default function Home() {
         timestamp: new Date().toLocaleTimeString(),
         amount: amtSymbol,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
-        explorerUrl: `${explorerBase}${hash}`
+        explorerUrl: `${explorerBase}${hash}`,
+        latencyMs
       }
       saveActivity(newAct)
-      triggerSuccess(txTitle, amtSymbol, hash)
+      triggerSuccess(txTitle, amtSymbol, hash, latencyMs)
+      setStatusMsg('')
+    } catch (e) {
+      setStatusMsg(t.treasuryFailed)
+    } finally {
+      setTxLoading(false)
+    }
+  }
+
+  const handleRunSpeedTest = async () => {
+    if (!isConnected) return alert(t.notConnected)
+    setSpeedTestRunning(true)
+    const startTime = performance.now()
+    try {
+      const hash = await sendTransactionAsync({
+        to: address || DEFAULT_TREASURY as `0x${string}`,
+        value: parseEther('0.00001'),
+      })
+      const endTime = performance.now()
+      const latencyMs = Math.round(endTime - startTime)
+
+      triggerSuccess('Arc Network Speed Test Passed', '0.00001 USDC', hash, latencyMs)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setSpeedTestRunning(false)
+    }
+  }
+
+  const handleRoyaltyPayout = async () => {
+    if (!isConnected || !address) return alert(t.notConnected)
+    const startTime = performance.now()
+    const targetAddress = resolveRecipientAddress(royaltyRecipient)
+
+    try {
+      setTxLoading(true)
+      setStatusMsg(t.feeDistributing)
+
+      const hash = await sendTransactionAsync({
+        to: targetAddress,
+        value: parseEther(royaltyAmount && !isNaN(Number(royaltyAmount)) ? royaltyAmount : '0.01'),
+      })
+
+      const endTime = performance.now()
+      const latencyMs = Math.round(endTime - startTime)
+
+      const amtSymbol = `${royaltyAmount} USDC`
+      const targetLabel = `${targetAddress.slice(0, 6)}...${targetAddress.slice(-4)}`
+      const txTitle = `Fee Split Engine → ${targetLabel}`
+
+      const newAct: ActivityItem = {
+        id: Date.now().toString(),
+        title: txTitle,
+        timestamp: new Date().toLocaleTimeString(),
+        amount: amtSymbol,
+        txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
+        explorerUrl: `${explorerBase}${hash}`,
+        latencyMs
+      }
+      saveActivity(newAct)
+      triggerSuccess(txTitle, amtSymbol, hash, latencyMs)
       setStatusMsg('')
     } catch (err) {
-      console.error(err)
-      setStatusMsg('Royalty payout failed or cancelled.')
+      setStatusMsg(t.feeFailed)
     } finally {
       setTxLoading(false)
     }
   }
 
   const handlePracticeTx = async () => {
-    if (!isConnected) {
-      alert(t.notConnected)
-      return
-    }
+    if (!isConnected) return alert(t.notConnected)
+    const startTime = performance.now()
     try {
       setTxLoading(true)
       setStatusMsg(t.processing)
       
-      const targetAddr = address || '0x85Bb410B9cB937340CdA2e3B3Da12C55eF2A67b'
+      const targetAddr = address || DEFAULT_TREASURY
       const hash = await sendTransactionAsync({
-        to: targetAddr,
-        value: parseEther('0.00001'),
+        to: targetAddr as `0x${string}`,
+        value: parseEther('0.0001'),
       })
 
+      const endTime = performance.now()
+      const latencyMs = Math.round(endTime - startTime)
+
       setPracticeCount(prev => prev + 1)
-      const amtSymbol = `0.00001 ${balanceData?.symbol || 'ETH'}`
-      const txTitle = `Test Tx Execution (${networkName})`
+      const amtSymbol = `0.0001 USDC`
+      const txTitle = `Deterministic Settlement Test (Arc)`
 
       const newAct: ActivityItem = {
         id: Date.now().toString(),
@@ -507,14 +636,14 @@ export default function Home() {
         timestamp: new Date().toLocaleTimeString(),
         amount: amtSymbol,
         txHash: `${hash.slice(0, 6)}...${hash.slice(-4)}`,
-        explorerUrl: `${explorerBase}${hash}`
+        explorerUrl: `${explorerBase}${hash}`,
+        latencyMs
       }
       saveActivity(newAct)
-      triggerSuccess(txTitle, amtSymbol, hash)
+      triggerSuccess(txTitle, amtSymbol, hash, latencyMs)
       setStatusMsg('')
     } catch (err) {
-      console.error(err)
-      setStatusMsg('Transaction failed or cancelled.')
+      setStatusMsg(t.txCancelled)
     } finally {
       setTxLoading(false)
     }
@@ -522,64 +651,78 @@ export default function Home() {
 
   const handleDownloadCSV = () => {
     if (activities.length === 0 || typeof window === 'undefined') return
-    const headers = "ID,Title,Timestamp,Amount,TxHash,ExplorerUrl\n"
-    const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.explorerUrl}`).join("\n")
+    const headers = "ID,Title,Timestamp,Amount,TxHash,LatencyMs,ExplorerUrl\n"
+    const rows = activities.map(a => `${a.id},"${a.title}",${a.timestamp},${a.amount},${a.txHash},${a.latencyMs || 0},${a.explorerUrl}`).join("\n")
     const blob = new Blob([headers + rows], { type: 'text/csv' })
     const url = window.URL.createObjectURL ? window.URL.createObjectURL(blob) : ''
     const a = document.createElement('a')
     a.href = url
-    a.download = `multichain_activity_${Date.now()}.csv`
+    a.download = `arc_settlement_log_${Date.now()}.csv`
     a.click()
   }
 
   const receiveQrData = isConnected && address
-    ? `ethereum:${address}@${chainId}?label=${encodeURIComponent(userUpId)}`
-    : 'Connect Wallet to Generate Receive QR'
+    ? `ethereum:${address}@5042002?label=${encodeURIComponent(userUpId)}`
+    : 'connect wallet to generate arc qr'
+
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-[#05070a] text-slate-100 p-4 font-mono flex items-center justify-center">
+        <p className="text-xs text-purple-400 animate-pulse">loading arc settlement engine...</p>
+      </main>
+    )
+  }
+
+  const activeResolvedAddress = recipient ? resolveRecipientAddress(recipient) : null
 
   return (
-    <main className="min-h-screen bg-[#0a0d14] text-slate-100 p-4 md:p-8 font-sans relative">
-      <div className="max-w-3xl mx-auto space-y-6">
+    <main className="min-h-screen bg-[#05070a] text-slate-100 p-3 sm:p-6 font-mono relative overflow-x-hidden">
+      
+      <div className="max-w-3xl mx-auto space-y-4">
         
-        {/* Header */}
-        <header className="flex flex-col sm:flex-row justify-between items-center bg-[#111625] p-5 rounded-2xl border border-slate-800 gap-4 shadow-lg">
+        <header className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-tr from-purple-600 via-blue-600 to-indigo-500 rounded-xl flex items-center justify-center text-xl font-bold text-white shadow-md">
-              🌐
+            <div className="w-10 h-10 bg-gradient-to-tr from-purple-800 to-indigo-600 rounded-lg flex items-center justify-center text-sm font-bold text-white shrink-0">
+              ARC
             </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white">GIWASETU MULTI-CHAIN</h1>
-              <p className="text-xs text-slate-400">{t.subtitle}</p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm sm:text-base font-bold tracking-tight text-white truncate">{t.title}</h1>
+                <span className="text-[9px] bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded border border-purple-800/60 font-medium shrink-0">
+                  PRIMARY
+                </span>
+              </div>
+              <p className="text-[10px] sm:text-xs text-slate-400 truncate">{t.subtitle}</p>
             </div>
           </div>
           
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 justify-between sm:justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
             <select 
               value={lang} 
               onChange={(e) => setLang(e.target.value as Lang)}
-              className="bg-[#0b0e17] border border-slate-700 text-slate-200 text-xs px-2.5 py-2 rounded-xl focus:outline-none focus:border-blue-500 cursor-pointer"
+              className="bg-[#05070a] border border-slate-800 text-slate-300 text-xs px-2 py-1.5 rounded-lg focus:outline-none focus:border-purple-500"
             >
               <option value="en">🌐 English</option>
-              <option value="ko">🇰🇷 한국어</option>
               <option value="hi">🇮🇳 हिंदी</option>
+              <option value="ko">🇰🇷 한국어</option>
               <option value="es">🇪🇸 Español</option>
             </select>
             
-            <ConnectButton showBalance={true} chainStatus="icon" accountStatus="address" />
+            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
           </div>
         </header>
 
         {statusMsg && (
-          <div className="bg-blue-950/60 border border-blue-500/40 text-blue-300 p-3 rounded-xl text-xs flex justify-between items-center">
-            <span>{statusMsg}</span>
-            <button onClick={() => setStatusMsg('')} className="text-slate-400 hover:text-white">✕</button>
+          <div className="bg-purple-950/60 border border-purple-500/50 text-purple-200 p-2.5 rounded-lg text-xs flex justify-between items-center gap-2">
+            <span className="truncate">{statusMsg}</span>
+            <button onClick={() => setStatusMsg('')} className="text-slate-400 hover:text-white px-1">✕</button>
           </div>
         )}
 
-        {/* Identity Section */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800/80 pb-3">
-            <span className="text-xs font-semibold tracking-wider text-purple-400 uppercase">{t.identityHeader}</span>
-            <span className={`text-xs px-2.5 py-1 rounded-full border font-medium ${
+        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="flex justify-between items-center border-b border-slate-800 pb-2.5">
+            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">{t.identityHeader}</span>
+            <span className={`text-[10px] px-2 py-0.5 rounded border font-medium ${
               isConnected 
                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                 : 'bg-slate-800 text-slate-500 border-slate-700'
@@ -588,92 +731,118 @@ export default function Home() {
             </span>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">{t.boundId}</span>
-              <span className="text-sm font-mono font-semibold text-purple-300">
-                {isConnected ? userUpId : '--'}
-              </span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+              <span className="text-slate-400">{t.boundId}</span>
+              <span className="font-semibold text-purple-300">{isConnected ? userUpId : '--'}</span>
             </div>
-            <div className="bg-[#0b0e17] p-3.5 rounded-xl border border-slate-800 flex justify-between items-center">
-              <span className="text-xs text-slate-400">{t.liveBalance} ({networkName})</span>
-              <span className="text-sm font-mono font-semibold text-emerald-400">
-                {isConnected && balanceData 
-                  ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` 
+            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
+              <span className="text-slate-400">{t.liveBalance}</span>
+              <span className="font-semibold text-emerald-400">
+                {isConnected 
+                  ? (balanceData ? `${Number(balanceData.formatted).toFixed(4)} ${balanceData.symbol}` : 'Live USDC') 
                   : '--'}
               </span>
             </div>
           </div>
 
-          {/* Custom Handle Input */}
           {isConnected && (
-            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 flex gap-2 items-center">
+            <div className="bg-[#05070a] p-2.5 rounded-lg border border-slate-800 flex gap-2 items-center">
               <input 
                 type="text" 
-                placeholder="Set custom handle (e.g. @bhupendra)" 
+                placeholder="register handle (e.g. @bhupendra)" 
                 value={customUpId}
                 onChange={(e) => setCustomUpId(e.target.value)}
-                className="bg-[#111625] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 flex-1 font-mono"
+                className="bg-[#0a0d14] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 w-full"
               />
               <button 
                 onClick={handleRegisterUpId}
-                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium cursor-pointer"
+                className="bg-purple-600 hover:bg-purple-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all font-medium shrink-0"
               >
                 {t.issueUpId}
               </button>
             </div>
           )}
 
-          {/* Ecosystem Cards */}
-          <div className="pt-2">
-            <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 font-medium">{t.multichainHeader}</p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
-                <p className="text-slate-400 font-semibold text-[10px]">GIWA L2</p>
-                <p className="font-mono text-emerald-400 mt-1">{isGiwa && balanceData ? `${Number(balanceData.formatted).toFixed(3)} ETH` : 'Active / Sync'}</p>
-              </div>
-              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
-                <p className="text-slate-400 font-semibold text-[10px]">Arc Testnet</p>
-                <p className="font-mono text-blue-400 mt-1">{isArc && balanceData ? `${Number(balanceData.formatted).toFixed(3)} USDC` : 'Supported'}</p>
-              </div>
-              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
-                <p className="text-slate-400 font-semibold text-[10px]">Ethereum L1</p>
-                <p className="font-mono text-indigo-400 mt-1">Mainnet Ready</p>
-              </div>
-              <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800">
-                <p className="text-slate-400 font-semibold text-[10px]">Bitcoin (UTXO)</p>
-                <p className="font-mono text-amber-400 mt-1">Cross-Chain Bridge</p>
-              </div>
+          <div className="pt-1">
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-2 font-medium">{t.multichainHeader}</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              
+              <button 
+                onClick={() => {
+                  setTransferMode('native')
+                  setActiveTab('upi')
+                  setStatusMsg(t.nativeModeSelected)
+                }}
+                className={`p-2.5 rounded-lg border text-left transition-all ${
+                  transferMode === 'native' 
+                    ? 'bg-purple-950/40 border-purple-500' 
+                    : 'bg-[#05070a] border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <p className="text-purple-400 font-semibold text-[10px]">arc testnet</p>
+                <p className="text-slate-200 mt-0.5 font-bold text-xs">native usdc</p>
+                <p className="text-[9px] text-slate-400 mt-1">click to select mode</p>
+              </button>
+
+              <button 
+                onClick={() => setCctpModalOpen(true)}
+                className="bg-[#05070a] hover:border-emerald-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
+              >
+                <p className="text-slate-400 font-semibold text-[10px]">circle cctp</p>
+                <p className="text-emerald-400 mt-0.5 font-bold text-xs">cross-chain bridge ↗</p>
+                <p className="text-[9px] text-slate-400 mt-1">click to test cctp</p>
+              </button>
+
+              <button 
+                onClick={handleRunSpeedTest}
+                disabled={speedTestRunning}
+                className="bg-[#05070a] hover:border-indigo-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
+              >
+                <p className="text-slate-400 font-semibold text-[10px]">deterministic engine</p>
+                <p className="text-indigo-400 mt-0.5 font-bold text-xs">speed benchmark</p>
+                <p className="text-[9px] text-slate-400 mt-1">{speedTestRunning ? 'testing...' : 'click to run test'}</p>
+              </button>
+
+              <button 
+                onClick={() => setSplitModalOpen(true)}
+                className="bg-[#05070a] hover:border-amber-500/50 p-2.5 rounded-lg border border-slate-800 text-left transition-all"
+              >
+                <p className="text-slate-400 font-semibold text-[10px]">payment ux</p>
+                <p className="text-amber-400 mt-0.5 font-bold text-xs">auto-split splitter</p>
+                <p className="text-[9px] text-slate-400 mt-1">click to configure</p>
+              </button>
+
             </div>
           </div>
         </section>
 
-        {/* Royalty Engine Section */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-purple-900/40 space-y-3 shadow-md">
+        <section className="bg-[#0a0d14] p-4 rounded-xl border border-purple-900/40 space-y-2.5">
           <div>
-            <span className="text-xs font-semibold tracking-wider text-amber-400 uppercase">{t.royaltyHeader}</span>
-            <p className="text-[11px] text-slate-400 mt-0.5">{t.royaltyDesc}</p>
+            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">{t.royaltyHeader}</span>
+            <p className="text-[10px] text-slate-400 mt-0.5">{t.royaltyDesc}</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <input 
               type="text"
-              placeholder="Creator/Builder Address (or leave empty for self)"
+              placeholder="address 0x... or @handle"
               value={royaltyRecipient}
               onChange={(e) => setRoyaltyRecipient(e.target.value)}
-              className="sm:col-span-2 bg-[#0b0e17] border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
+              className="flex-1 bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
             />
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <input 
                 type="text"
+                placeholder="amount"
                 value={royaltyAmount}
                 onChange={(e) => setRoyaltyAmount(e.target.value)}
-                className="w-1/2 bg-[#0b0e17] border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-mono"
+                className="w-1/2 sm:w-20 bg-[#05070a] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
               />
               <button
                 onClick={handleRoyaltyPayout}
                 disabled={txLoading || !isConnected}
-                className="w-1/2 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2 transition-all cursor-pointer"
+                className="w-1/2 sm:w-auto bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-lg px-3 py-2 transition-all shrink-0"
               >
                 {t.distributeRoyalty}
               </button>
@@ -681,16 +850,15 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Onboarding Workflow */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
-          <h2 className="text-xs font-semibold tracking-wider text-slate-400 uppercase mb-2">{t.workflowHeader}</h2>
+        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-2.5">
+          <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{t.workflowHeader}</h2>
           
-          <div className="flex justify-between items-center bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60">
-            <div>
-              <p className="text-xs font-medium text-slate-200">{t.step1}</p>
-              <p className="text-[10px] text-slate-500">{t.step1Sub}</p>
+          <div className="flex justify-between items-center bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-200 truncate">{t.step1}</p>
+              <p className="text-[10px] text-slate-500 truncate">{t.step1Sub}</p>
             </div>
-            <span className={`text-xs px-2.5 py-1 rounded border font-medium ${
+            <span className={`text-[10px] px-2 py-0.5 rounded border font-medium shrink-0 ${
               isConnected 
                 ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
                 : 'bg-slate-800 text-slate-500 border-slate-700'
@@ -699,29 +867,29 @@ export default function Home() {
             </span>
           </div>
 
-          <div className="flex justify-between items-center bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60">
-            <div>
-              <p className="text-xs font-medium text-slate-200">{t.step2}</p>
-              <p className="text-[10px] text-slate-500">{t.step2Sub.replace('{count}', practiceCount.toString())}</p>
+          <div className="flex justify-between items-center bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-200 truncate">{t.step2}</p>
+              <p className="text-[10px] text-slate-500 truncate">{t.step2Sub.replace('{count}', practiceCount.toString())}</p>
             </div>
             <button 
               onClick={handlePracticeTx}
               disabled={txLoading || !isConnected}
-              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3.5 py-1.5 rounded-lg transition-all font-medium active:scale-95 cursor-pointer"
+              className="text-xs bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white px-3 py-1 rounded-lg transition-all font-medium shrink-0"
             >
               {txLoading ? t.running : t.run}
             </button>
           </div>
 
-          <div className="flex justify-between items-center bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60">
-            <div>
-              <p className="text-xs font-medium text-slate-200">{t.step3}</p>
-              <p className="text-[10px] text-slate-500">{t.step3Sub}</p>
+          <div className="flex justify-between items-center bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-200 truncate">{t.step3}</p>
+              <p className="text-[10px] text-slate-500 truncate">{t.step3Sub}</p>
             </div>
             <button 
               onClick={() => isConnected && setStampIssued(!stampIssued)}
               disabled={!isConnected}
-              className={`text-xs px-2.5 py-1 rounded border font-medium transition-all ${
+              className={`text-xs px-2.5 py-1 rounded border font-medium transition-all shrink-0 ${
                 stampIssued 
                   ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
                   : 'bg-slate-800 text-slate-500 border-slate-700'
@@ -732,212 +900,213 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Payments Section with QR & Send Scanner */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
-          <div className="flex border-b border-slate-800 gap-2">
+        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-3">
+          <div className="flex border-b border-slate-800 gap-1 overflow-x-auto">
             <button 
               onClick={() => setActiveTab('upi')}
-              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
+              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 shrink-0 ${
                 activeTab === 'upi' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              Multi-Chain UPI Pay
+              arc usdc transfer
             </button>
             <button 
               onClick={() => setActiveTab('qr')}
-              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
+              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 shrink-0 ${
                 activeTab === 'qr' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              Receive QR Invoice
+              pos qr invoice
             </button>
             <button 
-              onClick={() => setActiveTab('fx')}
-              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 ${
-                activeTab === 'fx' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              onClick={() => setActiveTab('treasury')}
+              className={`pb-2 px-3 text-xs font-medium transition-all border-b-2 shrink-0 ${
+                activeTab === 'treasury' ? 'border-purple-500 text-purple-400' : 'border-transparent text-slate-400 hover:text-slate-200'
               }`}
             >
-              Global FX (KRW/INR)
+              arc yield treasury
             </button>
           </div>
 
           {activeTab === 'upi' && (
-            <div className="space-y-3 pt-2">
-              <div className="flex gap-2">
+            <div className="space-y-2.5 pt-1">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input 
                   type="text" 
                   placeholder={t.placeholder} 
                   value={recipient}
                   onChange={(e) => setRecipient(e.target.value)}
-                  className="flex-1 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-all font-mono"
+                  className="flex-1 bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
                 />
                 <button
-                  onClick={handleSimulateScan}
-                  className="bg-[#0b0e17] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 rounded-xl transition-all flex items-center gap-1 font-medium cursor-pointer"
+                  onClick={isScannerOpen ? stopCamera : startCamera}
+                  className="bg-[#05070a] border border-slate-700 hover:border-purple-500 text-purple-400 text-xs px-3 py-2 rounded-lg transition-all flex items-center justify-center gap-1 font-medium shrink-0"
                 >
-                  📷 {t.scanQr}
+                  {isScannerOpen ? t.closeQr : t.scanQr}
                 </button>
               </div>
 
+              {recipient && activeResolvedAddress && (
+                <div className="text-[10px] bg-slate-900/80 p-2 rounded-lg border border-slate-800 text-slate-400 flex justify-between gap-2 overflow-hidden">
+                  <span>resolved address:</span>
+                  <span className="text-purple-300 font-mono truncate">{activeResolvedAddress}</span>
+                </div>
+              )}
+
               {isScannerOpen && (
-                <div className="bg-[#0b0e17] p-4 rounded-xl border border-purple-500/50 text-center text-xs text-purple-300 animate-pulse">
-                  Scanning Camera Feed / Processing Image...
+                <div className="bg-[#05070a] p-3 rounded-lg border border-purple-500/50 space-y-2">
+                  <div id="qr-reader-container" className="w-full h-48 rounded-lg overflow-hidden bg-black mx-auto max-w-xs" />
+                  <p className="text-[10px] text-center text-slate-400">{t.pointCamera}</p>
                 </div>
               )}
               
+              <div className="flex justify-between items-center bg-[#05070a] p-2 rounded-lg border border-slate-800 text-xs">
+                <span className="text-slate-400 text-[10px]">transfer route:</span>
+                <div className="flex gap-1.5">
+                  <button 
+                    onClick={() => setTransferMode('native')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                      transferMode === 'native' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    native gas usdc
+                  </button>
+                  <button 
+                    onClick={() => setTransferMode('erc20')}
+                    className={`px-2 py-0.5 rounded text-[10px] font-medium ${
+                      transferMode === 'erc20' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400'
+                    }`}
+                  >
+                    erc-20 contract
+                  </button>
+                </div>
+              </div>
+
               <div className="flex gap-2">
                 <input 
                   type="text" 
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
-                  className="w-1/3 bg-[#0b0e17] border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500 font-mono transition-all"
+                  className="w-1/3 bg-[#05070a] border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
                 />
                 <button 
                   onClick={handlePayment}
                   disabled={txLoading || !isConnected}
-                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-xl py-2.5 transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                  className="w-2/3 bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-medium text-xs rounded-lg py-2 transition-all"
                 >
-                  {txLoading ? t.processing : `${t.payBtn} (${balanceData?.symbol || 'USDC'})`}
+                  {txLoading ? t.processing : `${t.payBtn} (${amount} usdc)`}
                 </button>
               </div>
-              
-              <p className="text-[10px] text-center text-slate-500">
-                Connected Network: {networkName} | Dynamic Explorer Sync Active
-              </p>
             </div>
           )}
 
           {activeTab === 'qr' && (
-            <div className="bg-[#0b0e17] p-6 rounded-xl border border-slate-800 text-center space-y-3">
+            <div className="bg-[#05070a] p-5 rounded-lg border border-slate-800 text-center space-y-3">
               <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">{t.qrTitle}</p>
               
-              <div className="w-40 h-40 bg-slate-900 border-2 border-purple-500/30 mx-auto rounded-xl flex flex-col items-center justify-center p-2 shadow-inner">
+              <div className="w-36 h-36 bg-slate-900 border border-purple-500/30 mx-auto rounded-lg flex flex-col items-center justify-center p-2">
                 <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(receiveQrData)}`} 
-                  alt="Receiver QR Code"
-                  className="w-32 h-32 rounded bg-white p-1"
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=${encodeURIComponent(receiveQrData)}`} 
+                  alt="arc receiver qr code"
+                  className="w-28 h-28 rounded bg-white p-1"
                 />
               </div>
 
-              <div className="space-y-1">
-                <p className="text-xs font-mono font-bold text-purple-400">{userUpId}</p>
-                <p className="text-[11px] font-mono text-slate-400 break-all">{address || 'No wallet connected'}</p>
-                <p className="text-[10px] text-emerald-400 font-semibold pt-1">Network: {networkName}</p>
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-purple-400">{userUpId}</p>
+                <p className="text-[10px] text-slate-400 break-all max-w-xs mx-auto">{address || 'no wallet connected'}</p>
+                <p className="text-[10px] text-emerald-400 font-semibold pt-1">network: arc testnet (usdc)</p>
               </div>
             </div>
           )}
 
-          {activeTab === 'fx' && (
-            <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800 space-y-3">
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">1 INR (₹) =</span>
-                <span className="font-mono text-emerald-400 font-semibold">16.12 KRW (₩)</span>
+          {activeTab === 'treasury' && (
+            <div className="bg-[#05070a] p-3.5 rounded-lg border border-slate-800 space-y-3">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                <div>
+                  <h3 className="text-xs font-bold text-purple-300 uppercase">{t.treasuryVaultTitle}</h3>
+                  <p className="text-[10px] text-slate-400">{t.treasuryVaultDesc}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] text-slate-400">{t.currentVaultYield}</p>
+                  <p className="text-xs font-bold text-emerald-400">4.85% apy</p>
+                </div>
               </div>
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-400">1 ETH / BTC =</span>
-                <span className="font-mono text-purple-400 font-semibold">Global Liquidity Pool Active</span>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-[#0a0d14] p-2.5 rounded-lg border border-slate-800">
+                  <p className="text-[10px] text-slate-400">{t.depositedBalance}</p>
+                  <p className="text-xs font-bold text-purple-300 mt-0.5">{vaultBalance} usdc</p>
+                </div>
+                <div className="bg-[#0a0d14] p-2.5 rounded-lg border border-slate-800">
+                  <p className="text-[10px] text-slate-400">{t.estAnnualYield}</p>
+                  <p className="text-xs font-bold text-emerald-400 mt-0.5">
+                    {(parseFloat(vaultBalance) * 0.0485).toFixed(4)} usdc
+                  </p>
+                </div>
               </div>
-              <p className="text-[10px] text-slate-500 text-center pt-1">Multi-Chain Settlement Engine</p>
+
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={treasuryDeposit}
+                  onChange={(e) => setTreasuryDeposit(e.target.value)}
+                  placeholder="amount in usdc"
+                  className="w-1/2 bg-[#0a0d14] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-500"
+                />
+                <button 
+                  onClick={handleTreasuryDeposit}
+                  disabled={txLoading || !isConnected}
+                  className="w-1/2 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 text-white font-medium text-xs rounded-lg py-1.5 transition-all"
+                >
+                  {txLoading ? t.depositing : t.depositToVault}
+                </button>
+              </div>
             </div>
           )}
         </section>
 
-        {/* Network-Categorized Faucets & Links */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-4">
-          <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.resourcesHeader}</p>
+        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-2.5">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t.resourcesHeader}</p>
           
-          {/* Arc Protocol Ecosystem */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-              <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide">Arc Protocol Ecosystem</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <a 
-                href="https://testnet.arcscan.app/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Arc Testnet Explorer</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://faucet.circle.com/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-blue-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Circle USDC Faucet</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://www.arc.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Arc Protocol Docs</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-            </div>
-          </div>
-
-          {/* GIWA Ecosystem */}
-          <div className="space-y-2 pt-2 border-t border-slate-800/60">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <p className="text-[11px] font-bold text-emerald-400 uppercase tracking-wide">GIWA L2 Ecosystem</p>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-              <a 
-                href="https://faucet.giwa.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>GIWA Faucet</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="http://sepolia-playground.giwa.io" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-emerald-400 transition-all font-medium flex items-center justify-between"
-              >
-                <span>GIWA Playground</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://faucet.lambda256.io/" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
-                <span>Lambda Faucet</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-              <a 
-                href="https://giwa.io/gasok" 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#0b0e17] hover:bg-[#151c2e] p-2.5 rounded-xl border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
-              >
-                <span>GIWA Gasok Docs</span>
-                <span className="text-[10px]">↗</span>
-              </a>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <a 
+              href="https://testnet.arcscan.app/" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="bg-[#05070a] hover:bg-[#0f1420] p-2.5 rounded-lg border border-purple-900/50 text-purple-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>arcscan explorer</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://faucet.circle.com/" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="bg-[#05070a] hover:bg-[#0f1420] p-2.5 rounded-lg border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>circle usdc faucet</span>
+              <span className="text-[10px]">↗</span>
+            </a>
+            <a 
+              href="https://www.arc.io/" 
+              target="_blank" 
+              rel="noreferrer" 
+              className="bg-[#05070a] hover:bg-[#0f1420] p-2.5 rounded-lg border border-slate-800 text-slate-300 transition-all font-medium flex items-center justify-between"
+            >
+              <span>arc protocol docs</span>
+              <span className="text-[10px]">↗</span>
+            </a>
           </div>
         </section>
 
-        {/* Activity Log */}
-        <section className="bg-[#111625] p-5 rounded-2xl border border-slate-800 space-y-3">
+        <section className="bg-[#0a0d14] p-4 rounded-xl border border-slate-800 space-y-2.5">
           <div className="flex justify-between items-center">
-            <span className="text-xs font-semibold tracking-wider text-slate-400 uppercase">{t.activityHeader}</span>
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{t.activityHeader}</span>
             {isConnected && activities.length > 0 && (
               <button 
                 onClick={handleDownloadCSV}
-                className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded transition-all cursor-pointer"
+                className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 px-2 py-0.5 rounded transition-all"
               >
                 {t.downloadCsv}
               </button>
@@ -948,103 +1117,152 @@ export default function Home() {
             {isConnected ? (
               activities.length > 0 ? (
                 activities.map((act) => (
-                  <div key={act.id} className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800/60 flex justify-between items-center">
-                    <div>
-                      <p className="text-emerald-400 font-medium">{act.title}</p>
-                      <p className="text-[10px] text-slate-500">{act.timestamp} • {act.amount}</p>
+                  <div key={act.id} className="bg-[#05070a] p-2.5 rounded-lg border border-slate-800/80 flex justify-between items-center gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-purple-300 font-medium truncate">{act.title}</p>
+                        {act.latencyMs && (
+                          <span className="text-[8px] bg-emerald-950 text-emerald-400 border border-emerald-800 px-1 py-0.2 rounded shrink-0">
+                            {act.latencyMs}ms
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-0.5 truncate">{act.timestamp} • {act.amount}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <a 
                         href={act.explorerUrl} 
                         target="_blank" 
                         rel="noreferrer"
-                        className="text-purple-400 hover:underline text-[10px] font-mono block"
+                        className="text-purple-400 hover:underline text-[10px] block font-mono"
                       >
-                        Verify Tx ↗ ({act.txHash})
+                        verify ↗ ({act.txHash})
                       </a>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
+                <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800/80 text-center text-slate-500 text-xs">
                   {t.noTxConnected}
                 </div>
               )
             ) : (
-              <div className="bg-[#0b0e17] p-4 rounded-xl border border-slate-800/60 text-center text-slate-500 text-xs">
+              <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800/80 text-center text-slate-500 text-xs">
                 {t.noTxDisconnected}
               </div>
             )}
           </div>
         </section>
 
-        {/* Official Social Links & Builder Credits */}
-        <footer className="bg-[#111625] p-4 rounded-2xl border border-slate-800 text-center space-y-3">
-          <div className="flex justify-center items-center gap-6 text-xs text-slate-400">
-            <a 
-              href="https://x.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>𝕏 (Twitter)</span>
-            </a>
-            <a 
-              href="https://github.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>GitHub</span>
-            </a>
-            <a 
-              href="https://discord.com" 
-              target="_blank" 
-              rel="noreferrer" 
-              className="hover:text-purple-400 transition-all flex items-center gap-1 font-medium"
-            >
-              <span>Discord</span>
-            </a>
-          </div>
-          <p className="text-[11px] text-slate-500">
-            GIWASETU MULTI-CHAIN PROTOCOL — Settlement Engine for Ethereum • Arc • GIWA
-          </p>
-        </footer>
-
       </div>
 
-      {/* SUCCESS MODAL POPUP WITH ANIMATION */}
+      {cctpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0a0d14] border border-emerald-500/40 w-full max-w-sm rounded-xl p-4 space-y-3">
+            <h3 className="text-xs font-bold text-emerald-400 uppercase">circle cctp native bridge</h3>
+            <p className="text-[11px] text-slate-400">burn & mint native usdc across arc network via circle cctp protocol.</p>
+            
+            <div className="space-y-1 text-xs">
+              <label className="text-slate-400 text-[10px]">transfer amount (usdc):</label>
+              <input 
+                type="text" 
+                value={cctpAmount}
+                onChange={(e) => setCctpAmount(e.target.value)}
+                className="w-full bg-[#05070a] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-200"
+              />
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button 
+                onClick={async () => {
+                  setCctpModalOpen(false)
+                  await handlePracticeTx()
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2 rounded-lg font-medium"
+              >
+                execute cctp bridge
+              </button>
+              <button 
+                onClick={() => setCctpModalOpen(false)}
+                className="w-1/3 bg-slate-800 text-slate-300 text-xs py-2 rounded-lg"
+              >
+                cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {splitModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0a0d14] border border-amber-500/40 w-full max-w-sm rounded-xl p-4 space-y-3">
+            <h3 className="text-xs font-bold text-amber-400 uppercase">programmable auto-splitter</h3>
+            <p className="text-[11px] text-slate-400">automatically split incoming usdc settlements: 80% merchant, 15% treasury, 5% royalty fee.</p>
+            
+            <div className="bg-[#05070a] p-2.5 rounded-lg border border-slate-800 space-y-1.5 text-xs">
+              <div className="flex justify-between">
+                <span className="text-slate-400">merchant payout:</span>
+                <span className="text-slate-200 font-bold">80%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">vault treasury deposit:</span>
+                <span className="text-emerald-400 font-bold">15%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">protocol fee:</span>
+                <span className="text-purple-400 font-bold">5%</span>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => {
+                setSplitModalOpen(false)
+                setStatusMsg(t.autoSplitActivated)
+              }}
+              className="w-full bg-amber-600 hover:bg-amber-500 text-white text-xs py-2 rounded-lg font-medium"
+            >
+              activate auto-split rules
+            </button>
+          </div>
+        </div>
+      )}
+
       {successModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111625] border border-emerald-500/40 w-full max-w-sm rounded-2xl p-6 shadow-2xl text-center space-y-4">
-            <div className="w-14 h-14 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-2xl mx-auto border border-emerald-500/40">
+          <div className="bg-[#0a0d14] border border-purple-500/40 w-full max-w-sm rounded-xl p-5 text-center space-y-3">
+            <div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center text-xl mx-auto border border-emerald-500/40">
               ✓
             </div>
             
-            <div className="space-y-1">
-              <h3 className="text-lg font-bold text-white">{t.txSuccessTitle}</h3>
-              <p className="text-xs text-slate-400">{t.txSuccessDesc}</p>
+            <div className="space-y-0.5">
+              <h3 className="text-base font-bold text-white">{t.txSuccessTitle}</h3>
+              <p className="text-[11px] text-slate-400">{t.txSuccessDesc}</p>
             </div>
 
-            <div className="bg-[#0b0e17] p-3 rounded-xl border border-slate-800 text-left space-y-1.5 font-mono text-xs">
-              <p className="text-slate-400 text-[10px]">DETAILS:</p>
-              <p className="text-purple-300 font-semibold">{successModal.title}</p>
+            <div className="bg-[#05070a] p-3 rounded-lg border border-slate-800 text-left space-y-1.5 text-xs">
+              <div className="flex justify-between items-center text-[10px] text-slate-400 border-b border-slate-800 pb-1">
+                <span>execution speed:</span>
+                <span className="text-emerald-400 font-bold bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-800">
+                  {successModal.latencyMs} ms
+                </span>
+              </div>
+              <p className="text-purple-300 font-semibold truncate">{successModal.title}</p>
               <p className="text-emerald-400 font-bold">{successModal.amount}</p>
-              <p className="text-slate-500 text-[10px] truncate">Hash: {successModal.hash}</p>
+              <p className="text-slate-500 text-[9px] truncate">hash: {successModal.hash}</p>
             </div>
 
-            <div className="flex flex-col gap-2 pt-1">
+            <div className="flex flex-col gap-1.5 pt-1">
               <a 
                 href={successModal.url}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs py-2.5 rounded-xl transition-all shadow-md block"
+                className="w-full bg-purple-600 hover:bg-purple-500 text-white font-medium text-xs py-2 rounded-lg block"
               >
                 {t.viewExplorer}
               </a>
               <button 
                 onClick={() => setSuccessModal(null)}
-                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2.5 rounded-xl transition-all font-medium cursor-pointer"
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs py-2 rounded-lg font-medium"
               >
                 {t.close}
               </button>
